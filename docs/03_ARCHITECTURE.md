@@ -5,26 +5,36 @@ BuildFlow utilizes a Microservices Architecture to ensure scalability, fault iso
 
 The platform consists of a single-page application (React.js) communicating via REST APIs with multiple Spring Boot microservices. Each microservice manages its own database (Database-per-Service pattern using MySQL). Asynchronous event-driven communication is handled by Apache Kafka to decouple services, and Redis is used for caching aggregated analytics data to ensure fast dashboard load times.
 
+```mermaid
+graph LR
+    User(["Construction Staff"]) --> |Uses| UI["React.js Web App"]
+    UI --> |REST API| Gateway["API Gateway"]
+    Gateway --> |Routes| Microservices["Spring Boot Microservices"]
+    Microservices --> |Reads/Writes| DB[("MySQL Databases")]
+    Microservices -.-> |Events| Kafka["Apache Kafka"]
+    Microservices --- Cache[("Redis Cache")]
+```
+
 ## Microservice Diagram
 ```mermaid
 graph TD
-    Client[Web Browser / React Frontend] --> APIGateway[Spring Cloud Gateway]
+    Client["Web Browser / React Frontend"] --> APIGateway["Spring Cloud Gateway"]
     
-    APIGateway --> AuthService[Authentication & User Service]
-    APIGateway --> ProjService[Project Management Service]
-    APIGateway --> WorkService[Workforce Management Service]
-    APIGateway --> InvService[Material & Inventory Service]
-    APIGateway --> EquipService[Equipment Management Service]
-    APIGateway --> FinService[Finance & Expense Service]
-    APIGateway --> RepService[Reporting & Analytics Service]
+    APIGateway --> AuthService["Authentication & User Service"]
+    APIGateway --> ProjService["Project Management Service"]
+    APIGateway --> WorkService["Workforce Management Service"]
+    APIGateway --> InvService["Material & Inventory Service"]
+    APIGateway --> EquipService["Equipment Management Service"]
+    APIGateway --> FinService["Finance & Expense Service"]
+    APIGateway --> RepService["Reporting & Analytics Service"]
     
-    AuthService --> DBAuth[(MySQL: Auth)]
-    ProjService --> DBProj[(MySQL: Project)]
-    WorkService --> DBWork[(MySQL: Workforce)]
-    InvService --> DBInv[(MySQL: Inventory)]
-    EquipService --> DBEquip[(MySQL: Equipment)]
-    FinService --> DBFin[(MySQL: Finance)]
-    RepService --> DBRep[(MySQL: Reporting)]
+    AuthService --> DBAuth[("MySQL: Auth")]
+    ProjService --> DBProj[("MySQL: Project")]
+    WorkService --> DBWork[("MySQL: Workforce")]
+    InvService --> DBInv[("MySQL: Inventory")]
+    EquipService --> DBEquip[("MySQL: Equipment")]
+    FinService --> DBFin[("MySQL: Finance")]
+    RepService --> DBRep[("MySQL: Reporting")]
 
     %% Event-Driven Data Flow
     ProjService -.-> Kafka["Apache Kafka (Message Broker)"]
@@ -32,26 +42,26 @@ graph TD
     InvService -.-> Kafka
     FinService -.-> Kafka
     
-    Kafka -.-> NotifService[Notification Service]
+    Kafka -.-> NotifService["Notification Service"]
     Kafka -.-> RepService
     
     %% Caching Layer
-    RepService --- Redis[(Redis Cache)]
+    RepService --- Redis[("Redis Cache")]
 ```
 
 ## Component Diagram
 ```mermaid
 graph TD
-    subgraph Frontend (React Application)
-        UI[UI Components / Pages] --> Redux[State Management / Context]
-        Redux --> Axios[Axios HTTP Client]
+    subgraph Frontend ["Frontend (React Application)"]
+        UI["UI Components / Pages"] --> Redux["State Management / Context"]
+        Redux --> Axios["Axios HTTP Client"]
     end
     
-    subgraph Backend Microservice (Spring Boot)
-        Controller[REST Controller Layer] --> Service[Business Service Layer]
-        Service --> Repository[Spring Data JPA Repository]
-        Repository --> DB[(MySQL Database)]
-        Service --> KafkaProducer[Kafka Producer Template]
+    subgraph Backend ["Backend Microservice (Spring Boot)"]
+        Controller["REST Controller Layer"] --> Service["Business Service Layer"]
+        Service --> Repository["Spring Data JPA Repository"]
+        Repository --> DB[("MySQL Database")]
+        Service --> KafkaProducer["Kafka Producer Template"]
     end
     
     Axios --> Controller
@@ -73,8 +83,8 @@ graph TD
 sequenceDiagram
     participant User
     participant Frontend
-    participant Gateway as API Gateway
-    participant AuthService
+    participant Gateway as "API Gateway"
+    participant AuthService as "Auth Service"
     
     User->>Frontend: Submit Login Credentials
     Frontend->>Gateway: POST /api/auth/login
@@ -83,7 +93,7 @@ sequenceDiagram
     Gateway-->>Frontend: Return JWT to Client
     
     Note over Frontend,Gateway: Subsequent Protected Requests
-    Frontend->>Gateway: HTTP Request + Header (Authorization: Bearer <JWT>)
+    Frontend->>Gateway: HTTP Request + Header (Authorization: Bearer JWT)
     Gateway->>Gateway: Validate JWT Signature locally
     Gateway->>DownstreamService: Forward Request with User Context
 ```
@@ -91,15 +101,15 @@ sequenceDiagram
 ## Deployment Diagram
 ```mermaid
 graph TD
-    subgraph Azure Cloud Infrastructure
-        FrontendHost[Azure Static Web Apps]
-        BackendHost[Azure Container Apps / App Service]
-        DatabaseHost[Azure Database for MySQL]
-        CacheHost[Azure Cache for Redis]
-        MessageBus[Azure Event Hubs for Kafka]
+    subgraph AzureCloud ["Azure Cloud Infrastructure"]
+        FrontendHost["Azure Static Web Apps"]
+        BackendHost["Azure Container Apps / App Service"]
+        DatabaseHost["Azure Database for MySQL"]
+        CacheHost["Azure Cache for Redis"]
+        MessageBus["Azure Event Hubs for Kafka"]
     end
     
-    Client[User Browser] --> FrontendHost
+    Client["User Browser"] --> FrontendHost
     FrontendHost --> BackendHost
     BackendHost --> DatabaseHost
     BackendHost --> CacheHost
