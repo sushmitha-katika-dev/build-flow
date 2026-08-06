@@ -27,7 +27,7 @@ graph TD
     RepService --> DBRep[(MySQL: Reporting)]
 
     %% Event-Driven Data Flow
-    ProjService -.-> Kafka[Apache Kafka (Message Broker)]
+    ProjService -.-> Kafka["Apache Kafka (Message Broker)"]
     WorkService -.-> Kafka
     InvService -.-> Kafka
     FinService -.-> Kafka
