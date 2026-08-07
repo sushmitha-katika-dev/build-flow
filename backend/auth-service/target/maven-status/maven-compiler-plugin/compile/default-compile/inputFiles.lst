@@ -1,0 +1,16 @@
+C:\java-full-stack\build-flow\backend\auth-service\src\main\java\com\buildflow\auth\enums\Role.java
+C:\java-full-stack\build-flow\backend\auth-service\src\main\java\com\buildflow\auth\controller\AuthController.java
+C:\java-full-stack\build-flow\backend\auth-service\src\main\java\com\buildflow\auth\AuthServiceApplication.java
+C:\java-full-stack\build-flow\backend\auth-service\src\main\java\com\buildflow\auth\repository\UserRepository.java
+C:\java-full-stack\build-flow\backend\auth-service\src\main\java\com\buildflow\auth\dto\AuthResponse.java
+C:\java-full-stack\build-flow\backend\auth-service\src\main\java\com\buildflow\auth\dto\RegisterRequest.java
+C:\java-full-stack\build-flow\backend\auth-service\src\main\java\com\buildflow\auth\util\JwtUtil.java
+C:\java-full-stack\build-flow\backend\auth-service\src\main\java\com\buildflow\auth\config\OpenApiConfig.java
+C:\java-full-stack\build-flow\backend\auth-service\src\main\java\com\buildflow\auth\exception\AuthException.java
+C:\java-full-stack\build-flow\backend\auth-service\src\main\java\com\buildflow\auth\service\AuthService.java
+C:\java-full-stack\build-flow\backend\auth-service\src\main\java\com\buildflow\auth\service\AuthServiceImpl.java
+C:\java-full-stack\build-flow\backend\auth-service\src\main\java\com\buildflow\auth\entity\User.java
+C:\java-full-stack\build-flow\backend\auth-service\src\main\java\com\buildflow\auth\dto\AuthRequest.java
+C:\java-full-stack\build-flow\backend\auth-service\src\main\java\com\buildflow\auth\dto\ErrorResponse.java
+C:\java-full-stack\build-flow\backend\auth-service\src\main\java\com\buildflow\auth\exception\GlobalExceptionHandler.java
+C:\java-full-stack\build-flow\backend\auth-service\src\main\java\com\buildflow\auth\config\SecurityConfig.java
