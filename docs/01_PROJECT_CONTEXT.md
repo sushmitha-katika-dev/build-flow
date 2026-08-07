@@ -25,25 +25,225 @@ BuildFlow uses a **Microservices Architecture**. An API Gateway routes traffic f
 
 ## Folder Structure
 ```
-build-flow/
-├── docs/                      # Standardized project documentation
-├── frontend/                  # React.js SPA application
-├── backend/                   # Spring Boot microservices
+BuildFlow/
+│
+├── docs/                                   # Project Documentation
+│   ├── PROJECT_PROPOSAL.md
+│   ├── PROJECT_CONTEXT.md
+│   ├── REQUIREMENTS.md
+│   ├── ARCHITECTURE.md
+│   ├── DATABASE_DESIGN.md
+│   ├── API_CONTRACT.md
+│   ├── UI_FLOW.md
+│   ├── TASKS.md
+│   ├── TEST_REPORT.md
+│   └── DEPLOYMENT_GUIDE.md
+│
+├── backend/
+│   │
 │   ├── api-gateway/
+│   │   ├── src/
+│   │   ├── Dockerfile
+│   │   ├── pom.xml
+│   │   └── README.md
+│   │
 │   ├── auth-service/
+│   │   ├── src/
+│   │   │   ├── main/
+│   │   │   │   ├── java/com/buildflow/auth/
+│   │   │   │   │   ├── config/
+│   │   │   │   │   ├── controller/
+│   │   │   │   │   ├── dto/
+│   │   │   │   │   ├── entity/
+│   │   │   │   │   ├── exception/
+│   │   │   │   │   ├── repository/
+│   │   │   │   │   ├── security/
+│   │   │   │   │   ├── service/
+│   │   │   │   │   ├── util/
+│   │   │   │   │   └── AuthServiceApplication.java
+│   │   │   └── resources/
+│   │   │       ├── application.yml
+│   │   │       └── db/
+│   │   ├── src/test/
+│   │   ├── Dockerfile
+│   │   └── pom.xml
+│   │
 │   ├── project-service/
+│   │   ├── src/
+│   │   ├── Dockerfile
+│   │   └── pom.xml
+│   │
 │   ├── workforce-service/
+│   │   ├── src/
+│   │   ├── Dockerfile
+│   │   └── pom.xml
+│   │
 │   ├── inventory-service/
+│   │   ├── src/
+│   │   ├── Dockerfile
+│   │   └── pom.xml
+│   │
 │   ├── equipment-service/
+│   │   ├── src/
+│   │   ├── Dockerfile
+│   │   └── pom.xml
+│   │
 │   ├── finance-service/
-│   ├── notification-service/
+│   │   ├── src/
+│   │   ├── Dockerfile
+│   │   └── pom.xml
+│   │
 │   └── reporting-service/
-├── docker/                    # Docker Compose files & configurations
-├── postman/                   # API testing collections
-├── .github/                   # GitHub Actions for CI/CD pipelines
-└── README.md                  # Project root overview
+│       ├── src/
+│       ├── Dockerfile
+│       └── pom.xml
+│
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── api/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   │   ├── common/
+│   │   │   ├── dashboard/
+│   │   │   ├── projects/
+│   │   │   ├── workforce/
+│   │   │   ├── inventory/
+│   │   │   ├── equipment/
+│   │   │   ├── finance/
+│   │   │   └── reports/
+│   │   ├── hooks/
+│   │   ├── layouts/
+│   │   ├── pages/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   ├── store/
+│   │   ├── types/
+│   │   ├── utils/
+│   │   ├── App.tsx
+│   │   └── main.tsx
+│   ├── package.json
+│   ├── Dockerfile
+│   └── vite.config.ts
+│
+├── database/
+│   ├── auth-db/
+│   ├── project-db/
+│   ├── workforce-db/
+│   ├── inventory-db/
+│   ├── equipment-db/
+│   ├── finance-db/
+│   └── reporting-db/
+│
+├── docker/
+│   ├── docker-compose.yml
+│   ├── kafka/
+│   ├── mysql/
+│   └── redis/
+│
+├── postman/
+│   └── BuildFlow.postman_collection.json
+│
+├── scripts/
+│   ├── setup.sh
+│   └── setup.bat
+│
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+│
+├── .gitignore
+├── README.md
+└── LICENSE
 ```
 
+Development order 
+BuildFlow
+│
+├── Documentation ✅
+│
+├── API Gateway
+│
+├── Authentication Service
+│
+├── Project Service
+│
+├── Workforce Service
+│
+├── Inventory Service
+│
+├── Equipment Service
+│
+├── Finance Service
+│
+├── Reporting Service
+│
+├── Frontend
+│
+├── Testing
+│
+├── Docker
+│
+├── CI/CD
+│
+└── Deployment
+
+
+structure inside every service 
+
+project-service/
+│
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/
+│   │   │       └── buildflow/
+│   │   │           └── project/
+│   │   │
+│   │   │               ├── config/
+│   │   │               │
+│   │   │               ├── controller/
+│   │   │               │
+│   │   │               ├── dto/
+│   │   │               │   ├── request/
+│   │   │               │   └── response/
+│   │   │               │
+│   │   │               ├── entity/
+│   │   │               │
+│   │   │               ├── enums/
+│   │   │               │
+│   │   │               ├── exception/
+│   │   │               │
+│   │   │               ├── mapper/
+│   │   │               │
+│   │   │               ├── repository/
+│   │   │               │
+│   │   │               ├── security/
+│   │   │               │
+│   │   │               ├── service/
+│   │   │               │
+│   │   │               ├── service/
+│   │   │               │    └── impl/
+│   │   │               │
+│   │   │               ├── util/
+│   │   │               │
+│   │   │               ├── validator/
+│   │   │               │
+│   │   │               └── ProjectServiceApplication.java
+│   │   │
+│   │   └── resources/
+│   │        ├── application.yml
+│   │        ├── application-dev.yml
+│   │        ├── application-prod.yml
+│   │        └── db/
+│   │
+│   └── test/
+│
+├── Dockerfile
+│
+├── pom.xml
+│
+└── README.md
 ## Branching Strategy
 - `main`: Stable, production-ready code.
 - `develop`: Integration branch for active development.
