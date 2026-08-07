@@ -25,8 +25,7 @@ BuildFlow uses a **Microservices Architecture**. An API Gateway routes traffic f
 
 ## Folder Structure
 ```
-BuildFlow/
-│
+build-flow/
 ├── docs/                                   # Project Documentation
 │   ├── PROJECT_PROPOSAL.md
 │   ├── PROJECT_CONTEXT.md
@@ -157,10 +156,10 @@ BuildFlow/
 └── LICENSE
 ```
 
-Development order 
-BuildFlow
+## Development order 
+build-flow
 │
-├── Documentation ✅
+├── Documentation
 │
 ├── API Gateway
 │
@@ -189,7 +188,7 @@ BuildFlow
 └── Deployment
 
 
-structure inside every service 
+## Structure inside every service 
 
 project-service/
 │
@@ -244,6 +243,7 @@ project-service/
 ├── pom.xml
 │
 └── README.md
+
 ## Branching Strategy
 - `main`: Stable, production-ready code.
 - `develop`: Integration branch for active development.
