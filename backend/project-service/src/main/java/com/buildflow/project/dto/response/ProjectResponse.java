@@ -1,27 +1,26 @@
-package com.buildflow.project.dto;
+package com.buildflow.project.dto.response;
 
 import com.buildflow.project.enums.ProjectStatus;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class ProjectResponse {
     private Long id;
-    private String name;
+    private String projectCode;
+    private String projectName;
+    private String description;
+    private String clientName;
+    private String clientContact;
     private String location;
-    private ProjectStatus status;
     private LocalDate startDate;
-    private LocalDate endDate;
-    private BigDecimal budget;
+    private LocalDate expectedEndDate;
+    private LocalDate actualEndDate;
+    private BigDecimal estimatedBudget;
+    private ProjectStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
