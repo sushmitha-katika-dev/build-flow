@@ -1,7 +1,5 @@
 package com.buildflow.workforce.entity;
 
-import com.buildflow.workforce.enums.WorkerRole;
-import com.buildflow.workforce.enums.WorkerStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,45 +9,38 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "workers")
+@Table(name = "wages")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Worker {
+public class Wage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String firstName;
+    @Column(name = "labour_id", nullable = false)
+    private Long labourId;
 
-    @Column(nullable = false)
-    private String lastName;
-
-    @Column(unique = true, nullable = false)
-    private String email;
-
-    @Column(nullable = false)
-    private String phoneNumber;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private WorkerRole role;
-
-    @Column(name = "project_id")
+    @Column(name = "project_id", nullable = false)
     private Long projectId;
 
-    @Column(precision = 10, scale = 2)
+    @Column(precision = 10, scale = 2, nullable = false)
     private BigDecimal hourlyRate;
 
-    @Enumerated(EnumType.STRING)
+    @Column(precision = 5, scale = 2, nullable = false)
+    private BigDecimal totalHours;
+
+    @Column(precision = 12, scale = 2, nullable = false)
+    private BigDecimal amountPaid;
+
     @Column(nullable = false)
-    private WorkerStatus status;
+    private LocalDate paymentDate;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
