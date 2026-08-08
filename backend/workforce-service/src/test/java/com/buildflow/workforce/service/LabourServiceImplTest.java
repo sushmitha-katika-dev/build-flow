@@ -1,22 +1,24 @@
 package com.buildflow.workforce.service;
 
-import com.buildflow.workforce.dto.request.LabourRequest;
+import com.buildflow.workforce.constants.WorkforceConstants;
+import com.buildflow.workforce.dto.request.LabourCreateRequest;
 import com.buildflow.workforce.dto.response.LabourResponse;
 import com.buildflow.workforce.entity.Labour;
 import com.buildflow.workforce.enums.LabourRole;
 import com.buildflow.workforce.enums.LabourStatus;
 import com.buildflow.workforce.exception.ResourceNotFoundException;
+import com.buildflow.workforce.mapper.LabourMapper;
 import com.buildflow.workforce.repository.LabourRepository;
 import com.buildflow.workforce.service.impl.LabourServiceImpl;
+import com.buildflow.workforce.validator.LabourValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.kafka.core.KafkaTemplate;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,123 +26,78 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class LabourServiceImplTest {
+class LabourServiceImplTest {
 
     @Mock
     private LabourRepository labourRepository;
 
+    @Mock
+    private LabourMapper labourMapper;
+
+    @Mock
+    private LabourValidator labourValidator;
+
+    @Mock
+    private KafkaTemplate<String, Object> kafkaTemplate;
+
     @InjectMocks
     private LabourServiceImpl labourService;
 
+    private LabourCreateRequest createRequest;
     private Labour labour;
-    private LabourRequest labourRequest;
+    private LabourResponse response;
 
     @BeforeEach
     void setUp() {
-        labour = Labour.builder()
-                .id(1L)
-                .firstName("John")
-                .lastName("Doe")
-                .email("john.doe@example.com")
-                .phoneNumber("1234567890")
-                .role(LabourRole.ENGINEER)
-                .projectId(10L)
-                .status(LabourStatus.ACTIVE)
-                .build();
+        createRequest = new LabourCreateRequest();
+        createRequest.setFirstName("John");
+        createRequest.setLastName("Doe");
+        createRequest.setEmail("john.doe@test.com");
+        createRequest.setPhoneNumber("1234567890");
+        createRequest.setRole(LabourRole.LABORER);
+        createRequest.setProjectId(100L);
 
-        labourRequest = new LabourRequest(
-                "John",
-                "Doe",
-                "john.doe@example.com",
-                "1234567890",
-                LabourRole.ENGINEER,
-                10L,
-                LabourStatus.ACTIVE
-        );
+        labour = new Labour();
+        labour.setId(1L);
+        labour.setFirstName("John");
+        labour.setLastName("Doe");
+        labour.setStatus(LabourStatus.ACTIVE);
+
+        response = new LabourResponse();
+        response.setId(1L);
+        response.setFirstName("John");
+        response.setLastName("Doe");
     }
 
     @Test
-    void createLabour_Success() {
-        when(labourRepository.existsByEmail("john.doe@example.com")).thenReturn(false);
+    void onboardLabour_Success() {
+        doNothing().when(labourValidator).validateCreateRequest(any());
+        when(labourMapper.toEntity(any())).thenReturn(labour);
         when(labourRepository.save(any(Labour.class))).thenReturn(labour);
+        when(labourMapper.toResponse(any(Labour.class))).thenReturn(response);
 
-        LabourResponse response = labourService.createLabour(labourRequest);
+        LabourResponse result = labourService.onboardLabour(createRequest);
 
-        assertNotNull(response);
-        assertEquals("John", response.getFirstName());
-        verify(labourRepository, times(1)).save(any(Labour.class));
-    }
-
-    @Test
-    void createLabour_EmailExists() {
-        when(labourRepository.existsByEmail("john.doe@example.com")).thenReturn(true);
-
-        assertThrows(IllegalArgumentException.class, () -> labourService.createLabour(labourRequest));
-        verify(labourRepository, never()).save(any(Labour.class));
+        assertNotNull(result);
+        assertEquals("John", result.getFirstName());
+        verify(kafkaTemplate).send(eq(WorkforceConstants.LABOUR_ONBOARDED_TOPIC), any(Labour.class));
     }
 
     @Test
     void getLabourById_Success() {
         when(labourRepository.findById(1L)).thenReturn(Optional.of(labour));
+        when(labourMapper.toResponse(labour)).thenReturn(response);
 
-        LabourResponse response = labourService.getLabourById(1L);
+        LabourResponse result = labourService.getLabourById(1L);
 
-        assertNotNull(response);
-        assertEquals(1L, response.getId());
+        assertNotNull(result);
+        assertEquals("John", result.getFirstName());
     }
 
     @Test
-    void getLabourById_NotFound() {
+    void getLabourById_NotFound_ThrowsException() {
         when(labourRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> labourService.getLabourById(1L));
-    }
-
-    @Test
-    void getAllLabours_Success() {
-        when(labourRepository.findAll()).thenReturn(Arrays.asList(labour));
-
-        List<LabourResponse> responses = labourService.getAllLabours();
-
-        assertNotNull(responses);
-        assertEquals(1, responses.size());
-    }
-
-    @Test
-    void getLaboursByProjectId_Success() {
-        when(labourRepository.findByProjectId(10L)).thenReturn(Arrays.asList(labour));
-
-        List<LabourResponse> responses = labourService.getLaboursByProjectId(10L);
-
-        assertNotNull(responses);
-        assertEquals(1, responses.size());
-        assertEquals(10L, responses.get(0).getProjectId());
-    }
-
-    @Test
-    void updateLabour_Success() {
-        when(labourRepository.findById(1L)).thenReturn(Optional.of(labour));
-        when(labourRepository.save(any(Labour.class))).thenReturn(labour);
-
-        LabourResponse response = labourService.updateLabour(1L, labourRequest);
-
-        assertNotNull(response);
-        verify(labourRepository, times(1)).save(any(Labour.class));
-    }
-
-    @Test
-    void deleteLabour_Success() {
-        when(labourRepository.existsById(1L)).thenReturn(true);
-
-        labourService.deleteLabour(1L);
-
-        verify(labourRepository, times(1)).deleteById(1L);
-    }
-
-    @Test
-    void deleteLabour_NotFound() {
-        when(labourRepository.existsById(1L)).thenReturn(false);
-
-        assertThrows(ResourceNotFoundException.class, () -> labourService.deleteLabour(1L));
     }
 }

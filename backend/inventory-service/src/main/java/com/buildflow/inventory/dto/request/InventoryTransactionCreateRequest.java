@@ -3,17 +3,13 @@ package com.buildflow.inventory.dto.request;
 import com.buildflow.inventory.enums.TransactionType;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class InventoryTransactionRequest {
+public class InventoryTransactionCreateRequest {
 
     @NotNull(message = "Material ID cannot be null")
     private Long materialId;

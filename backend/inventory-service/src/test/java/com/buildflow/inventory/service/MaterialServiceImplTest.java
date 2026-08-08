@@ -1,24 +1,30 @@
 package com.buildflow.inventory.service;
 
-import com.buildflow.inventory.dto.request.MaterialRequest;
+import com.buildflow.inventory.constants.InventoryConstants;
+import com.buildflow.inventory.dto.request.MaterialCreateRequest;
 import com.buildflow.inventory.dto.response.MaterialResponse;
 import com.buildflow.inventory.entity.Material;
 import com.buildflow.inventory.enums.MaterialType;
 import com.buildflow.inventory.enums.MaterialUnit;
+import com.buildflow.inventory.mapper.MaterialMapper;
 import com.buildflow.inventory.repository.MaterialRepository;
 import com.buildflow.inventory.service.impl.MaterialServiceImpl;
+import com.buildflow.inventory.validator.MaterialValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.kafka.core.KafkaTemplate;
 
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,57 +33,64 @@ class MaterialServiceImplTest {
     @Mock
     private MaterialRepository materialRepository;
 
+    @Mock
+    private MaterialMapper materialMapper;
+
+    @Mock
+    private MaterialValidator materialValidator;
+
+    @Mock
+    private KafkaTemplate<String, Object> kafkaTemplate;
+
     @InjectMocks
     private MaterialServiceImpl materialService;
 
+    private MaterialCreateRequest request;
     private Material material;
-    private MaterialRequest materialRequest;
+    private MaterialResponse response;
 
     @BeforeEach
     void setUp() {
-        material = Material.builder()
-                .id(1L)
-                .name("Cement 50kg")
-                .type(MaterialType.CEMENT)
-                .unit(MaterialUnit.BAG)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+        request = new MaterialCreateRequest();
+        request.setName("Cement");
+        request.setType(MaterialType.CEMENT);
+        request.setUnit(MaterialUnit.BAG);
+        request.setUnitPrice(BigDecimal.valueOf(350));
+        request.setReorderLevel(BigDecimal.valueOf(100));
 
-        materialRequest = new MaterialRequest();
-        materialRequest.setName("Cement 50kg");
-        materialRequest.setType(MaterialType.CEMENT);
-        materialRequest.setUnit(MaterialUnit.BAG);
+        material = new Material();
+        material.setId(1L);
+        material.setName("Cement");
+        material.setType(MaterialType.CEMENT);
+
+        response = new MaterialResponse();
+        response.setId(1L);
+        response.setName("Cement");
+        response.setType(MaterialType.CEMENT);
     }
 
     @Test
     void createMaterial_Success() {
-        when(materialRepository.existsByName("Cement 50kg")).thenReturn(false);
+        doNothing().when(materialValidator).validateCreateRequest(any());
+        when(materialMapper.toEntity(any())).thenReturn(material);
         when(materialRepository.save(any(Material.class))).thenReturn(material);
+        when(materialMapper.toResponse(any(Material.class))).thenReturn(response);
 
-        MaterialResponse response = materialService.createMaterial(materialRequest);
+        MaterialResponse result = materialService.createMaterial(request);
 
-        assertNotNull(response);
-        assertEquals(1L, response.getId());
-        assertEquals("Cement 50kg", response.getName());
-        verify(materialRepository).save(any(Material.class));
-    }
-
-    @Test
-    void createMaterial_AlreadyExists_ThrowsException() {
-        when(materialRepository.existsByName("Cement 50kg")).thenReturn(true);
-
-        assertThrows(IllegalArgumentException.class, () -> materialService.createMaterial(materialRequest));
-        verify(materialRepository, never()).save(any(Material.class));
+        assertNotNull(result);
+        assertEquals("Cement", result.getName());
+        verify(kafkaTemplate).send(eq(InventoryConstants.MATERIAL_CREATED_TOPIC), any(Material.class));
     }
 
     @Test
     void getMaterialById_Success() {
         when(materialRepository.findById(1L)).thenReturn(Optional.of(material));
+        when(materialMapper.toResponse(material)).thenReturn(response);
 
-        MaterialResponse response = materialService.getMaterialById(1L);
+        MaterialResponse result = materialService.getMaterialById(1L);
 
-        assertNotNull(response);
-        assertEquals(1L, response.getId());
+        assertNotNull(result);
+        assertEquals("Cement", result.getName());
     }
 }

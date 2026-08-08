@@ -1,14 +1,18 @@
 package com.buildflow.inventory.service;
 
-import com.buildflow.inventory.dto.request.StockRequest;
+import com.buildflow.inventory.dto.request.StockCreateRequest;
+import com.buildflow.inventory.dto.request.StockUpdateRequest;
 import com.buildflow.inventory.dto.response.StockResponse;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface StockService {
-    StockResponse initializeOrUpdateStock(StockRequest request);
+    StockResponse initializeStock(StockCreateRequest request);
+    StockResponse getStockById(Long id);
+    List<StockResponse> getStockByProject(Long projectId);
     StockResponse getStockByMaterialAndProject(Long materialId, Long projectId);
-    List<StockResponse> getStockByProjectId(Long projectId);
-    void processStockIn(Long materialId, Long projectId, java.math.BigDecimal quantity);
-    void processStockOut(Long materialId, Long projectId, java.math.BigDecimal quantity);
+    StockResponse updateStock(Long id, StockUpdateRequest request);
+    void processStockIn(Long materialId, Long projectId, BigDecimal quantity);
+    void processStockOut(Long materialId, Long projectId, BigDecimal quantity);
 }

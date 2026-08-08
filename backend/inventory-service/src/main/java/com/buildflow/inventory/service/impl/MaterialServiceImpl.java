@@ -1,83 +1,79 @@
 package com.buildflow.inventory.service.impl;
 
-import com.buildflow.inventory.dto.request.MaterialRequest;
+import com.buildflow.inventory.constants.InventoryConstants;
+import com.buildflow.inventory.dto.request.MaterialCreateRequest;
+import com.buildflow.inventory.dto.request.MaterialUpdateRequest;
 import com.buildflow.inventory.dto.response.MaterialResponse;
 import com.buildflow.inventory.entity.Material;
 import com.buildflow.inventory.exception.ResourceNotFoundException;
+import com.buildflow.inventory.mapper.MaterialMapper;
 import com.buildflow.inventory.repository.MaterialRepository;
 import com.buildflow.inventory.service.MaterialService;
+import com.buildflow.inventory.validator.MaterialValidator;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MaterialServiceImpl implements MaterialService {
 
     private final MaterialRepository materialRepository;
+    private final MaterialMapper materialMapper;
+    private final MaterialValidator materialValidator;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Override
-    public MaterialResponse createMaterial(MaterialRequest request) {
-        if (materialRepository.existsByName(request.getName())) {
-            throw new IllegalArgumentException("Material with name " + request.getName() + " already exists");
-        }
+    @Transactional
+    public MaterialResponse createMaterial(MaterialCreateRequest request) {
+        log.info("Creating new material: {}", request.getName());
 
-        Material material = Material.builder()
-                .name(request.getName())
-                .type(request.getType())
-                .unit(request.getUnit())
-                .specifications(request.getSpecifications())
-                .build();
+        materialValidator.validateCreateRequest(request);
 
-        return mapToResponse(materialRepository.save(material));
+        Material material = materialMapper.toEntity(request);
+        material = materialRepository.save(material);
+
+        kafkaTemplate.send(InventoryConstants.MATERIAL_CREATED_TOPIC, material);
+
+        return materialMapper.toResponse(material);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public MaterialResponse getMaterialById(Long id) {
         Material material = materialRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Material not found with id: " + id));
-        return mapToResponse(material);
+        return materialMapper.toResponse(material);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<MaterialResponse> getAllMaterials() {
         return materialRepository.findAll().stream()
-                .map(this::mapToResponse)
+                .map(materialMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public MaterialResponse updateMaterial(Long id, MaterialRequest request) {
+    @Transactional
+    public MaterialResponse updateMaterial(Long id, MaterialUpdateRequest request) {
         Material material = materialRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Material not found with id: " + id));
 
-        material.setName(request.getName());
-        material.setType(request.getType());
-        material.setUnit(request.getUnit());
-        material.setSpecifications(request.getSpecifications());
+        materialValidator.validateUpdateRequest(request, material);
 
-        return mapToResponse(materialRepository.save(material));
-    }
+        if (request.getName() != null) material.setName(request.getName());
+        if (request.getDescription() != null) material.setSpecifications(request.getDescription());
+        if (request.getType() != null) material.setType(request.getType());
+        if (request.getUnit() != null) material.setUnit(request.getUnit());
 
-    @Override
-    public void deleteMaterial(Long id) {
-        if (!materialRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Material not found with id: " + id);
-        }
-        materialRepository.deleteById(id);
-    }
-
-    private MaterialResponse mapToResponse(Material material) {
-        return MaterialResponse.builder()
-                .id(material.getId())
-                .name(material.getName())
-                .type(material.getType())
-                .unit(material.getUnit())
-                .specifications(material.getSpecifications())
-                .createdAt(material.getCreatedAt())
-                .updatedAt(material.getUpdatedAt())
-                .build();
+        material = materialRepository.save(material);
+        return materialMapper.toResponse(material);
     }
 }

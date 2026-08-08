@@ -2,17 +2,13 @@ package com.buildflow.workforce.dto.request;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class WageRequest {
+public class WageCreateRequest {
 
     @NotNull(message = "Labour ID cannot be null")
     private Long labourId;
