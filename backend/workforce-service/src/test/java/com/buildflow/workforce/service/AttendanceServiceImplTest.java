@@ -1,24 +1,25 @@
 package com.buildflow.workforce.service;
 
-import com.buildflow.workforce.dto.request.AttendanceRequest;
+import com.buildflow.workforce.constants.WorkforceConstants;
+import com.buildflow.workforce.dto.request.AttendanceCreateRequest;
 import com.buildflow.workforce.dto.response.AttendanceResponse;
 import com.buildflow.workforce.entity.Attendance;
 import com.buildflow.workforce.enums.AttendanceStatus;
 import com.buildflow.workforce.exception.ResourceNotFoundException;
+import com.buildflow.workforce.mapper.AttendanceMapper;
 import com.buildflow.workforce.repository.AttendanceRepository;
 import com.buildflow.workforce.repository.LabourRepository;
 import com.buildflow.workforce.service.impl.AttendanceServiceImpl;
+import com.buildflow.workforce.validator.AttendanceValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.kafka.core.KafkaTemplate;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,7 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class AttendanceServiceImplTest {
+class AttendanceServiceImplTest {
 
     @Mock
     private AttendanceRepository attendanceRepository;
@@ -34,69 +35,72 @@ public class AttendanceServiceImplTest {
     @Mock
     private LabourRepository labourRepository;
 
+    @Mock
+    private AttendanceMapper attendanceMapper;
+
+    @Mock
+    private AttendanceValidator attendanceValidator;
+
+    @Mock
+    private KafkaTemplate<String, Object> kafkaTemplate;
+
     @InjectMocks
     private AttendanceServiceImpl attendanceService;
 
+    private AttendanceCreateRequest createRequest;
     private Attendance attendance;
-    private AttendanceRequest attendanceRequest;
+    private AttendanceResponse response;
 
     @BeforeEach
     void setUp() {
-        attendance = Attendance.builder()
-                .id(1L)
-                .labourId(1L)
-                .date(LocalDate.now())
-                .status(AttendanceStatus.PRESENT)
-                .checkInTime(LocalTime.of(8, 0))
-                .checkOutTime(LocalTime.of(17, 0))
-                .build();
+        createRequest = new AttendanceCreateRequest();
+        createRequest.setLabourId(1L);
+        createRequest.setDate(LocalDate.now());
+        createRequest.setStatus(AttendanceStatus.PRESENT);
 
-        attendanceRequest = new AttendanceRequest(
-                1L,
-                LocalDate.now(),
-                AttendanceStatus.PRESENT,
-                LocalTime.of(8, 0),
-                LocalTime.of(17, 0)
-        );
+        attendance = new Attendance();
+        attendance.setId(1L);
+        attendance.setLabourId(1L);
+        attendance.setDate(LocalDate.now());
+        attendance.setStatus(AttendanceStatus.PRESENT);
+
+        response = new AttendanceResponse();
+        response.setId(1L);
+        response.setLabourId(1L);
+        response.setStatus(AttendanceStatus.PRESENT);
     }
 
     @Test
-    void recordAttendance_Success() {
+    void logAttendance_Success() {
         when(labourRepository.existsById(1L)).thenReturn(true);
+        doNothing().when(attendanceValidator).validateCreateRequest(any());
+        when(attendanceMapper.toEntity(any())).thenReturn(attendance);
         when(attendanceRepository.save(any(Attendance.class))).thenReturn(attendance);
+        when(attendanceMapper.toResponse(any(Attendance.class))).thenReturn(response);
 
-        AttendanceResponse response = attendanceService.recordAttendance(attendanceRequest);
+        AttendanceResponse result = attendanceService.logAttendance(createRequest);
 
-        assertNotNull(response);
-        assertEquals(1L, response.getLabourId());
-        verify(attendanceRepository, times(1)).save(any(Attendance.class));
+        assertNotNull(result);
+        assertEquals(AttendanceStatus.PRESENT, result.getStatus());
+        verify(kafkaTemplate).send(eq(WorkforceConstants.ATTENDANCE_LOGGED_TOPIC), any(Attendance.class));
     }
 
     @Test
-    void recordAttendance_LabourNotFound() {
+    void logAttendance_LabourNotFound_ThrowsException() {
         when(labourRepository.existsById(1L)).thenReturn(false);
 
-        assertThrows(ResourceNotFoundException.class, () -> attendanceService.recordAttendance(attendanceRequest));
-        verify(attendanceRepository, never()).save(any(Attendance.class));
+        assertThrows(ResourceNotFoundException.class, () -> attendanceService.logAttendance(createRequest));
+        verify(attendanceRepository, never()).save(any());
     }
 
     @Test
     void getAttendanceById_Success() {
         when(attendanceRepository.findById(1L)).thenReturn(Optional.of(attendance));
+        when(attendanceMapper.toResponse(attendance)).thenReturn(response);
 
-        AttendanceResponse response = attendanceService.getAttendanceById(1L);
+        AttendanceResponse result = attendanceService.getAttendanceById(1L);
 
-        assertNotNull(response);
-        assertEquals(1L, response.getId());
-    }
-
-    @Test
-    void getAttendanceByLabourId_Success() {
-        when(attendanceRepository.findByLabourId(1L)).thenReturn(Arrays.asList(attendance));
-
-        List<AttendanceResponse> responses = attendanceService.getAttendanceByLabourId(1L);
-
-        assertNotNull(responses);
-        assertEquals(1, responses.size());
+        assertNotNull(result);
+        assertEquals(1L, result.getLabourId());
     }
 }

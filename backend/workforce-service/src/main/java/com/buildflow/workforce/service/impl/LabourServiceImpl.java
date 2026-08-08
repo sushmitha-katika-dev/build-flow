@@ -1,103 +1,105 @@
 package com.buildflow.workforce.service.impl;
 
-import com.buildflow.workforce.dto.request.LabourRequest;
+import com.buildflow.workforce.constants.WorkforceConstants;
+import com.buildflow.workforce.dto.request.LabourCreateRequest;
+import com.buildflow.workforce.dto.request.LabourUpdateRequest;
 import com.buildflow.workforce.dto.response.LabourResponse;
 import com.buildflow.workforce.entity.Labour;
+import com.buildflow.workforce.enums.LabourStatus;
 import com.buildflow.workforce.exception.ResourceNotFoundException;
+import com.buildflow.workforce.mapper.LabourMapper;
 import com.buildflow.workforce.repository.LabourRepository;
 import com.buildflow.workforce.service.LabourService;
+import com.buildflow.workforce.validator.LabourValidator;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class LabourServiceImpl implements LabourService {
 
     private final LabourRepository labourRepository;
+    private final LabourMapper labourMapper;
+    private final LabourValidator labourValidator;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    public LabourServiceImpl(LabourRepository labourRepository) {
-        this.labourRepository = labourRepository;
+    @Override
+    @Transactional
+    public LabourResponse onboardLabour(LabourCreateRequest request) {
+        log.info("Onboarding new labour: {} {}", request.getFirstName(), request.getLastName());
+        
+        labourValidator.validateCreateRequest(request);
+
+        Labour labour = labourMapper.toEntity(request);
+        labour.setStatus(LabourStatus.ACTIVE);
+
+        labour = labourRepository.save(labour);
+
+        kafkaTemplate.send(WorkforceConstants.LABOUR_ONBOARDED_TOPIC, labour);
+
+        return labourMapper.toResponse(labour);
     }
 
     @Override
-    public LabourResponse createLabour(LabourRequest request) {
-        if (labourRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Labour with email already exists");
-        }
-
-        Labour labour = Labour.builder()
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .email(request.getEmail())
-                .phoneNumber(request.getPhoneNumber())
-                .role(request.getRole())
-                .projectId(request.getProjectId())
-                .status(request.getStatus())
-                .build();
-
-        Labour savedLabour = labourRepository.save(labour);
-        return mapToResponse(savedLabour);
-    }
-
-    @Override
+    @Transactional(readOnly = true)
     public LabourResponse getLabourById(Long id) {
         Labour labour = labourRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Labour not found with id: " + id));
-        return mapToResponse(labour);
+        return labourMapper.toResponse(labour);
     }
 
     @Override
-    public List<LabourResponse> getAllLabours() {
-        return labourRepository.findAll().stream().map(this::mapToResponse).collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public List<LabourResponse> getAllLabour() {
+        return labourRepository.findAll().stream()
+                .map(labourMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<LabourResponse> getLaboursByProjectId(Long projectId) {
-        return labourRepository.findByProjectId(projectId).stream().map(this::mapToResponse).collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public List<LabourResponse> getLabourByProject(Long projectId) {
+        return labourRepository.findByProjectId(projectId).stream()
+                .map(labourMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public LabourResponse updateLabour(Long id, LabourRequest request) {
+    @Transactional
+    public LabourResponse updateLabour(Long id, LabourUpdateRequest request) {
         Labour labour = labourRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Labour not found with id: " + id));
 
-        if (!labour.getEmail().equals(request.getEmail()) && labourRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Labour with email already exists");
-        }
+        labourValidator.validateUpdateRequest(request, labour);
 
-        labour.setFirstName(request.getFirstName());
-        labour.setLastName(request.getLastName());
-        labour.setEmail(request.getEmail());
-        labour.setPhoneNumber(request.getPhoneNumber());
-        labour.setRole(request.getRole());
-        labour.setProjectId(request.getProjectId());
-        labour.setStatus(request.getStatus());
+        if (request.getFirstName() != null) labour.setFirstName(request.getFirstName());
+        if (request.getLastName() != null) labour.setLastName(request.getLastName());
+        if (request.getEmail() != null) labour.setEmail(request.getEmail());
+        if (request.getPhoneNumber() != null) labour.setPhoneNumber(request.getPhoneNumber());
+        if (request.getRole() != null) labour.setRole(request.getRole());
+        if (request.getProjectId() != null) labour.setProjectId(request.getProjectId());
+        if (request.getStatus() != null) labour.setStatus(request.getStatus());
 
-        Labour updatedLabour = labourRepository.save(labour);
-        return mapToResponse(updatedLabour);
+        labour = labourRepository.save(labour);
+        return labourMapper.toResponse(labour);
     }
 
     @Override
-    public void deleteLabour(Long id) {
-        if (!labourRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Labour not found with id: " + id);
-        }
-        labourRepository.deleteById(id);
-    }
-
-    private LabourResponse mapToResponse(Labour labour) {
-        return LabourResponse.builder()
-                .id(labour.getId())
-                .firstName(labour.getFirstName())
-                .lastName(labour.getLastName())
-                .email(labour.getEmail())
-                .phoneNumber(labour.getPhoneNumber())
-                .role(labour.getRole())
-                .projectId(labour.getProjectId())
-                .status(labour.getStatus())
-                .createdAt(labour.getCreatedAt())
-                .updatedAt(labour.getUpdatedAt())
-                .build();
+    @Transactional
+    public LabourResponse updateLabourStatus(Long id, LabourStatus status) {
+        Labour labour = labourRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Labour not found with id: " + id));
+        
+        labour.setStatus(status);
+        labour = labourRepository.save(labour);
+        
+        return labourMapper.toResponse(labour);
     }
 }
