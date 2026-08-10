@@ -217,3 +217,30 @@ This document defines the core REST API endpoints for the BuildFlow Microservice
     "status": "PROFIT"
   }
   ```
+
+---
+
+## 6. Reporting & Analytics Service
+
+### Get Dashboard Metrics
+- **Endpoint:** `/api/v1/reporting/dashboard`
+- **HTTP Method:** `GET`
+- **Description:** Retrieves cached top-level dashboard metrics (active projects, low stock alerts, total revenue, and expenses).
+- **Authentication:** Required (Bearer JWT), Roles: `ADMIN`, `PROJECT_MANAGER`
+- **Request Body:** None
+- **Query Parameters:** None
+- **Path Variables:** None
+- **Success Response:** Returns aggregated dashboard metrics.
+- **Status Codes:** `200 OK`, `401 Unauthorized`
+- **Sample JSON:**
+  *Response (Success):*
+  ```json
+  {
+    "activeProjectsCount": 5,
+    "lowStockAlertsCount": 2,
+    "totalCompanyRevenue": 100000.00,
+    "totalCompanyExpenses": 60000.00,
+    "netProfitOrLoss": 40000.00,
+    "generatedAt": "2026-08-09T10:00:00"
+  }
+  ```
