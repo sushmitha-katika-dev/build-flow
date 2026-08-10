@@ -165,7 +165,7 @@ export const DashboardPage = () => {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" />
                 <YAxis tickFormatter={(value) => `$${value / 1000}k`} />
-                <Tooltip formatter={(value: number) => [`$${value.toLocaleString()}`, '']} />
+                <Tooltip formatter={(value: any) => [`$${Number(value).toLocaleString()}`, '']} />
                 <Legend />
                 <Bar dataKey="Revenue" fill="#10B981" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="Expenses" fill="#EF4444" radius={[4, 4, 0, 0]} />

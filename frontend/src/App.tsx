@@ -6,6 +6,8 @@ import { LoginPage } from './pages/auth/LoginPage';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 
 import { DashboardPage } from './pages/dashboard/DashboardPage';
+import { ProjectsPage } from './pages/projects/ProjectsPage';
+import { ProjectDetailsPage } from './pages/projects/ProjectDetailsPage';
 
 function App() {
   return (
@@ -21,7 +23,8 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<MainLayout />}>
               <Route path="/" element={<DashboardPage />} />
-              <Route path="/projects" element={<div>Projects coming soon</div>} />
+              <Route path="/projects" element={<ProjectsPage />} />
+              <Route path="/projects/:id" element={<ProjectDetailsPage />} />
               <Route path="/workforce" element={<div>Workforce coming soon</div>} />
               <Route path="/inventory" element={<div>Inventory coming soon</div>} />
               <Route path="/equipment" element={<div>Equipment coming soon</div>} />
