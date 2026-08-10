@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
   Legend
 } from 'recharts';
 import { AlertTriangle, TrendingUp, TrendingDown, DollarSign, FolderKanban } from 'lucide-react';
