@@ -1,6 +1,6 @@
 package com.buildflow.gateway.config;
 
-import com.buildflow.gateway.filter.JwtAuthenticationFilter;
+import com.buildflow.gateway.filter.JwtAuthenticationGatewayFilterFactory;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
@@ -9,9 +9,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RouteConfig {
 
-    private final JwtAuthenticationFilter jwtAuthFilter;
+    private final JwtAuthenticationGatewayFilterFactory jwtAuthFilter;
 
-    public RouteConfig(JwtAuthenticationFilter jwtAuthFilter) {
+    public RouteConfig(JwtAuthenticationGatewayFilterFactory jwtAuthFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
     }
 
@@ -21,7 +21,7 @@ public class RouteConfig {
                 .route("auth-service-programmatic", r -> r.path("/api/v1/auth/**")
                         .uri("http://localhost:8081"))
                 .route("project-service-programmatic", r -> r.path("/api/v1/projects/**")
-                        .filters(f -> f.filter(jwtAuthFilter.apply(new JwtAuthenticationFilter.Config())))
+                        .filters(f -> f.filter(jwtAuthFilter.apply(new JwtAuthenticationGatewayFilterFactory.Config())))
                         .uri("http://localhost:8082"))
                 .build();
     }
