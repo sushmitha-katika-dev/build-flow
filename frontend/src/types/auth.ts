@@ -8,5 +8,12 @@ export interface AuthResponse {
 
 export interface LoginCredentials {
   username: string;
-  password?: string; // Add password for login explicitly if needed by service
+  password?: string;
+}
+
+export interface RegisterCredentials {
+  username: string;
+  email: string;
+  password?: string;
+  role: Role;
 }

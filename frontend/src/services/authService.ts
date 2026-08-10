@@ -1,5 +1,5 @@
 import { axiosClient } from '../api/axiosClient';
-import type { AuthResponse, LoginCredentials } from '../types/auth';
+import type { AuthResponse, LoginCredentials, RegisterCredentials } from '../types/auth';
 
 export const AuthService = {
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
@@ -7,9 +7,8 @@ export const AuthService = {
     return response.data;
   },
 
-  // Stub for register if needed later
-  register: async (data: any): Promise<AuthResponse> => {
-    const response = await axiosClient.post<AuthResponse>('/auth/register', data);
+  register: async (credentials: RegisterCredentials): Promise<AuthResponse> => {
+    const response = await axiosClient.post<AuthResponse>('/auth/register', credentials);
     return response.data;
   },
 };

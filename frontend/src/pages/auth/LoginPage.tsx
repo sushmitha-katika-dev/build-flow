@@ -72,6 +72,13 @@ export const LoginPage: React.FC = () => {
         <Button type="submit" className="w-full" isLoading={isSubmitting}>
           Sign in
         </Button>
+
+        <div className="text-center mt-4 text-sm">
+          <span className="text-gray-600">Don't have an account? </span>
+          <a href="/register" className="font-medium text-blue-600 hover:text-blue-500">
+            Register now
+          </a>
+        </div>
       </form>
     </div>
   );
