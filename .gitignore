@@ -26,3 +26,6 @@ buildNumber.properties
 
 # Logs
 *.log
+
+# Docker
+.env
