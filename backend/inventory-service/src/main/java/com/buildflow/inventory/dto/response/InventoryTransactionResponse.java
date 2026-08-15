@@ -19,6 +19,8 @@ public class InventoryTransactionResponse {
     private Long projectId;
     private TransactionType transactionType;
     private BigDecimal quantity;
+    private BigDecimal unitCost;
+    private BigDecimal totalCost;
     private LocalDateTime transactionDate;
     private String notes;
     private LocalDateTime createdAt;

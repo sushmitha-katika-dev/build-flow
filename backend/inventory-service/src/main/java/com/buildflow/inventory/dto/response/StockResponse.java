@@ -18,6 +18,7 @@ public class StockResponse {
     private Long projectId;
     private BigDecimal currentStock;
     private BigDecimal reorderLevel;
+    private BigDecimal averageUnitCost;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

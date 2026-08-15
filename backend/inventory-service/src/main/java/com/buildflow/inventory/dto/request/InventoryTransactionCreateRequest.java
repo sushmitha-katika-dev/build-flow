@@ -23,6 +23,8 @@ public class InventoryTransactionCreateRequest {
     @DecimalMin(value = "0.0", inclusive = false, message = "Quantity must be greater than zero")
     private BigDecimal quantity;
 
+    private BigDecimal unitCost;
+
     @NotNull(message = "Transaction date cannot be null")
     private LocalDateTime transactionDate;
 

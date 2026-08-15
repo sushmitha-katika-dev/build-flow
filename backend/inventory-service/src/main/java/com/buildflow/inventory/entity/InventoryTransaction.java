@@ -37,6 +37,12 @@ public class InventoryTransaction {
     @Column(precision = 10, scale = 2, nullable = false)
     private BigDecimal quantity;
 
+    @Column(name = "unit_cost", precision = 12, scale = 2)
+    private BigDecimal unitCost;
+
+    @Column(name = "total_cost", precision = 12, scale = 2)
+    private BigDecimal totalCost;
+
     @Column(nullable = false)
     private LocalDateTime transactionDate;
 

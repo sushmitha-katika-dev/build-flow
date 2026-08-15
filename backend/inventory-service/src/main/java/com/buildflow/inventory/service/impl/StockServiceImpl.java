@@ -46,6 +46,7 @@ public class StockServiceImpl implements StockService {
 
         Stock stock = stockMapper.toEntity(request);
         stock.setReorderLevel(BigDecimal.ZERO); // default
+        stock.setAverageUnitCost(BigDecimal.ZERO);
         stock = stockRepository.save(stock);
 
         return stockMapper.toResponse(stock);
@@ -91,7 +92,7 @@ public class StockServiceImpl implements StockService {
 
     @Override
     @Transactional
-    public void processStockIn(Long materialId, Long projectId, BigDecimal quantity) {
+    public Stock processStockIn(Long materialId, Long projectId, BigDecimal quantity, BigDecimal unitCost) {
         Stock stock = stockRepository.findByMaterialIdAndProjectId(materialId, projectId)
                 .orElseGet(() -> {
                     Stock newStock = new Stock();
@@ -99,18 +100,35 @@ public class StockServiceImpl implements StockService {
                     newStock.setProjectId(projectId);
                     newStock.setCurrentStock(BigDecimal.ZERO);
                     newStock.setReorderLevel(BigDecimal.ZERO);
+                    newStock.setAverageUnitCost(BigDecimal.ZERO);
                     return newStock;
                 });
 
-        stock.setCurrentStock(stock.getCurrentStock().add(quantity));
+        BigDecimal currentStock = stock.getCurrentStock() != null ? stock.getCurrentStock() : BigDecimal.ZERO;
+        BigDecimal currentAverage = stock.getAverageUnitCost() != null ? stock.getAverageUnitCost() : BigDecimal.ZERO;
+        BigDecimal incomingCost = unitCost != null ? unitCost : BigDecimal.ZERO;
+        
+        BigDecimal totalCurrentValue = currentStock.multiply(currentAverage);
+        BigDecimal totalIncomingValue = quantity.multiply(incomingCost);
+        
+        BigDecimal newTotalStock = currentStock.add(quantity);
+        
+        if (newTotalStock.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal newAverageCost = totalCurrentValue.add(totalIncomingValue)
+                    .divide(newTotalStock, 2, java.math.RoundingMode.HALF_UP);
+            stock.setAverageUnitCost(newAverageCost);
+        }
+
+        stock.setCurrentStock(newTotalStock);
         stock = stockRepository.save(stock);
 
         kafkaTemplate.send(InventoryConstants.STOCK_UPDATED_TOPIC, stock);
+        return stock;
     }
 
     @Override
     @Transactional
-    public void processStockOut(Long materialId, Long projectId, BigDecimal quantity) {
+    public Stock processStockOut(Long materialId, Long projectId, BigDecimal quantity) {
         Stock stock = stockRepository.findByMaterialIdAndProjectId(materialId, projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Stock not found for material ID: " + materialId + " and project ID: " + projectId));
 
@@ -122,5 +140,6 @@ public class StockServiceImpl implements StockService {
         stock = stockRepository.save(stock);
 
         kafkaTemplate.send(InventoryConstants.STOCK_UPDATED_TOPIC, stock);
+        return stock;
     }
 }

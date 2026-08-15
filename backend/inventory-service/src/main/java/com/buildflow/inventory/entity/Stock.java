@@ -35,6 +35,9 @@ public class Stock {
     @Column(precision = 10, scale = 2, nullable = false)
     private BigDecimal reorderLevel;
 
+    @Column(name = "average_unit_cost", precision = 12, scale = 2)
+    private BigDecimal averageUnitCost;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

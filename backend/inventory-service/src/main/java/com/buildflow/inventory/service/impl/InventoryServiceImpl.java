@@ -44,13 +44,28 @@ public class InventoryServiceImpl implements InventoryService {
         transactionValidator.validateCreateRequest(request);
 
         InventoryTransaction transaction = transactionMapper.toEntity(request);
-        transaction = transactionRepository.save(transaction);
-
+        
         if (request.getTransactionType() == TransactionType.STOCK_IN) {
-            stockService.processStockIn(request.getMaterialId(), request.getProjectId(), request.getQuantity());
+            if (request.getUnitCost() == null) {
+                throw new IllegalArgumentException("Unit cost is required for STOCK_IN transactions");
+            }
+            transaction.setUnitCost(request.getUnitCost());
+            transaction.setTotalCost(request.getQuantity().multiply(request.getUnitCost()));
+            
+            transaction = transactionRepository.save(transaction);
+            stockService.processStockIn(request.getMaterialId(), request.getProjectId(), request.getQuantity(), request.getUnitCost());
+            
         } else if (request.getTransactionType() == TransactionType.CONSUMPTION) {
-            stockService.processStockOut(request.getMaterialId(), request.getProjectId(), request.getQuantity());
+            com.buildflow.inventory.entity.Stock stock = stockService.processStockOut(request.getMaterialId(), request.getProjectId(), request.getQuantity());
+            
+            java.math.BigDecimal avgCost = stock.getAverageUnitCost() != null ? stock.getAverageUnitCost() : java.math.BigDecimal.ZERO;
+            transaction.setUnitCost(avgCost);
+            transaction.setTotalCost(request.getQuantity().multiply(avgCost));
+            
+            transaction = transactionRepository.save(transaction);
             kafkaTemplate.send("inventory-material-consumed", transaction);
+        } else {
+            transaction = transactionRepository.save(transaction);
         }
 
         return transactionMapper.toResponse(transaction);
