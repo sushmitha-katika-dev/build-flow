@@ -17,8 +17,9 @@ export const TransactionFormModal = ({ isOpen, onClose, materials }: Props) => {
   const [formData, setFormData] = useState<InventoryTransactionRequest>({
     materialId: 0,
     projectId: 0,
-    transactionType: 'INWARD',
+    transactionType: 'STOCK_IN',
     quantity: 0,
+    unitCost: 0,
     transactionDate: new Date().toISOString().split('T')[0],
     notes: ''
   });
@@ -45,15 +46,20 @@ export const TransactionFormModal = ({ isOpen, onClose, materials }: Props) => {
     setError(null);
 
     try {
-      // Create stock entry first if this is an inward transaction and we need to ensure stock exists
-      // Wait, the backend might handle it. But the requirement is to use the existing transaction endpoint.
-      await InventoryService.logTransaction(formData);
+      const submitData = {
+        ...formData,
+        transactionDate: formData.transactionDate.includes('T') 
+          ? formData.transactionDate 
+          : `${formData.transactionDate}T00:00:00`
+      };
+      await InventoryService.logTransaction(submitData);
       onClose();
       setFormData({
         materialId: 0,
         projectId: 0,
-        transactionType: 'INWARD',
+        transactionType: 'STOCK_IN',
         quantity: 0,
+        unitCost: 0,
         transactionDate: new Date().toISOString().split('T')[0],
         notes: ''
       });
@@ -78,14 +84,14 @@ export const TransactionFormModal = ({ isOpen, onClose, materials }: Props) => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Project *</label>
+              <label className="block text-sm font-medium text-gray-700">Project</label>
               <select
-                required
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                required={formData.transactionType === 'CONSUMPTION'}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
                 value={formData.projectId}
                 onChange={(e) => setFormData({ ...formData, projectId: Number(e.target.value) })}
               >
-                <option value={0}>Select Project</option>
+                <option value={0}>Select Project (Required for Consumption)</option>
                 {projects.map(project => (
                   <option key={project.id} value={project.id}>{project.projectName}</option>
                 ))}
@@ -116,8 +122,9 @@ export const TransactionFormModal = ({ isOpen, onClose, materials }: Props) => {
                   value={formData.transactionType}
                   onChange={(e) => setFormData({ ...formData, transactionType: e.target.value as TransactionType })}
                 >
-                  <option value="INWARD">Inward (Add Stock)</option>
-                  <option value="OUTWARD">Outward (Consume)</option>
+                  <option value="STOCK_IN">Stock In (Receive Purchase)</option>
+                  <option value="CONSUMPTION">Consumption (Use on Project)</option>
+                  <option value="ADJUSTMENT">Adjustment (Correction)</option>
                 </select>
               </div>
 
@@ -133,6 +140,21 @@ export const TransactionFormModal = ({ isOpen, onClose, materials }: Props) => {
                   onChange={(e) => setFormData({ ...formData, quantity: parseFloat(e.target.value) })}
                 />
               </div>
+              
+              {formData.transactionType === 'STOCK_IN' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Unit Cost (₹) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    required
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    value={formData.unitCost || ''}
+                    onChange={(e) => setFormData({ ...formData, unitCost: parseFloat(e.target.value) })}
+                  />
+                </div>
+              )}
             </div>
 
             <div>

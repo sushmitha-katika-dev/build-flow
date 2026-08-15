@@ -3,7 +3,9 @@ import type {
   Equipment, 
   EquipmentCreateRequest,
   EquipmentAssignment,
-  EquipmentAssignmentRequest
+  EquipmentAssignmentRequest,
+  EquipmentUsageRecord,
+  EquipmentUsageCreateRequest
 } from '../types/equipment';
 
 export const EquipmentService = {
@@ -29,6 +31,21 @@ export const EquipmentService = {
 
   assignEquipment: async (equipmentId: number, data: EquipmentAssignmentRequest): Promise<EquipmentAssignment> => {
     const response = await axiosClient.post<EquipmentAssignment>(`/equipment/${equipmentId}/assignments`, data);
+    return response.data;
+  },
+
+  recordUsage: async (data: EquipmentUsageCreateRequest): Promise<EquipmentUsageRecord> => {
+    const response = await axiosClient.post<EquipmentUsageRecord>('/equipment/usage', data);
+    return response.data;
+  },
+
+  getUsageByProjectId: async (projectId: number): Promise<EquipmentUsageRecord[]> => {
+    const response = await axiosClient.get<EquipmentUsageRecord[]>(`/equipment/usage/projects/${projectId}`);
+    return response.data;
+  },
+
+  getUsageByEquipmentId: async (equipmentId: number): Promise<EquipmentUsageRecord[]> => {
+    const response = await axiosClient.get<EquipmentUsageRecord[]>(`/equipment/usage/equipment/${equipmentId}`);
     return response.data;
   }
 };

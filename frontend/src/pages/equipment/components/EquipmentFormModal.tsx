@@ -16,6 +16,9 @@ export const EquipmentFormModal = ({ isOpen, onClose, onSuccess }: Props) => {
     type: 'HEAVY_MACHINERY',
     status: 'AVAILABLE',
     registrationNumber: '',
+    ownershipType: 'OWNED',
+    usageUnit: 'HOURLY',
+    unitRate: 0,
     isBulk: false,
     totalQuantity: 1
   });
@@ -39,11 +42,22 @@ export const EquipmentFormModal = ({ isOpen, onClose, onSuccess }: Props) => {
         type: 'HEAVY_MACHINERY',
         status: 'AVAILABLE',
         registrationNumber: '',
+        ownershipType: 'OWNED',
+        usageUnit: 'HOURLY',
+        unitRate: 0,
         isBulk: false,
         totalQuantity: 1
       });
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to add equipment.');
+      console.error("Add equipment error:", err.response?.data);
+      if (err.response?.data?.errors) {
+        const fieldErrors = Object.entries(err.response.data.errors)
+          .map(([field, msg]) => `${field}: ${msg}`)
+          .join(', ');
+        setError(`Validation failed: ${fieldErrors}`);
+      } else {
+        setError(err.response?.data?.message || err.message || 'Failed to add equipment.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -114,6 +128,47 @@ export const EquipmentFormModal = ({ isOpen, onClose, onSuccess }: Props) => {
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 value={formData.registrationNumber}
                 onChange={(e) => setFormData({ ...formData, registrationNumber: e.target.value })}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Ownership *</label>
+                <select
+                  required
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  value={formData.ownershipType}
+                  onChange={(e) => setFormData({ ...formData, ownershipType: e.target.value as any })}
+                >
+                  <option value="OWNED">Owned</option>
+                  <option value="RENTED">Rented</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Usage Unit *</label>
+                <select
+                  required
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  value={formData.usageUnit}
+                  onChange={(e) => setFormData({ ...formData, usageUnit: e.target.value as any })}
+                >
+                  <option value="HOURLY">Hourly</option>
+                  <option value="DAILY">Daily</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700">Unit Rate (₹) *</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                required
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                value={formData.unitRate === 0 ? '' : formData.unitRate}
+                onChange={(e) => setFormData({ ...formData, unitRate: e.target.value ? parseFloat(e.target.value) : 0 })}
               />
             </div>
 

@@ -1,28 +1,40 @@
 import { useEffect, useState } from 'react';
 import { Plus, PackageSearch, ArrowRightLeft } from 'lucide-react';
 import { InventoryService } from '../../services/inventoryService';
-import type { Material } from '../../types/inventory';
+import type { Material, Stock } from '../../types/inventory';
 import { Button } from '../../components/common/Button';
 import { Alert } from '../../components/common/Alert';
 import { Skeleton } from '../../components/common/Skeleton';
 import { Badge } from '../../components/common/Badge';
 import { MaterialFormModal } from './components/MaterialFormModal';
 import { TransactionFormModal } from './components/TransactionFormModal';
+import { MaterialDetailsModal } from './components/MaterialDetailsModal';
 
 export const InventoryPage = () => {
   const [materials, setMaterials] = useState<Material[]>([]);
+  const [stocks, setStocks] = useState<Record<number, Stock>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [selectedMaterialId, setSelectedMaterialId] = useState<number | null>(null);
 
-  const fetchMaterials = async () => {
+  const fetchData = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await InventoryService.getAllMaterials();
-      setMaterials(data);
+      const [materialsData, stocksData] = await Promise.all([
+        InventoryService.getAllMaterials(),
+        InventoryService.getProjectStock(0).catch(() => []) // Project 0 is global warehouse stock
+      ]);
+      setMaterials(materialsData);
+      
+      const stockMap: Record<number, Stock> = {};
+      stocksData.forEach((stock: Stock) => {
+        stockMap[stock.materialId] = stock;
+      });
+      setStocks(stockMap);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load materials.');
     } finally {
@@ -31,7 +43,7 @@ export const InventoryPage = () => {
   };
 
   useEffect(() => {
-    fetchMaterials();
+    fetchData();
   }, []);
 
   return (
@@ -85,7 +97,9 @@ export const InventoryPage = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Added On</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Stock</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Unit Cost</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -101,8 +115,18 @@ export const InventoryPage = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {material.unit}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-semibold text-gray-900">
+                        {stocks[material.id]?.currentStock || 0} {material.unit}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {material.createdAt ? new Date(material.createdAt).toLocaleDateString() : '-'}
+                      ₹{stocks[material.id]?.averageUnitCost?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <Button variant="secondary" size="sm" onClick={() => setSelectedMaterialId(material.id)}>
+                        Details
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -115,13 +139,22 @@ export const InventoryPage = () => {
       <MaterialFormModal 
         isOpen={isMaterialModalOpen} 
         onClose={() => setIsMaterialModalOpen(false)} 
-        onSuccess={fetchMaterials} 
+        onSuccess={fetchData} 
       />
 
       <TransactionFormModal
         isOpen={isTransactionModalOpen}
-        onClose={() => setIsTransactionModalOpen(false)}
+        onClose={() => {
+          setIsTransactionModalOpen(false);
+          fetchData(); // Refresh after transaction
+        }}
         materials={materials}
+      />
+      
+      <MaterialDetailsModal
+        isOpen={selectedMaterialId !== null}
+        onClose={() => setSelectedMaterialId(null)}
+        material={materials.find(m => m.id === selectedMaterialId) || null}
       />
     </div>
   );
