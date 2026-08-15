@@ -2,6 +2,8 @@ package com.buildflow.equipment.entity;
 
 import com.buildflow.equipment.enums.EquipmentStatus;
 import com.buildflow.equipment.enums.EquipmentType;
+import com.buildflow.equipment.enums.OwnershipType;
+import com.buildflow.equipment.enums.UsageUnit;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,6 +12,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -45,6 +48,17 @@ public class Equipment {
 
     @Column(nullable = false)
     private Integer availableQuantity;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ownership_type")
+    private OwnershipType ownershipType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "usage_unit")
+    private UsageUnit usageUnit;
+
+    @Column(name = "unit_rate", precision = 10, scale = 2)
+    private BigDecimal unitRate;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
