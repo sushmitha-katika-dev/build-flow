@@ -205,6 +205,17 @@ services:
       redis:
         condition: service_healthy
 
+  frontend:
+    build:
+      context: ./frontend
+    container_name: buildflow-frontend
+    ports:
+      - "80:80"
+    networks:
+      - buildflow-net
+    depends_on:
+      - api-gateway
+
 networks:
   buildflow-net:
     driver: bridge

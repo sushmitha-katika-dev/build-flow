@@ -7,6 +7,9 @@ import java.time.LocalTime;
 
 @Data
 public class AttendanceUpdateRequest {
+
+    private Long projectId;
+
     private AttendanceStatus status;
     private LocalTime checkInTime;
     private LocalTime checkOutTime;

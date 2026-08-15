@@ -80,7 +80,7 @@ export const FinancePage = () => {
         >
           <option value={0}>-- Select a project to view financials --</option>
           {projects.map(p => (
-            <option key={p.id} value={p.id}>{p.name}</option>
+            <option key={p.id} value={p.id}>{p.projectName}</option>
           ))}
         </select>
       </div>

@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Building2 } from 'lucide-react';
 import { ProjectService } from '../../services/projectService';
+import { FinanceService } from '../../services/financeService';
 import type { Project } from '../../types/project';
+import type { ProjectBudget } from '../../types/finance';
 import { Button } from '../../components/common/Button';
 import { Alert } from '../../components/common/Alert';
 import { Skeleton } from '../../components/common/Skeleton';
@@ -11,6 +13,7 @@ import { ProjectFormModal } from './ProjectFormModal';
 
 export const ProjectsPage = () => {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [budgets, setBudgets] = useState<Record<number, ProjectBudget>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,6 +24,17 @@ export const ProjectsPage = () => {
       setError(null);
       const data = await ProjectService.getAllProjects();
       setProjects(data);
+
+      const budgetPromises = data.map(p => FinanceService.getProjectBudget(p.id!).catch(() => null));
+      const budgetResults = await Promise.all(budgetPromises);
+      
+      const budgetMap: Record<number, ProjectBudget> = {};
+      data.forEach((p, index) => {
+        if (p.id && budgetResults[index]) {
+          budgetMap[p.id] = budgetResults[index]!;
+        }
+      });
+      setBudgets(budgetMap);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load projects.');
     } finally {
@@ -88,6 +102,9 @@ export const ProjectsPage = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Budget</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invested</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remaining</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Budget Used</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
@@ -95,17 +112,38 @@ export const ProjectsPage = () => {
                 {projects.map((project) => (
                   <tr key={project.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{project.name}</div>
+                      <div className="text-sm font-medium text-gray-900">{project.projectName}</div>
                       <div className="text-sm text-gray-500">ID: {project.id}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {project.client_name}
+                      {project.clientName}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(project.status)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                      ${project.estimated_budget?.toLocaleString()}
+                      ${project.estimatedBudget?.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      ${budgets[project.id!]?.actualExpenses?.toLocaleString() || '0'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      ${budgets[project.id!]?.remainingBudget?.toLocaleString() || project.estimatedBudget?.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="w-full bg-gray-200 rounded-full h-2.5 mr-2">
+                          <div 
+                            className={`h-2.5 rounded-full ${
+                              ((budgets[project.id!]?.actualExpenses || 0) / (project.estimatedBudget || 1)) > 0.9 ? 'bg-red-600' : 'bg-blue-600'
+                            }`}
+                            style={{ width: `${Math.min(((budgets[project.id!]?.actualExpenses || 0) / (project.estimatedBudget || 1)) * 100, 100)}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          {Math.round(((budgets[project.id!]?.actualExpenses || 0) / (project.estimatedBudget || 1)) * 100)}%
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <Link to={`/projects/${project.id}`} className="text-blue-600 hover:text-blue-900">

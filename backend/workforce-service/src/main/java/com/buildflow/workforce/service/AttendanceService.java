@@ -9,8 +9,14 @@ import java.util.List;
 
 public interface AttendanceService {
     AttendanceResponse logAttendance(AttendanceCreateRequest request);
+
     AttendanceResponse getAttendanceById(Long id);
+
     List<AttendanceResponse> getAttendanceByLabourId(Long labourId);
+
     List<AttendanceResponse> getAttendanceByDate(LocalDate date);
+
     AttendanceResponse updateAttendance(Long id, AttendanceUpdateRequest request);
+    void deleteAttendance(Long id);
+    void bulkDeleteAttendance(List<Long> ids);
 }

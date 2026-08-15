@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import com.buildflow.workforce.enums.WageStatus;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -27,20 +28,23 @@ public class Wage {
     @Column(name = "labour_id", nullable = false)
     private Long labourId;
 
-    @Column(name = "project_id", nullable = false)
+    @Column(name = "project_id")
     private Long projectId;
 
-    @Column(precision = 10, scale = 2, nullable = false)
-    private BigDecimal hourlyRate;
+    @Column(name = "agreement_id")
+    private Long agreementId;
 
-    @Column(precision = 5, scale = 2, nullable = false)
-    private BigDecimal totalHours;
+    private String notes;
 
     @Column(precision = 12, scale = 2, nullable = false)
     private BigDecimal amountPaid;
 
     @Column(nullable = false)
     private LocalDate paymentDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private WageStatus status;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

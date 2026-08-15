@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -17,10 +18,13 @@ import java.time.LocalTime;
 public class AttendanceResponse {
     private Long id;
     private Long labourId;
+    private Long projectId;
     private LocalDate date;
     private AttendanceStatus status;
     private LocalTime checkInTime;
     private LocalTime checkOutTime;
+    private BigDecimal earned;
+    private String notes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

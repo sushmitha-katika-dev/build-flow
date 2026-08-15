@@ -2,7 +2,8 @@ import { axiosClient } from '../api/axiosClient';
 import type { 
   Expense, 
   ExpenseRequest,
-  ProfitLossSummary
+  ProfitLossSummary,
+  ProjectBudget
 } from '../types/finance';
 
 export const FinanceService = {
@@ -18,6 +19,16 @@ export const FinanceService = {
 
   getProjectProfitLoss: async (projectId: number): Promise<ProfitLossSummary> => {
     const response = await axiosClient.get<ProfitLossSummary>(`/finance/profit-loss/project/${projectId}`);
+    return response.data;
+  },
+
+  getProjectBudget: async (projectId: number): Promise<ProjectBudget> => {
+    const response = await axiosClient.get<ProjectBudget>(`/finance/budgets/project/${projectId}`);
+    return response.data;
+  },
+
+  initializeBudget: async (data: { projectId: number, estimatedBudget: number }): Promise<ProjectBudget> => {
+    const response = await axiosClient.post<ProjectBudget>('/finance/budgets/initialize', data);
     return response.data;
   }
 };

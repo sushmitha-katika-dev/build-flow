@@ -31,3 +31,15 @@ export interface ProfitLossSummary {
   netProfitOrLoss: number;
   status: 'PROFIT' | 'LOSS' | 'BREAK_EVEN';
 }
+
+export interface ProjectBudget {
+  id: number;
+  projectId: number;
+  estimatedBudget: number;
+  actualExpenses: number;
+  remainingBudget: number;
+  amountPaid: number;
+  outstandingAmount: number;
+  createdAt?: string;
+  updatedAt?: string;
+}

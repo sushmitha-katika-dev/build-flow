@@ -7,6 +7,7 @@ import com.buildflow.finance.entity.Payment;
 import com.buildflow.finance.exception.PaymentNotFoundException;
 import com.buildflow.finance.mapper.FinanceMapper;
 import com.buildflow.finance.repository.PaymentRepository;
+import com.buildflow.finance.service.BudgetService;
 import com.buildflow.finance.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final FinanceMapper financeMapper;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final BudgetService budgetService;
 
     @Override
     @Transactional
@@ -36,6 +38,8 @@ public class PaymentServiceImpl implements PaymentService {
         
         PaymentResponse response = financeMapper.toResponse(savedPayment);
         kafkaTemplate.send(FinanceConstants.PAYMENT_RECEIVED_TOPIC, response);
+        
+        budgetService.updateAmountPaid(request.getProjectId());
         
         return response;
     }
@@ -50,6 +54,8 @@ public class PaymentServiceImpl implements PaymentService {
                 
         financeMapper.updateEntityFromRequest(request, payment);
         Payment updatedPayment = paymentRepository.save(payment);
+        
+        budgetService.updateAmountPaid(updatedPayment.getProjectId());
         
         return financeMapper.toResponse(updatedPayment);
     }
@@ -77,6 +83,11 @@ public class PaymentServiceImpl implements PaymentService {
         if (!paymentRepository.existsById(id)) {
             throw new PaymentNotFoundException("Payment not found with id: " + id);
         }
+        Payment payment = paymentRepository.findById(id).get();
+        Long projectId = payment.getProjectId();
+        
         paymentRepository.deleteById(id);
+        
+        budgetService.updateAmountPaid(projectId);
     }
 }

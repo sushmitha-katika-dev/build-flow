@@ -12,6 +12,8 @@ public class BudgetResponse {
     private BigDecimal estimatedBudget;
     private BigDecimal actualExpenses;
     private BigDecimal remainingBudget;
+    private BigDecimal amountPaid;
+    private BigDecimal outstandingAmount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

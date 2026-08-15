@@ -86,8 +86,8 @@ export const TransactionFormModal = ({ isOpen, onClose, materials }: Props) => {
                 onChange={(e) => setFormData({ ...formData, projectId: Number(e.target.value) })}
               >
                 <option value={0}>Select Project</option>
-                {projects.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
+                {projects.map(project => (
+                  <option key={project.id} value={project.id}>{project.projectName}</option>
                 ))}
               </select>
             </div>

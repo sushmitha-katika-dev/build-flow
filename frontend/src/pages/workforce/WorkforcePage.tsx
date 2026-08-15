@@ -1,90 +1,84 @@
-import { useEffect, useState } from 'react';
-import { Users, CheckCircle } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { Users, IndianRupee, UserPlus, HardHat, Info } from 'lucide-react';
 import { WorkforceService } from '../../services/workforceService';
-import { ProjectService } from '../../services/projectService';
-import type { Labourer, LogAttendanceRequest, AttendanceStatus } from '../../types/workforce';
-import type { Project } from '../../types/project';
+import type { LabourWorkforceSummary } from '../../types/workforce';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
-import { Input } from '../../components/common/Input';
 import { Alert } from '../../components/common/Alert';
 import { Skeleton } from '../../components/common/Skeleton';
+import { Input } from '../../components/common/Input';
+import { AddWorkforceMemberModal } from './AddWorkforceMemberModal';
+import { WorkerDetailsModal } from './WorkerDetailsModal';
 
 export const WorkforcePage = () => {
-  const [labourers, setLabourers] = useState<Labourer[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [summaries, setSummaries] = useState<LabourWorkforceSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
 
-  // Form State
-  const [formData, setFormData] = useState<LogAttendanceRequest>({
-    labourer_id: 0,
-    project_id: 0,
-    record_date: new Date().toISOString().split('T')[0],
-    status: 'PRESENT',
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [selectedWorker, setSelectedWorker] = useState<LabourWorkforceSummary | null>(null);
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await WorkforceService.getLabourSummary();
+      setSummaries(data);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to load workforce summary.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        // Fetch both concurrently
-        const [labourData, projectData] = await Promise.all([
-          WorkforceService.getAllLabourers(),
-          ProjectService.getAllProjects(),
-        ]);
-        setLabourers(labourData);
-        setProjects(projectData);
-
-        if (labourData.length > 0) {
-          setFormData(prev => ({ ...prev, labourer_id: labourData[0].id }));
-        }
-        if (projectData.length > 0) {
-          setFormData(prev => ({ ...prev, project_id: projectData[0].id }));
-        }
-      } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to load workforce data. The service might be unavailable.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchData();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError(null);
-    setSuccessMessage(null);
+  const { totalWorkers, maleWorkers, femaleWorkers, pendingPay } = useMemo(() => {
+    let maleWorkers = 0;
+    let femaleWorkers = 0;
+    let pendingPay = 0;
 
-    if (!formData.labourer_id || !formData.project_id) {
-      setFormError('Please select a labourer and a project.');
-      return;
-    }
+    summaries.forEach((s) => {
+      if (s.gender === 'MALE') maleWorkers++;
+      else if (s.gender === 'FEMALE') femaleWorkers++;
+      pendingPay += s.remainingAmount || 0;
+    });
 
-    try {
-      setIsSubmitting(true);
-      const res = await WorkforceService.logAttendance(formData);
-      setSuccessMessage(`Attendance logged! Calculated wage: $${res.calculated_wage.toLocaleString()}`);
-    } catch (err: any) {
-      setFormError(err.response?.data?.message || 'Failed to log attendance. (Conflict: Already logged today?)');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    return {
+      totalWorkers: summaries.length,
+      maleWorkers,
+      femaleWorkers,
+      pendingPay
+    };
+  }, [summaries]);
+
+  const filteredSummaries = useMemo(() => {
+    if (!search) return summaries;
+    const lowerSearch = search.toLowerCase();
+    return summaries.filter((s) => 
+      s.firstName.toLowerCase().includes(lowerSearch) || 
+      s.lastName.toLowerCase().includes(lowerSearch) ||
+      s.role.toLowerCase().includes(lowerSearch)
+    );
+  }, [summaries, search]);
 
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Workforce Management</h1>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card><Skeleton className="h-48 w-full" /></Card>
-          <Card><Skeleton className="h-48 w-full" /></Card>
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-10 w-32" />
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card><Skeleton className="h-20 w-full" /></Card>
+          <Card><Skeleton className="h-20 w-full" /></Card>
+          <Card><Skeleton className="h-20 w-full" /></Card>
+          <Card><Skeleton className="h-20 w-full" /></Card>
+        </div>
+        <Card><Skeleton className="h-64 w-full" /></Card>
       </div>
     );
   }
@@ -92,7 +86,9 @@ export const WorkforcePage = () => {
   if (error) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Workforce Management</h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900">Workforce Dashboard</h1>
+        </div>
         <Alert type="error" message={error} />
       </div>
     );
@@ -100,118 +96,164 @@ export const WorkforcePage = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Workforce Management</h1>
-        <p className="text-sm text-gray-500">Log attendance and view the labour registry</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Workforce Dashboard</h1>
+          <p className="text-sm text-gray-500">Manage your entire construction workforce across all projects.</p>
+        </div>
+        <Button 
+          onClick={() => setIsAddModalOpen(true)}
+          className="flex items-center"
+        >
+          <UserPlus className="w-4 h-4 mr-2" />
+          Add Worker
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Attendance Form */}
-        <Card title="Log Daily Attendance">
-          <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-            {successMessage && <Alert type="success" message={successMessage} />}
-            {formError && <Alert type="error" message={formError} />}
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="flex items-center space-x-4">
+          <div className="p-3 bg-blue-100 text-blue-600 rounded-lg">
+            <Users className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">Total Workers</p>
+            <p className="text-2xl font-bold text-gray-900">{totalWorkers}</p>
+          </div>
+        </Card>
+        <Card className="flex items-center space-x-4">
+          <div className="p-3 bg-indigo-100 text-indigo-600 rounded-lg">
+            <HardHat className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">Male</p>
+            <p className="text-2xl font-bold text-gray-900">{maleWorkers}</p>
+          </div>
+        </Card>
+        <Card className="flex items-center space-x-4">
+          <div className="p-3 bg-pink-100 text-pink-600 rounded-lg">
+            <HardHat className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">Female</p>
+            <p className="text-2xl font-bold text-gray-900">{femaleWorkers}</p>
+          </div>
+        </Card>
+        <Card className="flex items-center space-x-4">
+          <div className="p-3 bg-amber-100 text-amber-600 rounded-lg">
+            <IndianRupee className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">Pending Pay</p>
+            <p className="text-2xl font-bold text-gray-900">₹{pendingPay.toLocaleString('en-IN')}</p>
+          </div>
+        </Card>
+      </div>
 
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">Worker</label>
-              <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={formData.labourer_id}
-                onChange={(e) => setFormData({ ...formData, labourer_id: parseInt(e.target.value) })}
-                disabled={isSubmitting}
-              >
-                {labourers.map(l => (
-                  <option key={l.id} value={l.id}>
-                    {l.firstName} {l.lastName} - {l.trade || 'Worker'}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1 mt-4">
-              <label className="block text-sm font-medium text-gray-700">Project Assignment</label>
-              <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={formData.project_id}
-                onChange={(e) => setFormData({ ...formData, project_id: parseInt(e.target.value) })}
-                disabled={isSubmitting}
-              >
-                {projects.map(p => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <Input
-              label="Record Date"
-              type="date"
-              value={formData.record_date}
-              onChange={(e) => setFormData({ ...formData, record_date: e.target.value })}
-              disabled={isSubmitting}
+      <Card>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+          <h2 className="text-lg font-bold text-gray-900">Worker Registry</h2>
+          <div className="w-full sm:w-64">
+            <Input 
+              type="text" 
+              placeholder="Search workers..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full"
             />
+          </div>
+        </div>
 
-            <div className="space-y-1 mt-4">
-              <label className="block text-sm font-medium text-gray-700">Status</label>
-              <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value as AttendanceStatus })}
-                disabled={isSubmitting}
-              >
-                <option value="PRESENT">Present</option>
-                <option value="ABSENT">Absent</option>
-                <option value="HALF_DAY">Half Day</option>
-              </select>
-            </div>
-
-            <div className="pt-4">
-              <Button type="submit" isLoading={isSubmitting} className="w-full">
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Submit Attendance
-              </Button>
-            </div>
-          </form>
-        </Card>
-
-        {/* Worker Registry Table */}
-        <Card title="Worker Registry">
-          {labourers.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <Users className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-              <p>No labourers found in the registry.</p>
-            </div>
-          ) : (
-            <div className="mt-4 overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trade</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rate</th>
+        {filteredSummaries.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            <Info className="mx-auto h-12 w-12 text-gray-400 mb-3" />
+            <p>No workers found matching your criteria.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attendance</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Earnings</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pending Pay</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredSummaries.map((worker) => (
+                  <tr key={worker.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                          {worker.firstName.charAt(0)}{worker.lastName.charAt(0)}
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{worker.firstName} {worker.lastName}</div>
+                          <div className="text-sm text-gray-500">{worker.gender}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{worker.role}</div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                        {worker.compensationType.replace('_', ' ')}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{worker.daysWorked} days</div>
+                      {worker.compensationType === 'DAILY' && (
+                        <div className="text-xs text-gray-500">@ ₹{worker.dailyRate?.toLocaleString('en-IN')}/day</div>
+                      )}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">Total: ₹{(worker.totalEarned || 0).toLocaleString('en-IN')}</div>
+                      <div className="text-xs text-gray-500">Paid: ₹{(worker.amountPaid || 0).toLocaleString('en-IN')}</div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        worker.paymentStatus === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                        worker.paymentStatus === 'PARTIAL' ? 'bg-amber-100 text-amber-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {worker.paymentStatus}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">₹{worker.remainingAmount?.toLocaleString('en-IN') || 0}</div>
+                      <div className="text-xs text-gray-500">pending</div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                      <Button variant="outline" onClick={() => setSelectedWorker(worker)}>
+                        View Details
+                      </Button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {labourers.map((labourer) => (
-                    <tr key={labourer.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{labourer.id}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {labourer.firstName} {labourer.lastName}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{labourer.trade}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                        ${labourer.dailyRate}/day
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Card>
-      </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+
+      <AddWorkforceMemberModal 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        onSuccess={() => fetchData()} 
+      />
+
+      <WorkerDetailsModal
+        isOpen={!!selectedWorker}
+        onClose={() => setSelectedWorker(null)}
+        worker={selectedWorker}
+        onUpdate={() => fetchData()}
+      />
     </div>
   );
 };

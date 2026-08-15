@@ -5,6 +5,8 @@ import com.buildflow.workforce.dto.request.WageCreateRequest;
 import com.buildflow.workforce.dto.request.WageUpdateRequest;
 import com.buildflow.workforce.dto.response.WageResponse;
 import com.buildflow.workforce.entity.Wage;
+import com.buildflow.workforce.event.WageEvent;
+import com.buildflow.workforce.enums.WageStatus;
 import com.buildflow.workforce.exception.ResourceNotFoundException;
 import com.buildflow.workforce.mapper.WageMapper;
 import com.buildflow.workforce.repository.LabourRepository;
@@ -43,9 +45,21 @@ public class WageServiceImpl implements WageService {
         wageValidator.validateCreateRequest(request);
 
         Wage wage = wageMapper.toEntity(request);
+        wage.setStatus(WageStatus.ACTIVE);
         wage = wageRepository.save(wage);
 
-        kafkaTemplate.send(WorkforceConstants.WAGE_PROCESSED_TOPIC, wage);
+        WageEvent event = WageEvent.builder()
+                .id(wage.getId())
+                .labourId(wage.getLabourId())
+                .agreementId(wage.getAgreementId())
+                .projectId(wage.getProjectId())
+                .amountPaid(wage.getAmountPaid())
+                .paymentDate(wage.getPaymentDate())
+                .status("PROCESSED")
+                .eventType("PROCESSED")
+                .build();
+
+        kafkaTemplate.send(WorkforceConstants.WAGE_PROCESSED_TOPIC, event);
 
         return wageMapper.toResponse(wage);
     }
@@ -82,12 +96,58 @@ public class WageServiceImpl implements WageService {
 
         wageValidator.validateUpdateRequest(request, wage);
 
-        if (request.getHourlyRate() != null) wage.setHourlyRate(request.getHourlyRate());
-        if (request.getTotalHours() != null) wage.setTotalHours(request.getTotalHours());
-        if (request.getAmountPaid() != null) wage.setAmountPaid(request.getAmountPaid());
-        if (request.getPaymentDate() != null) wage.setPaymentDate(request.getPaymentDate());
+        if (request.getAmountPaid() != null)
+            wage.setAmountPaid(request.getAmountPaid());
+        if (request.getPaymentDate() != null)
+            wage.setPaymentDate(request.getPaymentDate());
 
         wage = wageRepository.save(wage);
+
+        WageEvent event = WageEvent.builder()
+                .id(wage.getId())
+                .labourId(wage.getLabourId())
+                .agreementId(wage.getAgreementId())
+                .projectId(wage.getProjectId())
+                .amountPaid(wage.getAmountPaid())
+                .paymentDate(wage.getPaymentDate())
+                .status("PROCESSED")
+                .eventType("UPDATED")
+                .build();
+
+        kafkaTemplate.send(WorkforceConstants.WAGE_UPDATED_TOPIC, event);
         return wageMapper.toResponse(wage);
+    }
+
+    @Override
+    @Transactional
+    public WageResponse cancelWage(Long id) {
+        Wage wage = wageRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Wage not found with id: " + id));
+
+        wage.setStatus(WageStatus.CANCELLED);
+        wage = wageRepository.save(wage);
+
+        WageEvent event = WageEvent.builder()
+                .id(wage.getId())
+                .labourId(wage.getLabourId())
+                .agreementId(wage.getAgreementId())
+                .projectId(wage.getProjectId())
+                .amountPaid(wage.getAmountPaid())
+                .paymentDate(wage.getPaymentDate())
+                .status("CANCELLED")
+                .eventType("CANCELLED")
+                .build();
+
+        kafkaTemplate.send(WorkforceConstants.WAGE_CANCELLED_TOPIC, event);
+        
+        return wageMapper.toResponse(wage);
+    }
+
+    @Override
+    @Transactional
+    public void bulkCancelWages(List<Long> ids) {
+        for (Long id : ids) {
+            cancelWage(id);
+        }
     }
 }

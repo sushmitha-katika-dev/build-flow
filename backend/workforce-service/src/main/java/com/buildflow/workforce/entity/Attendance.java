@@ -28,6 +28,9 @@ public class Attendance {
     @Column(name = "labour_id", nullable = false)
     private Long labourId;
 
+    @Column(name = "project_id")
+    private Long projectId;
+
     @Column(nullable = false)
     private LocalDate date;
 
@@ -37,6 +40,8 @@ public class Attendance {
 
     private LocalTime checkInTime;
     private LocalTime checkOutTime;
+
+    private String notes;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

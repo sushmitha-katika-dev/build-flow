@@ -5,6 +5,7 @@ import com.buildflow.workforce.dto.request.AttendanceCreateRequest;
 import com.buildflow.workforce.dto.response.AttendanceResponse;
 import com.buildflow.workforce.entity.Attendance;
 import com.buildflow.workforce.enums.AttendanceStatus;
+import com.buildflow.workforce.event.AttendanceEvent;
 import com.buildflow.workforce.exception.ResourceNotFoundException;
 import com.buildflow.workforce.mapper.AttendanceMapper;
 import com.buildflow.workforce.repository.AttendanceRepository;
@@ -82,7 +83,8 @@ class AttendanceServiceImplTest {
 
         assertNotNull(result);
         assertEquals(AttendanceStatus.PRESENT, result.getStatus());
-        verify(kafkaTemplate).send(eq(WorkforceConstants.ATTENDANCE_LOGGED_TOPIC), any(Attendance.class));
+        verify(attendanceRepository).save(any(Attendance.class));
+        verify(kafkaTemplate).send(eq(WorkforceConstants.ATTENDANCE_LOGGED_TOPIC), any(AttendanceEvent.class));
     }
 
     @Test

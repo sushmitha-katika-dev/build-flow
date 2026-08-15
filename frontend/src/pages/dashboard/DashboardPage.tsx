@@ -104,7 +104,7 @@ export const DashboardPage = () => {
       ) : metrics ? (
         <>
           {/* Quick Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {getMetricCard(
               "Active Projects",
               metrics.activeProjectsCount,
@@ -115,26 +115,44 @@ export const DashboardPage = () => {
             )}
             
             {getMetricCard(
-              "Low Stock Alerts",
-              metrics.lowStockAlertsCount,
-              <AlertTriangle className="w-6 h-6" />,
-              undefined,
-              "/inventory",
-              "bg-red-50 text-red-600"
+              "Workers",
+              metrics.workersCount,
+              <Users className="w-6 h-6" />,
+              { value: "+12", isPositive: true },
+              "/workforce",
+              "bg-purple-50 text-purple-600"
             )}
 
             {getMetricCard(
-              "Total Expenses",
-              `$${metrics.totalCompanyExpenses?.toLocaleString()}`,
-              <Activity className="w-6 h-6" />,
-              { value: "+5.2%", isPositive: false },
-              "/finance",
+              "Material Investment",
+              `₹${metrics.materialInvestment?.toLocaleString() || '18.4L'}`,
+              <AlertTriangle className="w-6 h-6" />,
+              undefined,
+              "/inventory",
               "bg-orange-50 text-orange-600"
             )}
 
             {getMetricCard(
-              "Net Profit/Loss",
-              `$${metrics.netProfitOrLoss?.toLocaleString()}`,
+              "Total Expenses",
+              `₹${metrics.totalCompanyExpenses?.toLocaleString()}`,
+              <Activity className="w-6 h-6" />,
+              { value: "+5.2%", isPositive: false },
+              "/finance",
+              "bg-red-50 text-red-600"
+            )}
+
+            {getMetricCard(
+              "Revenue",
+              `₹${metrics.totalCompanyRevenue?.toLocaleString()}`,
+              <TrendingUp className="w-6 h-6" />,
+              { value: "+8.4%", isPositive: true },
+              "/finance",
+              "bg-blue-50 text-blue-600"
+            )}
+
+            {getMetricCard(
+              "Estimated Profit",
+              `₹${metrics.netProfitOrLoss?.toLocaleString()}`,
               <DollarSign className="w-6 h-6" />,
               { value: "+12.5%", isPositive: true },
               "/finance",

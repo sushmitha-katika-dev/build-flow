@@ -1,18 +1,24 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Building2, Calendar, DollarSign, User } from 'lucide-react';
+import { ArrowLeft, Building2, DollarSign } from 'lucide-react';
 import { ProjectService } from '../../services/projectService';
+import { FinanceService } from '../../services/financeService';
 import type { Project } from '../../types/project';
+import type { ProjectBudget } from '../../types/finance';
 import { Card } from '../../components/common/Card';
 import { Alert } from '../../components/common/Alert';
 import { Skeleton } from '../../components/common/Skeleton';
 import { Badge } from '../../components/common/Badge';
 
+import { ProjectWorkforceTab } from './ProjectWorkforceTab';
+
 export const ProjectDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const [project, setProject] = useState<Project | null>(null);
+  const [budget, setBudget] = useState<ProjectBudget | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'overview' | 'workforce'>('overview');
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -22,6 +28,13 @@ export const ProjectDetailsPage = () => {
         setError(null);
         const data = await ProjectService.getProjectById(parseInt(id));
         setProject(data);
+        
+        try {
+          const budgetData = await FinanceService.getProjectBudget(data.id!);
+          setBudget(budgetData);
+        } catch (err) {
+          console.warn("Could not load budget data");
+        }
       } catch (err: any) {
         setError(err.response?.data?.message || 'Failed to load project details.');
       } finally {
@@ -67,7 +80,7 @@ export const ProjectDetailsPage = () => {
         </Link>
         <div>
           <div className="flex items-center space-x-3">
-            <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{project.projectName}</h1>
             <Badge variant={project.status === 'ACTIVE' ? 'success' : 'default'}>{project.status}</Badge>
           </div>
           <p className="text-sm text-gray-500">Project ID: {project.id}</p>
@@ -81,7 +94,7 @@ export const ProjectDetailsPage = () => {
           </div>
           <div>
             <p className="text-sm text-gray-500 font-medium">Client</p>
-            <p className="font-semibold text-gray-900">{project.client_name}</p>
+            <p className="font-semibold text-gray-900">{project.clientName}</p>
           </div>
         </Card>
 
@@ -90,40 +103,87 @@ export const ProjectDetailsPage = () => {
             <DollarSign className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm text-gray-500 font-medium">Budget</p>
-            <p className="font-semibold text-gray-900">${project.estimated_budget?.toLocaleString()}</p>
+            <p className="text-sm text-gray-500 font-medium">Estimated Budget</p>
+            <p className="font-semibold text-gray-900">${project.estimatedBudget?.toLocaleString()}</p>
+          </div>
+        </Card>
+
+        <Card className="flex items-center p-4">
+          <div className="p-3 bg-red-50 text-red-600 rounded-lg mr-4">
+            <DollarSign className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 font-medium">Actual Cost (Invested)</p>
+            <p className="font-semibold text-gray-900">${budget?.actualExpenses?.toLocaleString() || '0'}</p>
+          </div>
+        </Card>
+        
+        <Card className="flex items-center p-4">
+          <div className="p-3 bg-blue-50 text-blue-600 rounded-lg mr-4">
+            <DollarSign className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 font-medium">Amount Paid</p>
+            <p className="font-semibold text-gray-900">${budget?.amountPaid?.toLocaleString() || '0'}</p>
+          </div>
+        </Card>
+        
+        <Card className="flex items-center p-4">
+          <div className="p-3 bg-orange-50 text-orange-600 rounded-lg mr-4">
+            <DollarSign className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 font-medium">Outstanding</p>
+            <p className="font-semibold text-gray-900">${budget?.outstandingAmount?.toLocaleString() || '0'}</p>
           </div>
         </Card>
 
         <Card className="flex items-center p-4">
           <div className="p-3 bg-purple-50 text-purple-600 rounded-lg mr-4">
-            <Calendar className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 font-medium">Start Date</p>
-            <p className="font-semibold text-gray-900">{project.start_date}</p>
-          </div>
-        </Card>
-
-        <Card className="flex items-center p-4">
-          <div className="p-3 bg-orange-50 text-orange-600 rounded-lg mr-4">
-            <User className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 font-medium">Manager ID</p>
-            <p className="font-semibold text-gray-900">{project.manager_id}</p>
+            <p className="font-semibold text-gray-900">{project.location}</p>
           </div>
         </Card>
       </div>
 
-      <Card title="Project Overview">
-        <div className="space-y-4">
-          <p className="text-gray-700">
-            This project is currently <strong className="lowercase">{project.status}</strong>. 
-            More details regarding equipment assignments, labour workforce, and financial profit/loss can be integrated here.
-          </p>
-        </div>
-      </Card>
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`${
+              activeTab === 'overview'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+          >
+            Overview
+          </button>
+          <button
+            onClick={() => setActiveTab('workforce')}
+            className={`${
+              activeTab === 'workforce'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+          >
+            Workforce
+          </button>
+        </nav>
+      </div>
+
+      {activeTab === 'overview' && (
+        <Card title="Project Overview">
+          <div className="space-y-4">
+            <p className="text-gray-700">
+              This project is currently <strong className="lowercase">{project.status}</strong>. 
+              More details regarding equipment assignments, labour workforce, and financial profit/loss can be integrated here.
+            </p>
+          </div>
+        </Card>
+      )}
+
+      {activeTab === 'workforce' && project.id && (
+        <ProjectWorkforceTab projectId={project.id} />
+      )}
     </div>
   );
 };

@@ -52,8 +52,22 @@ public class AttendanceController {
     @PutMapping("/{id}")
     @Operation(summary = "Update attendance record")
     public ResponseEntity<AttendanceResponse> updateAttendance(
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @Valid @RequestBody AttendanceUpdateRequest request) {
         return ResponseEntity.ok(attendanceService.updateAttendance(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete attendance record")
+    public ResponseEntity<Void> deleteAttendance(@PathVariable Long id) {
+        attendanceService.deleteAttendance(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/bulk")
+    @Operation(summary = "Bulk delete attendance records")
+    public ResponseEntity<Void> bulkDeleteAttendance(@RequestBody List<Long> ids) {
+        attendanceService.bulkDeleteAttendance(ids);
+        return ResponseEntity.noContent().build();
     }
 }

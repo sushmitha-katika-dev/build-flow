@@ -36,6 +36,8 @@ public class DashboardServiceImpl implements DashboardService {
         
         DashboardResponse response = DashboardResponse.builder()
                 .activeProjectsCount(snapshot.getActiveProjectsCount() != null ? snapshot.getActiveProjectsCount() : 0)
+                .workersCount(snapshot.getWorkersCount() != null ? snapshot.getWorkersCount() : 0)
+                .materialInvestment(snapshot.getMaterialInvestment() != null ? snapshot.getMaterialInvestment() : BigDecimal.ZERO)
                 .lowStockAlertsCount(snapshot.getLowStockAlertsCount() != null ? snapshot.getLowStockAlertsCount() : 0)
                 .totalCompanyRevenue(revenue)
                 .totalCompanyExpenses(expenses)
