@@ -10,6 +10,8 @@ import com.buildflow.finance.enums.PaymentStatus;
 import com.buildflow.finance.enums.PaymentType;
 import com.buildflow.finance.event.AttendanceEvent;
 import com.buildflow.finance.event.FixedWorkAgreementEvent;
+import com.buildflow.finance.event.InventoryTransactionEvent;
+import com.buildflow.finance.event.EquipmentUsageEvent;
 import com.buildflow.finance.event.WageEvent;
 import com.buildflow.finance.repository.ExpenseRepository;
 import com.buildflow.finance.repository.PaymentRepository;
@@ -280,5 +282,61 @@ public class WorkforceKafkaConsumer {
             paymentRepository.delete(payment);
             budgetService.updateAmountPaid(projectId);
         }
+    }
+
+    // --- INVENTORY EVENTS ---
+
+    @KafkaListener(topics = "inventory-material-consumed", groupId = "finance-service-group")
+    @Transactional
+    public void consumeInventoryMaterialConsumed(InventoryTransactionEvent event) {
+        log.info("Received Inventory Material Consumed event: {}", event.getId());
+        if (event.getProjectId() == null || event.getTotalCost() == null || event.getTotalCost().compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+
+        String referenceId = "INV-MAT-" + event.getId();
+        if (expenseRepository.findByReferenceId(referenceId).isPresent()) {
+            return;
+        }
+
+        Expense expense = Expense.builder()
+                .projectId(event.getProjectId())
+                .amount(event.getTotalCost())
+                .category(ExpenseCategory.MATERIAL)
+                .date(event.getTransactionDate() != null ? event.getTransactionDate().toLocalDate() : LocalDate.now())
+                .description("Material cost for transaction: " + event.getId() + (event.getNotes() != null ? " - " + event.getNotes() : ""))
+                .referenceId(referenceId)
+                .build();
+
+        expenseRepository.save(expense);
+        budgetService.updateActualExpenses(event.getProjectId());
+    }
+
+    // --- EQUIPMENT EVENTS ---
+
+    @KafkaListener(topics = "equipment-usage-logged", groupId = "finance-service-group")
+    @Transactional
+    public void consumeEquipmentUsageLogged(EquipmentUsageEvent event) {
+        log.info("Received Equipment Usage Logged event: {}", event.getUsageRecordId());
+        if (event.getProjectId() == null || event.getTotalCost() == null || event.getTotalCost().compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+
+        String referenceId = "EQUIPMENT-USAGE-" + event.getUsageRecordId();
+        if (expenseRepository.findByReferenceId(referenceId).isPresent()) {
+            return;
+        }
+
+        Expense expense = Expense.builder()
+                .projectId(event.getProjectId())
+                .amount(event.getTotalCost())
+                .category(ExpenseCategory.EQUIPMENT)
+                .date(event.getUsageDate() != null ? event.getUsageDate() : LocalDate.now())
+                .description("Equipment usage cost: " + event.getUnitsUsed() + " units @ " + event.getAppliedUnitRate())
+                .referenceId(referenceId)
+                .build();
+
+        expenseRepository.save(expense);
+        budgetService.updateActualExpenses(event.getProjectId());
     }
 }
