@@ -11,8 +11,8 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI projectServiceOpenAPI() {
         return new OpenAPI()
-                .info(new Info().title("BuildFlow Project API")
-                        .description("Handles construction project management")
-                        .version("v1.0"));
+                .info(new Info().title("Project Management Service API")
+                        .description("API documentation for BuildFlow Project Management Service")
+                        .version("v1.0.0"));
     }
 }

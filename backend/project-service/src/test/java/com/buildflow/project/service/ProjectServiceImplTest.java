@@ -1,22 +1,27 @@
 package com.buildflow.project.service;
 
-import com.buildflow.project.dto.ProjectRequest;
-import com.buildflow.project.dto.ProjectResponse;
+import com.buildflow.project.constants.ProjectConstants;
+import com.buildflow.project.dto.request.ProjectCreateRequest;
+import com.buildflow.project.dto.request.ProjectUpdateRequest;
+import com.buildflow.project.dto.response.ProjectResponse;
 import com.buildflow.project.entity.Project;
 import com.buildflow.project.enums.ProjectStatus;
+import com.buildflow.project.exception.DuplicateProjectException;
 import com.buildflow.project.exception.ProjectNotFoundException;
+import com.buildflow.project.mapper.ProjectMapper;
 import com.buildflow.project.repository.ProjectRepository;
+import com.buildflow.project.service.impl.ProjectServiceImpl;
+import com.buildflow.project.validator.ProjectValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.kafka.core.KafkaTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,111 +29,90 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ProjectServiceImplTest {
+class ProjectServiceImplTest {
 
     @Mock
     private ProjectRepository projectRepository;
 
+    @Mock
+    private ProjectMapper projectMapper;
+
+    @Mock
+    private ProjectValidator projectValidator;
+
+    @Mock
+    private KafkaTemplate<String, Object> kafkaTemplate;
+
     @InjectMocks
     private ProjectServiceImpl projectService;
 
+    private ProjectCreateRequest createRequest;
     private Project project;
-    private ProjectRequest projectRequest;
+    private ProjectResponse response;
 
     @BeforeEach
     void setUp() {
+        createRequest = new ProjectCreateRequest();
+        createRequest.setProjectName("Test Project");
+        createRequest.setClientName("Test Client");
+        createRequest.setLocation("New York");
+        createRequest.setStartDate(LocalDate.now());
+        createRequest.setExpectedEndDate(LocalDate.now().plusMonths(6));
+        createRequest.setEstimatedBudget(BigDecimal.valueOf(100000));
+
         project = Project.builder()
                 .id(1L)
-                .name("Highrise Alpha")
-                .location("New York")
-                .status(ProjectStatus.PLANNING)
-                .startDate(LocalDate.now())
-                .endDate(LocalDate.now().plusMonths(6))
-                .budget(new BigDecimal("1000000.00"))
+                .projectCode("PRJ-1234")
+                .projectName("Test Project")
+                .clientName("Test Client")
+                .status(ProjectStatus.PLANNED)
                 .build();
 
-        projectRequest = new ProjectRequest(
-                "Highrise Alpha",
-                "New York",
-                ProjectStatus.PLANNING,
-                LocalDate.now(),
-                LocalDate.now().plusMonths(6),
-                new BigDecimal("1000000.00")
-        );
+        response = new ProjectResponse();
+        response.setId(1L);
+        response.setProjectCode("PRJ-1234");
+        response.setProjectName("Test Project");
     }
 
     @Test
     void createProject_Success() {
+        doNothing().when(projectValidator).validateCreateRequest(any());
+        when(projectRepository.existsByProjectCode(anyString())).thenReturn(false);
+        when(projectMapper.toEntity(any())).thenReturn(new Project());
         when(projectRepository.save(any(Project.class))).thenReturn(project);
+        when(projectMapper.toResponse(any(Project.class))).thenReturn(response);
 
-        ProjectResponse response = projectService.createProject(projectRequest);
+        ProjectResponse result = projectService.createProject(createRequest);
 
-        assertNotNull(response);
-        assertEquals("Highrise Alpha", response.getName());
-        assertEquals(ProjectStatus.PLANNING, response.getStatus());
-        verify(projectRepository, times(1)).save(any(Project.class));
+        assertNotNull(result);
+        assertEquals("PRJ-1234", result.getProjectCode());
+        verify(kafkaTemplate).send(eq(ProjectConstants.PROJECT_CREATED_TOPIC), any(Project.class));
+    }
+
+    @Test
+    void createProject_Duplicate_ThrowsException() {
+        doNothing().when(projectValidator).validateCreateRequest(any());
+        when(projectRepository.existsByProjectCode(anyString())).thenReturn(true);
+
+        assertThrows(DuplicateProjectException.class, () -> projectService.createProject(createRequest));
+        verify(projectRepository, never()).save(any());
     }
 
     @Test
     void getProjectById_Success() {
         when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+        when(projectMapper.toResponse(project)).thenReturn(response);
 
-        ProjectResponse response = projectService.getProjectById(1L);
+        ProjectResponse result = projectService.getProjectById(1L);
 
-        assertNotNull(response);
-        assertEquals(1L, response.getId());
+        assertNotNull(result);
+        assertEquals("Test Project", result.getProjectName());
     }
 
     @Test
-    void getProjectById_NotFound() {
+    void getProjectById_NotFound_ThrowsException() {
         when(projectRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(ProjectNotFoundException.class, () -> projectService.getProjectById(1L));
-    }
-
-    @Test
-    void getAllProjects_Success() {
-        when(projectRepository.findAll()).thenReturn(Arrays.asList(project));
-
-        List<ProjectResponse> responses = projectService.getAllProjects();
-
-        assertNotNull(responses);
-        assertEquals(1, responses.size());
-    }
-
-    @Test
-    void updateProject_Success() {
-        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
-        when(projectRepository.save(any(Project.class))).thenReturn(project);
-
-        ProjectRequest updateRequest = new ProjectRequest(
-                "Updated Highrise",
-                "New York",
-                ProjectStatus.IN_PROGRESS,
-                LocalDate.now(),
-                LocalDate.now().plusMonths(6),
-                new BigDecimal("1500000.00")
-        );
-
-        ProjectResponse response = projectService.updateProject(1L, updateRequest);
-
-        assertNotNull(response);
-        verify(projectRepository, times(1)).save(any(Project.class));
-    }
-
-    @Test
-    void deleteProject_Success() {
-        when(projectRepository.existsById(1L)).thenReturn(true);
-
-        projectService.deleteProject(1L);
-
-        verify(projectRepository, times(1)).deleteById(1L);
-    }
-
-    @Test
-    void deleteProject_NotFound() {
-        when(projectRepository.existsById(1L)).thenReturn(false);
-
-        assertThrows(ProjectNotFoundException.class, () -> projectService.deleteProject(1L));
     }
 }

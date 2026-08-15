@@ -15,7 +15,38 @@ spring:
           uri: http://localhost:8082
           predicates:
             - Path=/api/v1/projects/**
-            
+          filters:
+            - JwtAuthentication
+        - id: workforce-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/v1/workforce/**
+          filters:
+            - JwtAuthentication
+        - id: inventory-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/v1/inventory/**,/api/v1/materials/**
+          filters:
+            - JwtAuthentication
+        - id: equipment-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/v1/equipment/**,/api/v1/maintenance/**,/api/v1/fuel/**
+          filters:
+            - JwtAuthentication
+        - id: finance-service
+          uri: http://localhost:8086
+          predicates:
+            - Path=/api/v1/expenses/**,/api/v1/profit-loss/**,/api/v1/payments/**,/api/v1/budget/**
+          filters:
+            - JwtAuthentication
+        - id: reporting-service
+          uri: http://localhost:8087
+          predicates:
+            - Path=/api/v1/reporting/**
+          filters:
+            - JwtAuthentication
 jwt:
   secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
   expiration: 86400000

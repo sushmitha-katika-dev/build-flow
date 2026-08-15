@@ -133,3 +133,114 @@ This document defines the core REST API endpoints for the BuildFlow Microservice
     "message": "Attendance logged successfully"
   }
   ```
+
+---
+
+## 4. Equipment Management Service
+
+### Assign Equipment to Project
+- **Endpoint:** `/api/v1/equipment/{id}/assignments`
+- **HTTP Method:** `POST`
+- **Description:** Assigns a quantity of equipment to a specific project.
+- **Authentication:** Required (Bearer JWT), Roles: `ADMIN`, `PROJECT_MANAGER`
+- **Request Body:** Required
+- **Query Parameters:** None
+- **Path Variables:** `id` (Integer) - The unique ID of the equipment.
+- **Success Response:** Returns the assignment details.
+- **Error Response:** Returns 400 if the assigned quantity exceeds available quantity.
+- **Status Codes:** `201 Created`, `400 Bad Request`, `404 Not Found`
+- **Sample JSON:**
+  *Request:*
+  ```json
+  {
+    "projectId": 1,
+    "assignedQuantity": 2,
+    "assignmentDate": "2026-08-09"
+  }
+  ```
+  *Response (Success):*
+  ```json
+  {
+    "id": 1,
+    "equipmentId": 1,
+    "projectId": 1,
+    "assignedQuantity": 2,
+    "assignmentDate": "2026-08-09"
+  }
+  ```
+
+---
+
+## 5. Financial Management Service
+
+### Record a New Expense
+- **Endpoint:** `/api/v1/expenses`
+- **HTTP Method:** `POST`
+- **Description:** Records an expense for a project and updates the project's actual expenses.
+- **Authentication:** Required (Bearer JWT), Roles: `ADMIN`, `FINANCE_MANAGER`
+- **Request Body:** Required
+- **Query Parameters:** None
+- **Path Variables:** None
+- **Success Response:** Returns the newly created expense object.
+- **Status Codes:** `201 Created`, `400 Bad Request`
+- **Sample JSON:**
+  *Request:*
+  ```json
+  {
+    "projectId": 1,
+    "amount": 2000.00,
+    "category": "MATERIAL",
+    "date": "2026-08-09",
+    "description": "Cement purchase"
+  }
+  ```
+
+### Calculate Profit/Loss
+- **Endpoint:** `/api/v1/profit-loss/project/{projectId}`
+- **HTTP Method:** `GET`
+- **Description:** Dynamically calculates the profitability of a given project based on estimated budget, total expenses, and payments received.
+- **Authentication:** Required (Bearer JWT), Roles: `ADMIN`, `FINANCE_MANAGER`, `PROJECT_MANAGER`
+- **Request Body:** None
+- **Query Parameters:** None
+- **Path Variables:** `projectId` (Integer)
+- **Success Response:** Returns profit/loss breakdown.
+- **Status Codes:** `200 OK`
+- **Sample JSON:**
+  *Response (Success):*
+  ```json
+  {
+    "projectId": 1,
+    "totalEstimatedBudget": 5000000.00,
+    "totalExpenses": 25000.00,
+    "totalPaymentsReceived": 50000.00,
+    "netProfitOrLoss": 25000.00,
+    "status": "PROFIT"
+  }
+  ```
+
+---
+
+## 6. Reporting & Analytics Service
+
+### Get Dashboard Metrics
+- **Endpoint:** `/api/v1/reporting/dashboard`
+- **HTTP Method:** `GET`
+- **Description:** Retrieves cached top-level dashboard metrics (active projects, low stock alerts, total revenue, and expenses).
+- **Authentication:** Required (Bearer JWT), Roles: `ADMIN`, `PROJECT_MANAGER`
+- **Request Body:** None
+- **Query Parameters:** None
+- **Path Variables:** None
+- **Success Response:** Returns aggregated dashboard metrics.
+- **Status Codes:** `200 OK`, `401 Unauthorized`
+- **Sample JSON:**
+  *Response (Success):*
+  ```json
+  {
+    "activeProjectsCount": 5,
+    "lowStockAlertsCount": 2,
+    "totalCompanyRevenue": 100000.00,
+    "totalCompanyExpenses": 60000.00,
+    "netProfitOrLoss": 40000.00,
+    "generatedAt": "2026-08-09T10:00:00"
+  }
+  ```
