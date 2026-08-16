@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { Alert } from '../../components/common/Alert';
-import { HardHat } from 'lucide-react';
 import { AuthService } from '../../services/authService';
 import type { RegisterCredentials, Role } from '../../types/auth';
 
@@ -45,16 +44,11 @@ export const RegisterPage = () => {
 
   if (success) {
     return (
-      <div className="text-center">
-        <div className="flex justify-center mb-6">
-          <div className="p-3 bg-green-100 rounded-full">
-            <HardHat className="w-8 h-8 text-green-600" />
-          </div>
-        </div>
-        <h3 className="text-xl font-bold text-gray-900 mb-2">Registration Successful!</h3>
-        <p className="text-gray-600 mb-6">You will be redirected to the login page shortly.</p>
-        <Link to="/login" className="text-blue-600 hover:text-blue-500 font-medium">
-          Go to Login now
+      <div className="text-center py-4">
+        <h3 className="text-xl font-bold text-emerald-600 mb-2">Registration Successful!</h3>
+        <p className="text-gray-600 text-sm mb-6">Your Admin account has been created. Redirecting to login...</p>
+        <Link to="/login" className="text-blue-600 hover:text-blue-500 font-bold text-sm">
+          Go to Login now →
         </Link>
       </div>
     );
@@ -62,12 +56,10 @@ export const RegisterPage = () => {
 
   return (
     <div>
-      <div className="flex justify-center mb-6">
-        <div className="p-3 bg-blue-100 rounded-full">
-          <HardHat className="w-8 h-8 text-blue-600" />
-        </div>
-      </div>
-      
+      <h2 className="text-xl font-bold text-gray-900 text-center mb-6">
+        Create a New Account
+      </h2>
+
       <form className="space-y-4" onSubmit={handleSubmit} noValidate>
         {error && <Alert type="error" message={error} className="mb-4" />}
 
