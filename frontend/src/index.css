@@ -1,3 +1,53 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html.dark {
+    color-scheme: dark;
+    background-color: #0f172a;
+    color: #f8fafc;
+  }
+  html.dark body {
+    background-color: #0f172a;
+    color: #f8fafc;
+  }
+  html.dark .bg-gray-50,
+  html.dark .bg-slate-50 {
+    background-color: #0f172a !important;
+  }
+  html.dark .bg-white {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+  }
+  html.dark .text-gray-900,
+  html.dark .text-gray-800,
+  html.dark .text-gray-700 {
+    color: #f8fafc !important;
+  }
+  html.dark .text-gray-600,
+  html.dark .text-gray-500 {
+    color: #94a3b8 !important;
+  }
+  html.dark .border-gray-200,
+  html.dark .border-gray-100 {
+    border-color: #334155 !important;
+  }
+  html.dark input,
+  html.dark select,
+  html.dark textarea {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+    border-color: #475569 !important;
+  }
+  html.dark table thead {
+    background-color: #0f172a !important;
+  }
+  html.dark table tbody tr {
+    background-color: #1e293b !important;
+  }
+  html.dark table tbody tr:hover {
+    background-color: #334155 !important;
+  }
+}

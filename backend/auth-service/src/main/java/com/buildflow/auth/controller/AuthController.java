@@ -33,4 +33,17 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
+
+    @PutMapping("/user/username")
+    @Operation(summary = "Update username", description = "Updates user display username and returns a new JWT token")
+    public ResponseEntity<AuthResponse> updateUsername(@Valid @RequestBody com.buildflow.auth.dto.UpdateUsernameRequest request) {
+        return ResponseEntity.ok(authService.updateUsername(request));
+    }
+
+    @PutMapping("/user/password")
+    @Operation(summary = "Update password", description = "Updates user account password")
+    public ResponseEntity<Void> updatePassword(@Valid @RequestBody com.buildflow.auth.dto.UpdatePasswordRequest request) {
+        authService.updatePassword(request);
+        return ResponseEntity.ok().build();
+    }
 }

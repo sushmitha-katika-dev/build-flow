@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { AuthLayout } from './layouts/AuthLayout';
@@ -15,8 +16,19 @@ import { InventoryPage } from './pages/inventory/InventoryPage';
 import { EquipmentPage } from './pages/equipment/EquipmentPage';
 import { FinancePage } from './pages/finance/FinancePage';
 import { CompanyPage } from './pages/company/CompanyPage';
+import { SettingsPage } from './pages/settings/SettingsPage';
+import { ProfilePage } from './pages/profile/ProfilePage';
 
 function App() {
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
   return (
     <AuthProvider>
       <Router>
@@ -39,8 +51,9 @@ function App() {
               <Route path="/equipment" element={<EquipmentPage />} />
               <Route path="/finance" element={<FinancePage />} />
               <Route path="/company" element={<CompanyPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
               <Route path="/reports" element={<Navigate to="/" replace />} />
-              <Route path="/settings" element={<div>Settings coming soon</div>} />
             </Route>
           </Route>
 

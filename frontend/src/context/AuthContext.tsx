@@ -14,6 +14,7 @@ interface AuthContextType {
   error: string | null;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
+  updateUsername: (newUsername: string) => void;
   clearError: () => void;
 }
 
@@ -62,6 +63,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const updateUsername = (newUsername: string) => {
+    if (!user) return;
+    const updatedUser = { ...user, username: newUsername };
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -79,6 +87,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         error,
         login,
         logout,
+        updateUsername,
         clearError,
       }}
     >

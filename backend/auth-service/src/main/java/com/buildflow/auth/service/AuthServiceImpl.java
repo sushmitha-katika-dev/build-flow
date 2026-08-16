@@ -67,4 +67,40 @@ public class AuthServiceImpl implements AuthService {
                 .role(user.getRole())
                 .build();
     }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public AuthResponse updateUsername(com.buildflow.auth.dto.UpdateUsernameRequest request) {
+        User user = userRepository.findByUsername(request.getCurrentUsername())
+                .orElseThrow(() -> new AuthException("User not found with username: " + request.getCurrentUsername()));
+
+        if (!request.getCurrentUsername().equalsIgnoreCase(request.getNewUsername()) &&
+                userRepository.existsByUsername(request.getNewUsername())) {
+            throw new AuthException("Username '" + request.getNewUsername() + "' is already taken");
+        }
+
+        user.setUsername(request.getNewUsername());
+        userRepository.save(user);
+
+        String token = jwtUtil.generateToken(user.getUsername(), user.getRole().name());
+        return AuthResponse.builder()
+                .token(token)
+                .username(user.getUsername())
+                .role(user.getRole())
+                .build();
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void updatePassword(com.buildflow.auth.dto.UpdatePasswordRequest request) {
+        User user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new AuthException("User not found with username: " + request.getUsername()));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new AuthException("Current password does not match");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
 }

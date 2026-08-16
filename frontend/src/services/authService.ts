@@ -11,4 +11,20 @@ export const AuthService = {
     const response = await axiosClient.post<AuthResponse>('/auth/register', credentials);
     return response.data;
   },
+
+  updateUsername: async (currentUsername: string, newUsername: string): Promise<AuthResponse> => {
+    const response = await axiosClient.put<AuthResponse>('/auth/user/username', {
+      currentUsername,
+      newUsername
+    });
+    return response.data;
+  },
+
+  updatePassword: async (username: string, currentPassword: string, newPassword: string): Promise<void> => {
+    await axiosClient.put('/auth/user/password', {
+      username,
+      currentPassword,
+      newPassword
+    });
+  }
 };
