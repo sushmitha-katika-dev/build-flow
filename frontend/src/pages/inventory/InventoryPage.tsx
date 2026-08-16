@@ -12,7 +12,7 @@ import { MaterialDetailsModal } from './components/MaterialDetailsModal';
 
 export const InventoryPage = () => {
   const [materials, setMaterials] = useState<Material[]>([]);
-  const [stocks, setStocks] = useState<Record<number, Stock>>({});
+  const [stocks, setStocks] = useState<Record<number, Stock[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -31,13 +31,12 @@ export const InventoryPage = () => {
       ]);
       setMaterials(materialsData);
       
-      const stockMap: Record<number, Stock> = {};
+      const stockMap: Record<number, Stock[]> = {};
       stocksData.forEach((stock: Stock) => {
-        if (stockMap[stock.materialId]) {
-          stockMap[stock.materialId].currentStock += stock.currentStock;
-        } else {
-          stockMap[stock.materialId] = { ...stock };
+        if (!stockMap[stock.materialId]) {
+          stockMap[stock.materialId] = [];
         }
+        stockMap[stock.materialId].push(stock);
       });
       setStocks(stockMap);
     } catch (err: any) {
@@ -112,33 +111,49 @@ export const InventoryPage = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {materials.map((material) => (
-                  <tr key={material.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{material.name}</div>
-                      <div className="text-sm text-gray-500">ID: {material.id}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge variant="default">{material.type}</Badge>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {material.unit}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm font-semibold text-gray-900">
-                        {stocks[material.id]?.currentStock || 0} {material.unit}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      ₹{stocks[material.id]?.averageUnitCost?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Button variant="secondary" size="sm" onClick={() => setSelectedMaterialId(material.id)}>
-                        Details
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
+                {materials.map((material) => {
+                  const matStocks = stocks[material.id] || [];
+                  const totalStock = matStocks.reduce((sum, s) => sum + (s.currentStock || 0), 0);
+                  const totalValuation = matStocks.reduce((sum, s) => sum + ((s.currentStock || 0) * (s.averageUnitCost || 0)), 0);
+                  const weightedAvgCost = totalStock > 0 ? (totalValuation / totalStock) : 0;
+
+                  return (
+                    <tr key={material.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-bold text-gray-900">{material.name}</div>
+                        <div className="text-xs text-gray-500 mb-1">ID: #{material.id}</div>
+                        {matStocks.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {matStocks.map((s) => (
+                              <span key={s.id} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-semibold bg-gray-100 text-gray-700 border border-gray-200">
+                                {s.variant || 'DEFAULT'}: {s.currentStock?.toLocaleString()} {material.unit} @ ₹{s.averageUnitCost?.toFixed(2)}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Badge variant="default">{material.type}</Badge>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {material.unit}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm font-bold text-gray-900">
+                          {totalStock.toLocaleString()} {material.unit}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        ₹{weightedAvgCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <Button variant="secondary" size="sm" onClick={() => setSelectedMaterialId(material.id)}>
+                          Details
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
