@@ -95,7 +95,7 @@ export const ExpenseFormModal = ({ isOpen, onClose, onSuccess, projectId }: Prop
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value as ExpenseCategory })}
                 >
-                  <option value="LABOUR">Labour</option>
+                  <option value="WORKFORCE">Workforce / Worker</option>
                   <option value="MATERIAL">Material</option>
                   <option value="EQUIPMENT">Equipment</option>
                   <option value="FUEL">Fuel</option>

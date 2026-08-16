@@ -70,6 +70,44 @@ public class StockServiceImpl implements StockService {
 
     @Override
     @Transactional(readOnly = true)
+    public StockResponse getStockByMaterialAndProject(Long materialId, Long projectId) {
+        List<Stock> stocks = stockRepository.findByMaterialIdAndProjectId(materialId, projectId);
+        if (stocks.isEmpty()) {
+            throw new ResourceNotFoundException("Stock not found for material ID: " + materialId + " and project ID: " + projectId);
+        }
+        if (stocks.size() == 1) {
+            return stockMapper.toResponse(stocks.get(0));
+        }
+
+        BigDecimal totalCurrentStock = BigDecimal.ZERO;
+        BigDecimal totalInventoryValue = BigDecimal.ZERO;
+
+        for (Stock stock : stocks) {
+            BigDecimal qty = stock.getCurrentStock() != null ? stock.getCurrentStock() : BigDecimal.ZERO;
+            BigDecimal avgCost = stock.getAverageUnitCost() != null ? stock.getAverageUnitCost() : BigDecimal.ZERO;
+            totalCurrentStock = totalCurrentStock.add(qty);
+            totalInventoryValue = totalInventoryValue.add(qty.multiply(avgCost));
+        }
+
+        BigDecimal weightedAvgCost = BigDecimal.ZERO;
+        if (totalCurrentStock.compareTo(BigDecimal.ZERO) > 0) {
+            weightedAvgCost = totalInventoryValue.divide(totalCurrentStock, 2, java.math.RoundingMode.HALF_UP);
+        }
+
+        Stock aggregated = new Stock();
+        aggregated.setId(stocks.get(0).getId());
+        aggregated.setMaterialId(materialId);
+        aggregated.setProjectId(projectId);
+        aggregated.setVariant("ALL");
+        aggregated.setCurrentStock(totalCurrentStock);
+        aggregated.setAverageUnitCost(weightedAvgCost);
+        aggregated.setReorderLevel(stocks.get(0).getReorderLevel());
+
+        return stockMapper.toResponse(aggregated);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public StockResponse getStockByMaterialAndProjectAndVariant(Long materialId, Long projectId, String variant) {
         String safeVariant = (variant == null || variant.trim().isEmpty()) ? "DEFAULT" : variant.trim();
         Stock stock = stockRepository.findByMaterialIdAndProjectIdAndVariant(materialId, projectId, safeVariant)

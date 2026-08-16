@@ -109,49 +109,55 @@ export const ProjectsPage = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {projects.map((project) => (
-                  <tr key={project.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{project.projectName}</div>
-                      <div className="text-sm text-gray-500">ID: {project.id}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {project.clientName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(project.status)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                      ₹{project.estimatedBudget?.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ₹{budgets[project.id!]?.actualExpenses?.toLocaleString() || '0'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ₹{budgets[project.id!]?.remainingBudget?.toLocaleString() || project.estimatedBudget?.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-full bg-gray-200 rounded-full h-2.5 mr-2">
-                          <div 
-                            className={`h-2.5 rounded-full ${
-                              ((budgets[project.id!]?.actualExpenses || 0) / (project.estimatedBudget || 1)) > 0.9 ? 'bg-red-600' : 'bg-blue-600'
-                            }`}
-                            style={{ width: `${Math.min(((budgets[project.id!]?.actualExpenses || 0) / (project.estimatedBudget || 1)) * 100, 100)}%` }}
-                          ></div>
+                {projects.map((project) => {
+                  const invested = budgets[project.id!]?.actualExpenses || 0;
+                  const remaining = (project.estimatedBudget || 0) - invested;
+                  const budgetUsedPct = project.estimatedBudget ? ((invested / project.estimatedBudget) * 100).toFixed(2) : '0.00';
+
+                  return (
+                    <tr key={project.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{project.projectName}</div>
+                        <div className="text-sm text-gray-500">ID: {project.id}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {project.clientName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {getStatusBadge(project.status)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                        ₹{project.estimatedBudget?.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ₹{invested.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
+                        ₹{remaining.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="w-full bg-gray-200 rounded-full h-2.5 mr-2">
+                            <div 
+                              className={`h-2.5 rounded-full ${
+                                (invested / (project.estimatedBudget || 1)) > 0.9 ? 'bg-red-600' : 'bg-blue-600'
+                              }`}
+                              style={{ width: `${Math.min((invested / (project.estimatedBudget || 1)) * 100, 100)}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {budgetUsedPct}%
+                          </span>
                         </div>
-                        <span className="text-xs text-gray-500">
-                          {Math.round(((budgets[project.id!]?.actualExpenses || 0) / (project.estimatedBudget || 1)) * 100)}%
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Link to={`/projects/${project.id}`} className="text-blue-600 hover:text-blue-900">
-                        View Details
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <Link to={`/projects/${project.id}`} className="text-blue-600 hover:text-blue-900">
+                          View Details
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

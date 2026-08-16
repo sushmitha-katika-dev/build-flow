@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -71,7 +72,15 @@ public class LabourServiceImpl implements LabourService {
     @Override
     @Transactional(readOnly = true)
     public List<LabourWorkforceSummaryResponse> getLabourSummaryByProject(Long projectId) {
-        return labourRepository.findByProjectId(projectId).stream()
+        Set<Long> labourIds = new java.util.LinkedHashSet<>();
+        labourRepository.findByProjectId(projectId).forEach(l -> labourIds.add(l.getId()));
+        attendanceRepository.findByProjectId(projectId).forEach(a -> labourIds.add(a.getLabourId()));
+        fixedWorkAgreementRepository.findByProjectId(projectId).forEach(f -> labourIds.add(f.getLabourId()));
+        wageRepository.findByProjectId(projectId).forEach(w -> labourIds.add(w.getLabourId()));
+
+        return labourIds.stream()
+                .map(id -> labourRepository.findById(id).orElse(null))
+                .filter(java.util.Objects::nonNull)
                 .map(labour -> buildSummary(labour, projectId))
                 .collect(Collectors.toList());
     }

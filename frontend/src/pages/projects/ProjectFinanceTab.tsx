@@ -95,7 +95,7 @@ export const ProjectFinanceTab = ({ projectId, budget }: Props) => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                        {expense.category}
+                        {['LABOUR', 'WORKFORCE', 'WORKER'].includes(expense.category) ? 'WORKFORCE' : expense.category}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">

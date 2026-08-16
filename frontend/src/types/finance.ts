@@ -1,4 +1,4 @@
-export type ExpenseCategory = 'LABOUR' | 'MATERIAL' | 'EQUIPMENT' | 'FUEL' | 'TRANSPORT' | 'MISCELLANEOUS';
+export type ExpenseCategory = 'WORKFORCE' | 'WORKER' | 'LABOUR' | 'MATERIAL' | 'EQUIPMENT' | 'FUEL' | 'TRANSPORT' | 'MISCELLANEOUS';
 export type PaymentType = 'ADVANCE' | 'MILESTONE' | 'FINAL';
 export type PaymentStatus = 'PENDING' | 'COMPLETED' | 'FAILED';
 

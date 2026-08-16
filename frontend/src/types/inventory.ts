@@ -18,7 +18,6 @@ export interface MaterialCreateRequest {
   description?: string;
   type: MaterialType;
   unit: MaterialUnit;
-  unitPrice: number;
   reorderLevel?: number;
 }
 
@@ -26,6 +25,7 @@ export interface Stock {
   id: number;
   materialId: number;
   projectId: number;
+  variant?: string;
   currentStock: number;
   reorderLevel: number;
   averageUnitCost?: number;

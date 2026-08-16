@@ -159,7 +159,9 @@ export const FinancePage = () => {
                           {expense.date}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge variant="default">{expense.category}</Badge>
+                          <Badge variant="default">
+                            {['LABOUR', 'WORKFORCE', 'WORKER'].includes(expense.category) ? 'WORKFORCE' : expense.category}
+                          </Badge>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
                           {expense.description || '-'}

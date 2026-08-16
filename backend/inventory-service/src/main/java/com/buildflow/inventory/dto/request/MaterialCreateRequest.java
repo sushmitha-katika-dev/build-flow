@@ -23,9 +23,5 @@ public class MaterialCreateRequest {
     @NotNull(message = "Material unit cannot be null")
     private MaterialUnit unit;
 
-    @NotNull(message = "Unit price cannot be null")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Unit price must be greater than zero")
-    private BigDecimal unitPrice;
-
     private BigDecimal reorderLevel;
 }

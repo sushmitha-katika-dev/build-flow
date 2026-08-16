@@ -254,10 +254,10 @@ export const ProjectDetailsPage = () => {
           <Card title="COST BREAKDOWN">
             <div className="space-y-4">
               {(() => {
-                const workforceCost = expenses.filter(e => e.category === 'LABOUR').reduce((sum, e) => sum + e.amount, 0);
+                const workforceCost = expenses.filter(e => ['LABOUR', 'WORKFORCE', 'WORKER'].includes(e.category)).reduce((sum, e) => sum + e.amount, 0);
                 const materialsCost = expenses.filter(e => e.category === 'MATERIAL').reduce((sum, e) => sum + e.amount, 0);
                 const equipmentCost = expenses.filter(e => e.category === 'EQUIPMENT').reduce((sum, e) => sum + e.amount, 0);
-                const otherCost = expenses.filter(e => !['LABOUR', 'MATERIAL', 'EQUIPMENT'].includes(e.category)).reduce((sum, e) => sum + e.amount, 0);
+                const otherCost = expenses.filter(e => !['LABOUR', 'WORKFORCE', 'WORKER', 'MATERIAL', 'EQUIPMENT'].includes(e.category)).reduce((sum, e) => sum + e.amount, 0);
                 const totalCost = workforceCost + materialsCost + equipmentCost + otherCost;
 
                 return (

@@ -63,7 +63,9 @@ public class InventoryServiceImpl implements InventoryService {
             transaction.setTotalCost(request.getQuantity().multiply(avgCost));
             
             transaction = transactionRepository.save(transaction);
-            kafkaTemplate.send("inventory-material-consumed", transaction);
+            if (transaction.getProjectId() != null && transaction.getProjectId() > 0) {
+                kafkaTemplate.send("inventory-material-consumed", transaction);
+            }
         } else if (request.getTransactionType() == TransactionType.TRANSFER) {
             // Deduct from Company
             com.buildflow.inventory.entity.Stock companyStock = stockService.processStockOut(request.getMaterialId(), 0L, request.getVariant(), request.getQuantity());
@@ -75,8 +77,16 @@ public class InventoryServiceImpl implements InventoryService {
             
             // Add to Project
             stockService.processStockIn(request.getMaterialId(), request.getProjectId(), request.getVariant(), request.getQuantity(), avgCost);
+
+            if (transaction.getProjectId() != null && transaction.getProjectId() > 0) {
+                kafkaTemplate.send("inventory-material-consumed", transaction);
+            }
         } else {
             transaction = transactionRepository.save(transaction);
+            if (request.getTransactionType() == TransactionType.STOCK_IN && transaction.getProjectId() != null && transaction.getProjectId() > 0) {
+                stockService.processStockIn(request.getMaterialId(), request.getProjectId(), request.getVariant(), request.getQuantity(), request.getUnitCost());
+                kafkaTemplate.send("inventory-material-consumed", transaction);
+            }
         }
 
         return transactionMapper.toResponse(transaction);
