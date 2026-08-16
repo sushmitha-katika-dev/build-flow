@@ -14,6 +14,7 @@ import { WorkerHistoryPage } from './pages/workforce/WorkerHistoryPage';
 import { InventoryPage } from './pages/inventory/InventoryPage';
 import { EquipmentPage } from './pages/equipment/EquipmentPage';
 import { FinancePage } from './pages/finance/FinancePage';
+import { CompanyPage } from './pages/company/CompanyPage';
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
               <Route path="/inventory" element={<InventoryPage />} />
               <Route path="/equipment" element={<EquipmentPage />} />
               <Route path="/finance" element={<FinancePage />} />
+              <Route path="/company" element={<CompanyPage />} />
               <Route path="/reports" element={<Navigate to="/" replace />} />
               <Route path="/settings" element={<div>Settings coming soon</div>} />
             </Route>

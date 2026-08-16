@@ -7,6 +7,7 @@ import {
   Tractor, 
   DollarSign, 
   BarChart3,
+  Building,
   Settings
 } from 'lucide-react';
 
@@ -23,6 +24,7 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
     { name: 'Equipment', path: '/equipment', icon: <Tractor className="w-5 h-5" /> },
     { name: 'Finance', path: '/finance', icon: <DollarSign className="w-5 h-5" /> },
     { name: 'Reports', path: '/reports', icon: <BarChart3 className="w-5 h-5" /> },
+    { name: 'Company', path: '/company', icon: <Building className="w-5 h-5" /> },
   ];
 
   return (

@@ -13,23 +13,28 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { useAuth } from '../../context/AuthContext';
 import { ProjectService } from '../../services/projectService';
 import { FinanceService } from '../../services/financeService';
 import { WorkforceService } from '../../services/workforceService';
 import { InventoryService } from '../../services/inventoryService';
 import { EquipmentService } from '../../services/equipmentService';
+import { CompanyService } from '../../services/companyService';
 
 import type { Project } from '../../types/project';
 import type { ProjectBudget } from '../../types/finance';
 import type { Labourer } from '../../types/workforce';
 import type { Material } from '../../types/inventory';
 import type { Equipment } from '../../types/equipment';
+import type { CompanyProfile } from '../../types/company';
 
 import { Alert } from '../../components/common/Alert';
 import { Skeleton } from '../../components/common/Skeleton';
 import { Badge } from '../../components/common/Badge';
 
 export const DashboardPage = () => {
+  const { user } = useAuth();
+  const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [budgets, setBudgets] = useState<Record<number, ProjectBudget>>({});
   const [labourers, setLabourers] = useState<Labourer[]>([]);
@@ -45,17 +50,20 @@ export const DashboardPage = () => {
 
       // Fetch all core resources from existing services in parallel
       const [
+        companyData,
         projectsData,
         labourersData,
         materialsData,
         equipmentData
       ] = await Promise.all([
+        CompanyService.getCompanyProfile().catch(() => null),
         ProjectService.getAllProjects().catch(() => []),
         WorkforceService.getAllLabourers().catch(() => []),
         InventoryService.getAllMaterials().catch(() => []),
         EquipmentService.getAllEquipment().catch(() => [])
       ]);
 
+      if (companyData) setCompanyProfile(companyData);
       setProjects(projectsData);
       setLabourers(labourersData);
       setMaterials(materialsData);
@@ -169,6 +177,15 @@ export const DashboardPage = () => {
     }
   };
 
+  const getInitials = (name?: string) => {
+    if (!name) return 'ABC';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -186,22 +203,45 @@ export const DashboardPage = () => {
 
   return (
     <div className="space-y-8">
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-2xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
-        <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 opacity-10 pointer-events-none">
-          <Building2 className="w-96 h-96" />
-        </div>
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Company Header */}
+      <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-center space-x-4">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-extrabold text-2xl flex items-center justify-center shadow-md shrink-0 border border-blue-500/20">
+            {companyProfile?.logoUrl ? (
+              <img
+                src={companyProfile.logoUrl}
+                alt={companyProfile.companyName}
+                className="w-full h-full object-cover rounded-2xl"
+              />
+            ) : (
+              getInitials(companyProfile?.companyName || 'ABC Constructions')
+            )}
+          </div>
           <div>
-            <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 border border-blue-400/30 text-blue-200 mb-3">
-              BUILDFLOW DASHBOARD
+            <div className="flex items-center space-x-2">
+              <h1 className="text-xl font-bold text-gray-900 tracking-tight">
+                {companyProfile?.companyName || 'ABC Constructions'}
+              </h1>
+              {companyProfile?.location && (
+                <span className="text-xs text-gray-500 bg-gray-100 px-2.5 py-0.5 rounded-full font-medium">
+                  {companyProfile.location}
+                </span>
+              )}
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Good morning, Contractor</h1>
-            <p className="text-blue-200 text-sm mt-1">Here is your operational & financial overview across all projects.</p>
+            <p className="text-xs font-semibold text-blue-600 mt-0.5">
+              Construction Management Dashboard
+            </p>
+            <p className="text-xs text-gray-500 mt-1 max-w-xl">
+              {companyProfile?.description || 'Manage your projects, workforce, materials and equipment from one place.'}
+            </p>
           </div>
-          <div className="bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-xl border border-white/10 text-xs sm:text-sm font-medium self-start sm:self-auto">
-            📅 {currentDateStr}
-          </div>
+        </div>
+
+        <div className="flex flex-col items-start md:items-end border-t md:border-t-0 pt-4 md:pt-0 border-gray-100">
+          <span className="text-sm font-semibold text-gray-700">
+            Good morning, <span className="text-blue-600 font-bold">{user?.username || 'Contractor'}</span>
+          </span>
+          <span className="text-xs text-gray-400 mt-1">📅 {currentDateStr}</span>
         </div>
       </div>
 

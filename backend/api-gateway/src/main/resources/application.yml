@@ -11,6 +11,12 @@ spring:
           uri: http://localhost:8081
           predicates:
             - Path=/api/v1/auth/**
+        - id: company-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/v1/company/**
+          filters:
+            - JwtAuthentication
         - id: project-service
           uri: http://localhost:8082
           predicates:
