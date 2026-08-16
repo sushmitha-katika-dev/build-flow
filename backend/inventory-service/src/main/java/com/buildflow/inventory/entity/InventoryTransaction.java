@@ -30,6 +30,9 @@ public class InventoryTransaction {
     @Column(name = "project_id")
     private Long projectId;
 
+    @Column(name = "variant")
+    private String variant;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TransactionType transactionType;

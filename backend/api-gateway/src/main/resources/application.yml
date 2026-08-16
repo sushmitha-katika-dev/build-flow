@@ -38,7 +38,7 @@ spring:
         - id: finance-service
           uri: http://localhost:8086
           predicates:
-            - Path=/api/v1/expenses/**,/api/v1/profit-loss/**,/api/v1/payments/**,/api/v1/budget/**
+            - Path=/api/v1/expenses/**,/api/v1/profit-loss/**,/api/v1/payments/**,/api/v1/budgets/**
           filters:
             - JwtAuthentication
         - id: reporting-service

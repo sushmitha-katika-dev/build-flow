@@ -64,7 +64,7 @@ public class LabourServiceImpl implements LabourService {
     @Transactional(readOnly = true)
     public List<LabourWorkforceSummaryResponse> getLabourSummary() {
         return labourRepository.findAll().stream()
-                .map(this::buildSummary)
+                .map(labour -> buildSummary(labour, null))
                 .collect(Collectors.toList());
     }
 
@@ -72,14 +72,23 @@ public class LabourServiceImpl implements LabourService {
     @Transactional(readOnly = true)
     public List<LabourWorkforceSummaryResponse> getLabourSummaryByProject(Long projectId) {
         return labourRepository.findByProjectId(projectId).stream()
-                .map(this::buildSummary)
+                .map(labour -> buildSummary(labour, projectId))
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    private LabourWorkforceSummaryResponse buildSummary(Labour labour) {
+    private LabourWorkforceSummaryResponse buildSummary(Labour labour, Long projectId) {
         List<Attendance> attendances = attendanceRepository.findByLabourId(labour.getId());
         List<Wage> wages = wageRepository.findByLabourId(labour.getId());
+
+        if (projectId != null) {
+            attendances = attendances.stream()
+                    .filter(a -> projectId.equals(a.getProjectId()))
+                    .collect(Collectors.toList());
+            wages = wages.stream()
+                    .filter(w -> projectId.equals(w.getProjectId()))
+                    .collect(Collectors.toList());
+        }
 
         java.math.BigDecimal daysWorked = java.math.BigDecimal.ZERO;
         for (Attendance a : attendances) {
@@ -97,7 +106,9 @@ public class LabourServiceImpl implements LabourService {
             totalEarned = dailyRate.multiply(daysWorked);
         } else if (labour.getCompensationType() == CompensationType.FIXED_WORK) {
             List<com.buildflow.workforce.entity.FixedWorkAgreement> agreements;
-            if (labour.getProjectId() != null) {
+            if (projectId != null) {
+                agreements = fixedWorkAgreementRepository.findByLabourIdAndProjectId(labour.getId(), projectId);
+            } else if (labour.getProjectId() != null) {
                 agreements = fixedWorkAgreementRepository.findByLabourIdAndProjectId(labour.getId(), labour.getProjectId());
             } else {
                 agreements = fixedWorkAgreementRepository.findByLabourId(labour.getId());

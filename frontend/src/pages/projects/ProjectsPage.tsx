@@ -122,13 +122,13 @@ export const ProjectsPage = () => {
                       {getStatusBadge(project.status)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                      ${project.estimatedBudget?.toLocaleString()}
+                      ₹{project.estimatedBudget?.toLocaleString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ${budgets[project.id!]?.actualExpenses?.toLocaleString() || '0'}
+                      ₹{budgets[project.id!]?.actualExpenses?.toLocaleString() || '0'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ${budgets[project.id!]?.remainingBudget?.toLocaleString() || project.estimatedBudget?.toLocaleString()}
+                      ₹{budgets[project.id!]?.remainingBudget?.toLocaleString() || project.estimatedBudget?.toLocaleString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">

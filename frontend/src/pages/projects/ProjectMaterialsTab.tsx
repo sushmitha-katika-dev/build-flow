@@ -63,8 +63,8 @@ export const ProjectMaterialsTab = ({ projectId }: Props) => {
   if (stocks.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500">No materials have been consumed for this project yet.</p>
-        <p className="text-sm text-gray-400 mt-1">Use the Inventory module to consume materials for this project.</p>
+        <p className="text-gray-500">No materials are currently available at this project site.</p>
+        <p className="text-sm text-gray-400 mt-1">Use the Inventory module to dispatch materials to this project.</p>
       </div>
     );
   }
@@ -78,9 +78,10 @@ export const ProjectMaterialsTab = ({ projectId }: Props) => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material Name</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Stock (At Site)</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Used Stock</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Cost (₹)</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estimated Value (₹)</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -90,7 +91,14 @@ export const ProjectMaterialsTab = ({ projectId }: Props) => {
               return (
                 <tr key={stock.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm font-medium text-gray-900">{material?.name || `Unknown (${stock.materialId})`}</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {material?.name || `Unknown (${stock.materialId})`} 
+                      {stock.variant && stock.variant !== 'DEFAULT' && (
+                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                          {stock.variant}
+                        </span>
+                      )}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {material?.type || '-'}
@@ -106,6 +114,9 @@ export const ProjectMaterialsTab = ({ projectId }: Props) => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {stock.updatedAt ? new Date(stock.updatedAt).toLocaleDateString() : '-'}
                   </td>
                 </tr>
               );

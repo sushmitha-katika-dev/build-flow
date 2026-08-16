@@ -15,5 +15,12 @@ export const ProjectService = {
   createProject: async (data: CreateProjectRequest): Promise<Project> => {
     const response = await axiosClient.post<Project>('/projects', data);
     return response.data;
+  },
+
+  updateProjectStatus: async (id: number, status: string): Promise<Project> => {
+    const response = await axiosClient.patch<Project>(`/projects/${id}/status`, null, {
+      params: { status }
+    });
+    return response.data;
   }
 };

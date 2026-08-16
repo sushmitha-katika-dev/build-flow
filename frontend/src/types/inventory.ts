@@ -1,6 +1,6 @@
 export type MaterialType = 'CEMENT' | 'STEEL' | 'PAINT' | 'GENERAL';
 export type MaterialUnit = 'KG' | 'LTR' | 'TON' | 'PCS' | 'METER' | 'BAG';
-export type TransactionType = 'STOCK_IN' | 'CONSUMPTION' | 'ADJUSTMENT';
+export type TransactionType = 'STOCK_IN' | 'CONSUMPTION' | 'TRANSFER' | 'ADJUSTMENT';
 export type PurchaseStatus = 'PENDING' | 'ORDERED' | 'DELIVERED' | 'CANCELLED';
 
 export interface Material {
@@ -42,7 +42,8 @@ export interface StockCreateRequest {
 export interface InventoryTransaction {
   id: number;
   materialId: number;
-  projectId: number;
+  projectId?: number;
+  variant?: string;
   transactionType: TransactionType;
   quantity: number;
   unitCost?: number;
@@ -55,7 +56,8 @@ export interface InventoryTransaction {
 
 export interface InventoryTransactionRequest {
   materialId: number;
-  projectId: number;
+  projectId?: number;
+  variant?: string;
   transactionType: TransactionType;
   quantity: number;
   unitCost?: number;

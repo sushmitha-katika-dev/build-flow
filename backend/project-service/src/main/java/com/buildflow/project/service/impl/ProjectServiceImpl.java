@@ -94,6 +94,10 @@ public class ProjectServiceImpl implements ProjectService {
         if (request.getEstimatedBudget() != null) project.setEstimatedBudget(request.getEstimatedBudget());
 
         project = projectRepository.save(project);
+        
+        // Publish event for budget changes
+        kafkaTemplate.send(ProjectConstants.PROJECT_UPDATED_TOPIC, project);
+        
         return projectMapper.toResponse(project);
     }
 

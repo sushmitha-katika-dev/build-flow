@@ -18,6 +18,7 @@ export const InventoryPage = () => {
   
   const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [transactionMode, setTransactionMode] = useState<'COMPANY_STOCK_IN' | 'PROJECT_DISPATCH' | 'GENERIC'>('GENERIC');
   const [selectedMaterialId, setSelectedMaterialId] = useState<number | null>(null);
 
   const fetchData = async () => {
@@ -32,7 +33,11 @@ export const InventoryPage = () => {
       
       const stockMap: Record<number, Stock> = {};
       stocksData.forEach((stock: Stock) => {
-        stockMap[stock.materialId] = stock;
+        if (stockMap[stock.materialId]) {
+          stockMap[stock.materialId].currentStock += stock.currentStock;
+        } else {
+          stockMap[stock.materialId] = { ...stock };
+        }
       });
       setStocks(stockMap);
     } catch (err: any) {
@@ -54,9 +59,13 @@ export const InventoryPage = () => {
           <p className="text-sm text-gray-500">Manage your materials and track stock movements.</p>
         </div>
         <div className="flex space-x-3">
-          <Button variant="secondary" onClick={() => setIsTransactionModalOpen(true)}>
+          <Button variant="secondary" onClick={() => { setTransactionMode('COMPANY_STOCK_IN'); setIsTransactionModalOpen(true); }}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Company Stock
+          </Button>
+          <Button variant="secondary" onClick={() => { setTransactionMode('PROJECT_DISPATCH'); setIsTransactionModalOpen(true); }}>
             <ArrowRightLeft className="w-4 h-4 mr-2" />
-            Log Transaction
+            Dispatch to Project
           </Button>
           <Button onClick={() => setIsMaterialModalOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
@@ -144,6 +153,7 @@ export const InventoryPage = () => {
 
       <TransactionFormModal
         isOpen={isTransactionModalOpen}
+        mode={transactionMode}
         onClose={() => {
           setIsTransactionModalOpen(false);
           fetchData(); // Refresh after transaction

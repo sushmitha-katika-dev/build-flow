@@ -70,9 +70,10 @@ public class StockServiceImpl implements StockService {
 
     @Override
     @Transactional(readOnly = true)
-    public StockResponse getStockByMaterialAndProject(Long materialId, Long projectId) {
-        Stock stock = stockRepository.findByMaterialIdAndProjectId(materialId, projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Stock not found for material ID: " + materialId + " and project ID: " + projectId));
+    public StockResponse getStockByMaterialAndProjectAndVariant(Long materialId, Long projectId, String variant) {
+        String safeVariant = (variant == null || variant.trim().isEmpty()) ? "DEFAULT" : variant.trim();
+        Stock stock = stockRepository.findByMaterialIdAndProjectIdAndVariant(materialId, projectId, safeVariant)
+                .orElseThrow(() -> new ResourceNotFoundException("Stock not found for material ID: " + materialId + ", project ID: " + projectId + ", variant: " + safeVariant));
         return stockMapper.toResponse(stock);
     }
 
@@ -92,12 +93,14 @@ public class StockServiceImpl implements StockService {
 
     @Override
     @Transactional
-    public Stock processStockIn(Long materialId, Long projectId, BigDecimal quantity, BigDecimal unitCost) {
-        Stock stock = stockRepository.findByMaterialIdAndProjectId(materialId, projectId)
+    public Stock processStockIn(Long materialId, Long projectId, String variant, BigDecimal quantity, BigDecimal unitCost) {
+        String safeVariant = (variant == null || variant.trim().isEmpty()) ? "DEFAULT" : variant.trim();
+        Stock stock = stockRepository.findByMaterialIdAndProjectIdAndVariant(materialId, projectId, safeVariant)
                 .orElseGet(() -> {
                     Stock newStock = new Stock();
                     newStock.setMaterialId(materialId);
                     newStock.setProjectId(projectId);
+                    newStock.setVariant(safeVariant);
                     newStock.setCurrentStock(BigDecimal.ZERO);
                     newStock.setReorderLevel(BigDecimal.ZERO);
                     newStock.setAverageUnitCost(BigDecimal.ZERO);
@@ -128,9 +131,10 @@ public class StockServiceImpl implements StockService {
 
     @Override
     @Transactional
-    public Stock processStockOut(Long materialId, Long projectId, BigDecimal quantity) {
-        Stock stock = stockRepository.findByMaterialIdAndProjectId(materialId, projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Stock not found for material ID: " + materialId + " and project ID: " + projectId));
+    public Stock processStockOut(Long materialId, Long projectId, String variant, BigDecimal quantity) {
+        String safeVariant = (variant == null || variant.trim().isEmpty()) ? "DEFAULT" : variant.trim();
+        Stock stock = stockRepository.findByMaterialIdAndProjectIdAndVariant(materialId, projectId, safeVariant)
+                .orElseThrow(() -> new ResourceNotFoundException("Stock not found for material ID: " + materialId + " and project ID: " + projectId + " and variant: " + safeVariant));
 
         if (stock.getCurrentStock().compareTo(quantity) < 0) {
             throw new IllegalArgumentException("Insufficient stock for material ID: " + materialId);

@@ -12,8 +12,8 @@ public interface StockService {
     StockResponse initializeStock(StockCreateRequest request);
     StockResponse getStockById(Long id);
     List<StockResponse> getStockByProject(Long projectId);
-    StockResponse getStockByMaterialAndProject(Long materialId, Long projectId);
+    StockResponse getStockByMaterialAndProjectAndVariant(Long materialId, Long projectId, String variant);
     StockResponse updateStock(Long id, StockUpdateRequest request);
-    Stock processStockIn(Long materialId, Long projectId, BigDecimal quantity, BigDecimal unitCost);
-    Stock processStockOut(Long materialId, Long projectId, BigDecimal quantity);
+    Stock processStockIn(Long materialId, Long projectId, String variant, BigDecimal quantity, BigDecimal unitCost);
+    Stock processStockOut(Long materialId, Long projectId, String variant, BigDecimal quantity);
 }

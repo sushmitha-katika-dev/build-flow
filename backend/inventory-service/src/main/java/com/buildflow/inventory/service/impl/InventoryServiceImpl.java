@@ -53,10 +53,10 @@ public class InventoryServiceImpl implements InventoryService {
             transaction.setTotalCost(request.getQuantity().multiply(request.getUnitCost()));
             
             transaction = transactionRepository.save(transaction);
-            stockService.processStockIn(request.getMaterialId(), request.getProjectId(), request.getQuantity(), request.getUnitCost());
+            stockService.processStockIn(request.getMaterialId(), request.getProjectId(), request.getVariant(), request.getQuantity(), request.getUnitCost());
             
         } else if (request.getTransactionType() == TransactionType.CONSUMPTION) {
-            com.buildflow.inventory.entity.Stock stock = stockService.processStockOut(request.getMaterialId(), request.getProjectId(), request.getQuantity());
+            com.buildflow.inventory.entity.Stock stock = stockService.processStockOut(request.getMaterialId(), request.getProjectId(), request.getVariant(), request.getQuantity());
             
             java.math.BigDecimal avgCost = stock.getAverageUnitCost() != null ? stock.getAverageUnitCost() : java.math.BigDecimal.ZERO;
             transaction.setUnitCost(avgCost);
@@ -64,6 +64,17 @@ public class InventoryServiceImpl implements InventoryService {
             
             transaction = transactionRepository.save(transaction);
             kafkaTemplate.send("inventory-material-consumed", transaction);
+        } else if (request.getTransactionType() == TransactionType.TRANSFER) {
+            // Deduct from Company
+            com.buildflow.inventory.entity.Stock companyStock = stockService.processStockOut(request.getMaterialId(), 0L, request.getVariant(), request.getQuantity());
+            
+            java.math.BigDecimal avgCost = companyStock.getAverageUnitCost() != null ? companyStock.getAverageUnitCost() : java.math.BigDecimal.ZERO;
+            transaction.setUnitCost(avgCost);
+            transaction.setTotalCost(request.getQuantity().multiply(avgCost));
+            transaction = transactionRepository.save(transaction);
+            
+            // Add to Project
+            stockService.processStockIn(request.getMaterialId(), request.getProjectId(), request.getVariant(), request.getQuantity(), avgCost);
         } else {
             transaction = transactionRepository.save(transaction);
         }

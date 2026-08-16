@@ -10,18 +10,20 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   materials: Material[];
+  mode: 'COMPANY_STOCK_IN' | 'PROJECT_DISPATCH' | 'GENERIC';
 }
 
-export const TransactionFormModal = ({ isOpen, onClose, materials }: Props) => {
+export const TransactionFormModal = ({ isOpen, onClose, materials, mode }: Props) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [formData, setFormData] = useState<InventoryTransactionRequest>({
     materialId: 0,
-    projectId: 0,
-    transactionType: 'STOCK_IN',
+    projectId: mode === 'COMPANY_STOCK_IN' ? 0 : 0,
+    transactionType: mode === 'COMPANY_STOCK_IN' ? 'STOCK_IN' : mode === 'PROJECT_DISPATCH' ? 'TRANSFER' : 'STOCK_IN',
     quantity: 0,
     unitCost: 0,
     transactionDate: new Date().toISOString().split('T')[0],
-    notes: ''
+    notes: '',
+    variant: ''
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -30,14 +32,25 @@ export const TransactionFormModal = ({ isOpen, onClose, materials }: Props) => {
   useEffect(() => {
     if (isOpen) {
       ProjectService.getAllProjects().then(setProjects).catch(() => {});
+      
+      setFormData({
+        materialId: 0,
+        projectId: mode === 'COMPANY_STOCK_IN' ? 0 : 0,
+        transactionType: mode === 'COMPANY_STOCK_IN' ? 'STOCK_IN' : mode === 'PROJECT_DISPATCH' ? 'TRANSFER' : 'STOCK_IN',
+        quantity: 0,
+        unitCost: 0,
+        transactionDate: new Date().toISOString().split('T')[0],
+        notes: '',
+        variant: ''
+      });
     }
-  }, [isOpen]);
+  }, [isOpen, mode]);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.materialId === 0 || formData.projectId === 0) {
+    if (formData.materialId === 0 || (mode !== 'COMPANY_STOCK_IN' && formData.projectId === 0)) {
       setError("Please select a material and a project.");
       return;
     }
@@ -61,7 +74,8 @@ export const TransactionFormModal = ({ isOpen, onClose, materials }: Props) => {
         quantity: 0,
         unitCost: 0,
         transactionDate: new Date().toISOString().split('T')[0],
-        notes: ''
+        notes: '',
+        variant: ''
       });
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to log transaction.');
@@ -77,26 +91,28 @@ export const TransactionFormModal = ({ isOpen, onClose, materials }: Props) => {
 
         <div className="relative inline-block w-full max-w-md p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-lg">
           <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-            Log Material Transaction
+            {mode === 'COMPANY_STOCK_IN' ? 'Add Stock to Company' : mode === 'PROJECT_DISPATCH' ? 'Dispatch to Project' : 'Log Material Transaction'}
           </h3>
 
           {error && <Alert type="error" message={error} className="mb-4" />}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Project</label>
-              <select
-                required={formData.transactionType === 'CONSUMPTION'}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
-                value={formData.projectId}
-                onChange={(e) => setFormData({ ...formData, projectId: Number(e.target.value) })}
-              >
-                <option value={0}>Select Project (Required for Consumption)</option>
-                {projects.map(project => (
-                  <option key={project.id} value={project.id}>{project.projectName}</option>
-                ))}
-              </select>
-            </div>
+            {mode !== 'COMPANY_STOCK_IN' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Project</label>
+                <select
+                  required
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                  value={formData.projectId}
+                  onChange={(e) => setFormData({ ...formData, projectId: Number(e.target.value) })}
+                >
+                  <option value={0} disabled>Select Project</option>
+                  {projects.map(project => (
+                    <option key={project.id} value={project.id}>{project.projectName}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Material *</label>
@@ -113,20 +129,35 @@ export const TransactionFormModal = ({ isOpen, onClose, materials }: Props) => {
               </select>
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Specification / Variant / Size</label>
+              <input
+                type="text"
+                placeholder={mode === 'COMPANY_STOCK_IN' ? 'e.g. 8mm, OPC 53 Grade' : 'Enter exact variant to dispatch'}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                value={formData.variant || ''}
+                onChange={(e) => setFormData({ ...formData, variant: e.target.value })}
+              />
+              <p className="mt-1 text-xs text-gray-500">Leave blank for default</p>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Type *</label>
-                <select
-                  required
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  value={formData.transactionType}
-                  onChange={(e) => setFormData({ ...formData, transactionType: e.target.value as TransactionType })}
-                >
-                  <option value="STOCK_IN">Stock In (Receive Purchase)</option>
-                  <option value="CONSUMPTION">Consumption (Use on Project)</option>
-                  <option value="ADJUSTMENT">Adjustment (Correction)</option>
-                </select>
-              </div>
+              {mode === 'GENERIC' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Type *</label>
+                  <select
+                    required
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    value={formData.transactionType}
+                    onChange={(e) => setFormData({ ...formData, transactionType: e.target.value as TransactionType })}
+                  >
+                    <option value="STOCK_IN">Stock In (Receive Purchase)</option>
+                    <option value="CONSUMPTION">Consumption (Use on Project)</option>
+                    <option value="TRANSFER">Transfer to Project</option>
+                    <option value="ADJUSTMENT">Adjustment (Correction)</option>
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">Quantity *</label>

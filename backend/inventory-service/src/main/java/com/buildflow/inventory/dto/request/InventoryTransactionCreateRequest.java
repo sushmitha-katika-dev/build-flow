@@ -16,6 +16,8 @@ public class InventoryTransactionCreateRequest {
 
     private Long projectId;
 
+    private String variant;
+
     @NotNull(message = "Transaction type cannot be null")
     private TransactionType transactionType;
 

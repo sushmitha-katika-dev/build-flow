@@ -34,10 +34,10 @@ export const ProjectWorkforceTab = ({ projectId }: ProjectWorkforceTabProps) => 
     fetchWorkforce();
   }, [projectId]);
 
-  const { totalWorkers, presentToday } = useMemo(() => {
+  const { totalWorkers, totalDaysWorked } = useMemo(() => {
     return {
       totalWorkers: summaries.length,
-      presentToday: Math.floor(summaries.length * 0.8), // Mock stat
+      totalDaysWorked: summaries.reduce((acc, s) => acc + (s.daysWorked || 0), 0)
     };
   }, [summaries]);
 
@@ -81,8 +81,8 @@ export const ProjectWorkforceTab = ({ projectId }: ProjectWorkforceTabProps) => 
             <CheckCircle className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-sm text-gray-500 font-medium">Present Today</p>
-            <p className="text-xl font-bold text-gray-900">{presentToday}</p>
+            <p className="text-sm text-gray-500 font-medium">Total Days Worked</p>
+            <p className="text-xl font-bold text-gray-900">{totalDaysWorked}</p>
           </div>
         </Card>
       </div>

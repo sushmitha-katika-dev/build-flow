@@ -8,27 +8,27 @@ import type {
 
 export const FinanceService = {
   getProjectExpenses: async (projectId: number): Promise<Expense[]> => {
-    const response = await axiosClient.get<Expense[]>(`/finance/expenses/project/${projectId}`);
+    const response = await axiosClient.get<Expense[]>(`/expenses/project/${projectId}`);
     return response.data;
   },
 
   logExpense: async (data: ExpenseRequest): Promise<Expense> => {
-    const response = await axiosClient.post<Expense>('/finance/expenses', data);
+    const response = await axiosClient.post<Expense>('/expenses', data);
     return response.data;
   },
 
   getProjectProfitLoss: async (projectId: number): Promise<ProfitLossSummary> => {
-    const response = await axiosClient.get<ProfitLossSummary>(`/finance/profit-loss/project/${projectId}`);
+    const response = await axiosClient.get<ProfitLossSummary>(`/profit-loss/project/${projectId}`);
     return response.data;
   },
 
   getProjectBudget: async (projectId: number): Promise<ProjectBudget> => {
-    const response = await axiosClient.get<ProjectBudget>(`/finance/budgets/project/${projectId}`);
+    const response = await axiosClient.get<ProjectBudget>(`/budgets/project/${projectId}`);
     return response.data;
   },
 
   initializeBudget: async (data: { projectId: number, estimatedBudget: number }): Promise<ProjectBudget> => {
-    const response = await axiosClient.post<ProjectBudget>('/finance/budgets/initialize', data);
+    const response = await axiosClient.post<ProjectBudget>('/budgets/initialize', data);
     return response.data;
   }
 };

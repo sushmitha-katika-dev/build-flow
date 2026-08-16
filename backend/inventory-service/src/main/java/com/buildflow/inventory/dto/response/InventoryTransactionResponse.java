@@ -17,6 +17,7 @@ public class InventoryTransactionResponse {
     private Long id;
     private Long materialId;
     private Long projectId;
+    private String variant;
     private TransactionType transactionType;
     private BigDecimal quantity;
     private BigDecimal unitCost;
