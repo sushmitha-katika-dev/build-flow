@@ -3,7 +3,6 @@ import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { Alert } from '../../components/common/Alert';
 import { useAuth } from '../../context/AuthContext';
-import { HardHat } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const { login, error, clearError } = useAuth();
@@ -37,11 +36,9 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div>
-      <div className="flex justify-center mb-6">
-        <div className="p-3 bg-blue-100 rounded-full">
-          <HardHat className="w-8 h-8 text-blue-600" />
-        </div>
-      </div>
+      <h2 className="text-xl font-bold text-gray-900 text-center mb-6">
+        Sign in to your Account
+      </h2>
       
       <form className="space-y-6" onSubmit={handleSubmit} noValidate>
         {error && <Alert type="error" message={error} className="mb-4" />}

@@ -104,22 +104,22 @@ export const FinancePage = () => {
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-4">
               <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-100 p-5">
                 <dt className="text-sm font-medium text-gray-500 truncate">Est. Budget</dt>
-                <dd className="mt-1 text-2xl font-semibold text-gray-900">${profitLoss.totalEstimatedBudget?.toLocaleString()}</dd>
+                <dd className="mt-1 text-2xl font-semibold text-gray-900">₹{profitLoss.totalEstimatedBudget?.toLocaleString()}</dd>
               </div>
               <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-100 p-5">
                 <dt className="text-sm font-medium text-gray-500 truncate">Total Expenses</dt>
-                <dd className="mt-1 text-2xl font-semibold text-red-600">${profitLoss.totalExpenses?.toLocaleString()}</dd>
+                <dd className="mt-1 text-2xl font-semibold text-red-600">₹{profitLoss.totalExpenses?.toLocaleString()}</dd>
               </div>
               <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-100 p-5">
                 <dt className="text-sm font-medium text-gray-500 truncate">Payments Received</dt>
-                <dd className="mt-1 text-2xl font-semibold text-green-600">${profitLoss.totalPaymentsReceived?.toLocaleString()}</dd>
+                <dd className="mt-1 text-2xl font-semibold text-green-600">₹{profitLoss.totalPaymentsReceived?.toLocaleString()}</dd>
               </div>
               <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-100 p-5">
                 <div className="flex items-center justify-between">
                   <dt className="text-sm font-medium text-gray-500 truncate">Net P&L</dt>
                   {getStatusBadge(profitLoss.status)}
                 </div>
-                <dd className="mt-1 text-2xl font-semibold text-gray-900">${profitLoss.netProfitOrLoss?.toLocaleString()}</dd>
+                <dd className="mt-1 text-2xl font-semibold text-gray-900">₹{profitLoss.netProfitOrLoss?.toLocaleString()}</dd>
               </div>
             </div>
           )}
@@ -170,7 +170,7 @@ export const FinancePage = () => {
                           {expense.referenceId || '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600 text-right">
-                          ${expense.amount.toLocaleString()}
+                          ₹{expense.amount.toLocaleString()}
                         </td>
                       </tr>
                     ))}

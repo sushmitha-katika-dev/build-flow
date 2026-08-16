@@ -47,5 +47,15 @@ export const EquipmentService = {
   getUsageByEquipmentId: async (equipmentId: number): Promise<EquipmentUsageRecord[]> => {
     const response = await axiosClient.get<EquipmentUsageRecord[]>(`/equipment/usage/equipment/${equipmentId}`);
     return response.data;
+  },
+
+  getFuelByEquipmentId: async (equipmentId: number): Promise<any[]> => {
+    const response = await axiosClient.get<any[]>(`/fuel/equipment/${equipmentId}`);
+    return response.data;
+  },
+
+  getMaintenanceByEquipmentId: async (equipmentId: number): Promise<any[]> => {
+    const response = await axiosClient.get<any[]>(`/maintenance/equipment/${equipmentId}`);
+    return response.data;
   }
 };

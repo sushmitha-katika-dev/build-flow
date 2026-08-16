@@ -33,8 +33,11 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
         isOpen ? 'translate-x-0' : '-translate-x-full'
       }`}
     >
-      <div className="flex items-center justify-center h-16 bg-gray-800 font-bold text-xl tracking-wider">
-        BuildFlow
+      <div className="flex flex-col items-center justify-center py-4 bg-gray-800 border-b border-gray-700/60">
+        <span className="font-extrabold text-xl tracking-wider text-white">BuildFlow</span>
+        <span className="text-[9px] font-black tracking-widest uppercase text-blue-400 mt-0.5">
+          FROM WORK TO WORTH
+        </span>
       </div>
       
       <div className="overflow-y-auto overflow-x-hidden flex-grow h-[calc(100vh-4rem)]">

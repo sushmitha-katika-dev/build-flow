@@ -97,7 +97,7 @@ export const ProjectFormModal = ({ isOpen, onClose, onProjectCreated }: ProjectF
         />
 
         <Input
-          label="Estimated Budget ($)"
+          label="Estimated Budget (₹)"
           type="number"
           min="0"
           step="0.01"
