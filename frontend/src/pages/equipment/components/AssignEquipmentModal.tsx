@@ -27,7 +27,7 @@ export const AssignEquipmentModal = ({ isOpen, onClose, equipmentList }: Props) 
 
   useEffect(() => {
     if (isOpen) {
-      ProjectService.getAllProjects().then(setProjects).catch(() => {});
+      ProjectService.getActiveProjects().then(setProjects).catch(() => {});
     }
   }, [isOpen]);
 

@@ -1,5 +1,6 @@
 package com.buildflow.equipment.service.impl;
 
+import com.buildflow.equipment.client.ProjectClient;
 import com.buildflow.equipment.dto.event.EquipmentUsageEvent;
 import com.buildflow.equipment.dto.request.EquipmentUsageCreateRequest;
 import com.buildflow.equipment.dto.response.EquipmentUsageResponse;
@@ -28,6 +29,7 @@ public class EquipmentUsageServiceImpl implements EquipmentUsageService {
 
     private final EquipmentUsageRepository usageRepository;
     private final EquipmentRepository equipmentRepository;
+    private final ProjectClient projectClient;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     private static final String TOPIC_EQUIPMENT_USAGE_LOGGED = "equipment-usage-logged";
@@ -37,7 +39,8 @@ public class EquipmentUsageServiceImpl implements EquipmentUsageService {
     public EquipmentUsageResponse recordUsage(EquipmentUsageCreateRequest request) {
         log.info("Recording usage for equipment: {} on project: {}", request.getEquipmentId(), request.getProjectId());
 
-        // 1. Validate equipment exists and is eligible
+        projectClient.validateProjectIsActive(request.getProjectId());
+
         Equipment equipment = equipmentRepository.findById(request.getEquipmentId())
                 .orElseThrow(() -> new EquipmentNotFoundException("Equipment not found with id: " + request.getEquipmentId()));
 
@@ -49,11 +52,9 @@ public class EquipmentUsageServiceImpl implements EquipmentUsageService {
             throw new IllegalArgumentException("Equipment unit rate is not configured. Cannot calculate usage cost.");
         }
 
-        // 2. Calculate Total Cost
         BigDecimal appliedUnitRate = equipment.getUnitRate();
         BigDecimal totalCost = request.getUnitsUsed().multiply(appliedUnitRate);
 
-        // 3. Persist Usage Record
         EquipmentUsageRecord record = EquipmentUsageRecord.builder()
                 .equipmentId(request.getEquipmentId())
                 .projectId(request.getProjectId())
@@ -65,7 +66,6 @@ public class EquipmentUsageServiceImpl implements EquipmentUsageService {
 
         EquipmentUsageRecord savedRecord = usageRepository.save(record);
 
-        // 4. Publish Financial Event
         EquipmentUsageEvent event = EquipmentUsageEvent.builder()
                 .usageRecordId(savedRecord.getId())
                 .equipmentId(savedRecord.getEquipmentId())
@@ -77,8 +77,11 @@ public class EquipmentUsageServiceImpl implements EquipmentUsageService {
                 .timestamp(LocalDateTime.now())
                 .build();
 
-        kafkaTemplate.send(TOPIC_EQUIPMENT_USAGE_LOGGED, event);
-        log.info("Published equipment-usage-logged event for usage record: {}", savedRecord.getId());
+        try {
+            kafkaTemplate.send(TOPIC_EQUIPMENT_USAGE_LOGGED, event);
+        } catch (Exception e) {
+            log.error("Failed to send equipment usage logged event", e);
+        }
 
         return mapToResponse(savedRecord);
     }

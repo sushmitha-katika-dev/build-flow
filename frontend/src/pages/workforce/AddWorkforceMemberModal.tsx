@@ -1,18 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal } from '../../components/common/Modal';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Alert } from '../../components/common/Alert';
 import { WorkforceService } from '../../services/workforceService';
-import type { LabourCreateRequest, Gender, LabourRole, CompensationType } from '../../types/workforce';
+import type { LabourCreateRequest, Gender, LabourRole, CompensationType, LabourWorkforceSummary } from '../../types/workforce';
 
 interface AddWorkforceMemberModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  initialWorker?: LabourWorkforceSummary | null;
 }
 
-export const AddWorkforceMemberModal = ({ isOpen, onClose, onSuccess }: AddWorkforceMemberModalProps) => {
+export const AddWorkforceMemberModal = ({ isOpen, onClose, onSuccess, initialWorker }: AddWorkforceMemberModalProps) => {
   const [formData, setFormData] = useState<LabourCreateRequest>({
     firstName: '',
     lastName: '',
@@ -28,15 +29,20 @@ export const AddWorkforceMemberModal = ({ isOpen, onClose, onSuccess }: AddWorkf
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      setIsLoading(true);
-      setError(null);
-      await WorkforceService.createLabourer(formData);
-      onSuccess();
-      onClose();
-      // Reset form
+  useEffect(() => {
+    if (initialWorker) {
+      setFormData({
+        firstName: initialWorker.firstName || '',
+        lastName: initialWorker.lastName || '',
+        phoneNumber: initialWorker.phoneNumber || '',
+        gender: initialWorker.gender || 'MALE',
+        role: initialWorker.role || 'LABORER',
+        compensationType: initialWorker.compensationType || 'DAILY',
+        dailyRate: initialWorker.dailyRate || undefined,
+        monthlySalary: initialWorker.monthlySalary || undefined,
+        projectId: initialWorker.projectId || undefined,
+      });
+    } else {
       setFormData({
         firstName: '',
         lastName: '',
@@ -48,15 +54,30 @@ export const AddWorkforceMemberModal = ({ isOpen, onClose, onSuccess }: AddWorkf
         monthlySalary: undefined,
         projectId: undefined,
       });
+    }
+  }, [initialWorker, isOpen]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setIsLoading(true);
+      setError(null);
+      if (initialWorker && initialWorker.id) {
+        await WorkforceService.updateLabourer(initialWorker.id, formData);
+      } else {
+        await WorkforceService.createLabourer(formData);
+      }
+      onSuccess();
+      onClose();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to add worker.');
+      setError(err.response?.data?.message || 'Failed to save worker.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add Worker">
+    <Modal isOpen={isOpen} onClose={onClose} title={initialWorker ? "Edit Worker" : "Add Worker"}>
       {error && <div className="mb-4"><Alert type="error" message={error} /></div>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
@@ -81,6 +102,7 @@ export const AddWorkforceMemberModal = ({ isOpen, onClose, onSuccess }: AddWorkf
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
           <input
+            className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             value={formData.phoneNumber || ''}
             onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
             placeholder="Optional"
@@ -128,21 +150,22 @@ export const AddWorkforceMemberModal = ({ isOpen, onClose, onSuccess }: AddWorkf
           </select>
         </div>
 
-        {formData.compensationType === 'DAILY' && (
+        {!initialWorker && formData.compensationType === 'DAILY' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Daily Rate *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Base Daily Rate (Optional)</label>
             <input
               type="number"
-              required
               min="0"
               step="0.01"
+              className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               value={formData.dailyRate || ''}
-              onChange={(e) => setFormData({ ...formData, dailyRate: parseFloat(e.target.value) })}
+              onChange={(e) => setFormData({ ...formData, dailyRate: e.target.value ? parseFloat(e.target.value) : undefined })}
+              placeholder="e.g. 800 (rates can also be logged per day during attendance)"
             />
           </div>
         )}
 
-        {formData.compensationType === 'MONTHLY' && (
+        {!initialWorker && formData.compensationType === 'MONTHLY' && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Salary *</label>
             <input
@@ -150,20 +173,19 @@ export const AddWorkforceMemberModal = ({ isOpen, onClose, onSuccess }: AddWorkf
               required
               min="0"
               step="0.01"
+              className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               value={formData.monthlySalary || ''}
               onChange={(e) => setFormData({ ...formData, monthlySalary: parseFloat(e.target.value) })}
             />
           </div>
         )}
 
-
-
         <div className="flex justify-end space-x-3 pt-4">
           <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Saving...' : 'Add Worker'}
+            {isLoading ? 'Saving...' : initialWorker ? 'Update Worker' : 'Add Worker'}
           </Button>
         </div>
       </form>

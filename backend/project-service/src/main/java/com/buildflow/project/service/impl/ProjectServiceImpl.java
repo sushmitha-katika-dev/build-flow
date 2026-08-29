@@ -18,6 +18,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -37,27 +38,29 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectResponse createProject(ProjectCreateRequest request) {
         log.info("Creating new project: {}", request.getProjectName());
         
-        // Validate business rules
         projectValidator.validateCreateRequest(request);
 
-        // Generate project code
         String projectCode = "PRJ-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         if (projectRepository.existsByProjectCode(projectCode)) {
             throw new DuplicateProjectException("Project with code " + projectCode + " already exists");
         }
 
-        // Convert DTO to Entity
         Project project = projectMapper.toEntity(request);
         project.setProjectCode(projectCode);
         project.setStatus(ProjectStatus.PLANNED);
 
-        // Save project
         project = projectRepository.save(project);
+        log.info("Project created with id: {}", project.getId());
 
-        // Publish event
-        kafkaTemplate.send(ProjectConstants.PROJECT_CREATED_TOPIC, project);
+        ProjectResponse response = projectMapper.toResponse(project);
+        
+        try {
+            kafkaTemplate.send(ProjectConstants.PROJECT_CREATED_TOPIC, response);
+        } catch (Exception e) {
+            log.error("Failed to send project created event", e);
+        }
 
-        return projectMapper.toResponse(project);
+        return response;
     }
 
     @Override
@@ -77,8 +80,19 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<ProjectResponse> getActiveProjects() {
+        List<ProjectStatus> closedStatuses = Arrays.asList(ProjectStatus.COMPLETED, ProjectStatus.CANCELLED);
+        return projectRepository.findByStatusNotIn(closedStatuses).stream()
+                .map(projectMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
     public ProjectResponse updateProject(Long id, ProjectUpdateRequest request) {
+        log.info("Updating project id: {}", id);
+        
         Project project = projectRepository.findById(id)
                 .orElseThrow(ProjectNotFoundException::new);
 
@@ -90,15 +104,17 @@ public class ProjectServiceImpl implements ProjectService {
         if (request.getClientContact() != null) project.setClientContact(request.getClientContact());
         if (request.getLocation() != null) project.setLocation(request.getLocation());
         if (request.getExpectedEndDate() != null) project.setExpectedEndDate(request.getExpectedEndDate());
-        if (request.getActualEndDate() != null) project.setActualEndDate(request.getActualEndDate());
         if (request.getEstimatedBudget() != null) project.setEstimatedBudget(request.getEstimatedBudget());
 
         project = projectRepository.save(project);
-        
-        // Publish event for budget changes
-        kafkaTemplate.send(ProjectConstants.PROJECT_UPDATED_TOPIC, project);
-        
-        return projectMapper.toResponse(project);
+
+        ProjectResponse response = projectMapper.toResponse(project);
+        try {
+            kafkaTemplate.send(ProjectConstants.PROJECT_UPDATED_TOPIC, response);
+        } catch (Exception e) {
+            log.error("Failed to send project updated event", e);
+        }
+        return response;
     }
 
     @Override
@@ -112,12 +128,19 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public ProjectResponse updateProjectStatus(Long id, ProjectStatus status) {
+        log.info("Updating status for project id: {} to {}", id, status);
         Project project = projectRepository.findById(id)
                 .orElseThrow(ProjectNotFoundException::new);
 
         project.setStatus(status);
         project = projectRepository.save(project);
         
-        return projectMapper.toResponse(project);
+        ProjectResponse response = projectMapper.toResponse(project);
+        try {
+            kafkaTemplate.send(ProjectConstants.PROJECT_UPDATED_TOPIC, response);
+        } catch (Exception e) {
+            log.error("Failed to send project updated event", e);
+        }
+        return response;
     }
 }

@@ -34,6 +34,11 @@ export const EquipmentService = {
     return response.data;
   },
 
+  returnEquipment: async (assignmentId: number): Promise<EquipmentAssignment> => {
+    const response = await axiosClient.put<EquipmentAssignment>(`/equipment/assignments/${assignmentId}/return`);
+    return response.data;
+  },
+
   recordUsage: async (data: EquipmentUsageCreateRequest): Promise<EquipmentUsageRecord> => {
     const response = await axiosClient.post<EquipmentUsageRecord>('/equipment/usage', data);
     return response.data;

@@ -66,8 +66,14 @@ public class EquipmentController {
     }
 
     @PutMapping("/assignments/{assignmentId}/return")
-    @Operation(summary = "Return assigned equipment")
+    @Operation(summary = "Return assigned equipment (PUT)")
     public ResponseEntity<EquipmentAssignmentResponse> returnEquipment(@PathVariable Long assignmentId) {
+        return ResponseEntity.ok(assignmentService.returnEquipment(assignmentId));
+    }
+
+    @PostMapping("/assignments/{assignmentId}/return")
+    @Operation(summary = "Return assigned equipment (POST)")
+    public ResponseEntity<EquipmentAssignmentResponse> returnEquipmentPost(@PathVariable Long assignmentId) {
         return ResponseEntity.ok(assignmentService.returnEquipment(assignmentId));
     }
 

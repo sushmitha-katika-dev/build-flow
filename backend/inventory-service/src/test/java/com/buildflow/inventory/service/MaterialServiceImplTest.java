@@ -55,7 +55,6 @@ class MaterialServiceImplTest {
         request.setName("Cement");
         request.setType(MaterialType.CEMENT);
         request.setUnit(MaterialUnit.BAG);
-        request.setUnitPrice(BigDecimal.valueOf(350));
         request.setReorderLevel(BigDecimal.valueOf(100));
 
         material = new Material();

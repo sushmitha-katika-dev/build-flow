@@ -41,6 +41,9 @@ public class Attendance {
     private LocalTime checkInTime;
     private LocalTime checkOutTime;
 
+    @Column(name = "daily_rate")
+    private java.math.BigDecimal dailyRate;
+
     private String notes;
 
     @CreationTimestamp

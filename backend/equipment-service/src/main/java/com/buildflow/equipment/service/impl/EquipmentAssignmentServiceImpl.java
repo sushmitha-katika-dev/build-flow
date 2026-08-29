@@ -1,5 +1,6 @@
 package com.buildflow.equipment.service.impl;
 
+import com.buildflow.equipment.client.ProjectClient;
 import com.buildflow.equipment.constants.EquipmentConstants;
 import com.buildflow.equipment.dto.request.EquipmentAssignmentRequest;
 import com.buildflow.equipment.dto.response.EquipmentAssignmentResponse;
@@ -31,6 +32,7 @@ public class EquipmentAssignmentServiceImpl implements EquipmentAssignmentServic
     private final EquipmentRepository equipmentRepository;
     private final EquipmentAssignmentMapper assignmentMapper;
     private final EquipmentValidator equipmentValidator;
+    private final ProjectClient projectClient;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Override
@@ -38,12 +40,13 @@ public class EquipmentAssignmentServiceImpl implements EquipmentAssignmentServic
     public EquipmentAssignmentResponse assignEquipment(Long equipmentId, EquipmentAssignmentRequest request) {
         log.info("Assigning equipment id: {} to project id: {}", equipmentId, request.getProjectId());
         
+        projectClient.validateProjectIsActive(request.getProjectId());
+
         Equipment equipment = equipmentRepository.findById(equipmentId)
                 .orElseThrow(() -> new EquipmentNotFoundException("Equipment not found with id: " + equipmentId));
                 
         equipmentValidator.validateEquipmentAssignment(equipment, request);
         
-        // Update equipment available quantity
         equipment.setAvailableQuantity(equipment.getAvailableQuantity() - request.getAssignedQuantity());
         
         if (equipment.getAvailableQuantity() == 0 && equipment.getStatus() == EquipmentStatus.AVAILABLE) {
@@ -57,8 +60,11 @@ public class EquipmentAssignmentServiceImpl implements EquipmentAssignmentServic
         
         EquipmentAssignmentResponse response = assignmentMapper.toResponse(savedAssignment);
         
-        // Send Kafka event
-        kafkaTemplate.send(EquipmentConstants.EQUIPMENT_ASSIGNED_TOPIC, response);
+        try {
+            kafkaTemplate.send(EquipmentConstants.EQUIPMENT_ASSIGNED_TOPIC, response);
+        } catch (Exception e) {
+            log.error("Failed to send equipment assigned event", e);
+        }
         
         return response;
     }
@@ -105,5 +111,31 @@ public class EquipmentAssignmentServiceImpl implements EquipmentAssignmentServic
         return assignmentRepository.findByProjectId(projectId).stream()
                 .map(assignmentMapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void closeActiveAssignmentsForProject(Long projectId) {
+        if (projectId == null) return;
+        log.info("Closing all active equipment assignments for project ID: {}", projectId);
+
+        List<EquipmentAssignment> activeAssignments = assignmentRepository.findByProjectId(projectId).stream()
+                .filter(a -> a.getReturnDate() == null)
+                .collect(Collectors.toList());
+
+        for (EquipmentAssignment assignment : activeAssignments) {
+            assignment.setReturnDate(LocalDate.now());
+            assignmentRepository.save(assignment);
+
+            Equipment equipment = equipmentRepository.findById(assignment.getEquipmentId()).orElse(null);
+            if (equipment != null) {
+                equipment.setAvailableQuantity(equipment.getAvailableQuantity() + assignment.getAssignedQuantity());
+                if (equipment.getStatus() == EquipmentStatus.IN_USE && equipment.getAvailableQuantity() > 0) {
+                    equipment.setStatus(EquipmentStatus.AVAILABLE);
+                }
+                equipmentRepository.save(equipment);
+                log.info("Returned equipment ID: {} from closed project ID: {}", equipment.getId(), projectId);
+            }
+        }
     }
 }

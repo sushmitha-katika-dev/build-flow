@@ -10,18 +10,12 @@ import java.util.List;
 
 public interface LabourService {
     LabourResponse onboardLabour(LabourCreateRequest request);
-
     LabourResponse getLabourById(Long id);
-
     List<LabourResponse> getAllLabour();
-
     List<LabourResponse> getLabourByProject(Long projectId);
-
     List<LabourWorkforceSummaryResponse> getLabourSummary();
-
     List<LabourWorkforceSummaryResponse> getLabourSummaryByProject(Long projectId);
-
     LabourResponse updateLabour(Long id, LabourUpdateRequest request);
-
     LabourResponse updateLabourStatus(Long id, LabourStatus status);
+    LabourResponse deleteLabour(Long id);
 }

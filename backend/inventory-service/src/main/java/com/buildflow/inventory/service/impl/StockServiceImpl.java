@@ -172,7 +172,8 @@ public class StockServiceImpl implements StockService {
     public Stock processStockOut(Long materialId, Long projectId, String variant, BigDecimal quantity) {
         String safeVariant = (variant == null || variant.trim().isEmpty()) ? "DEFAULT" : variant.trim();
         Stock stock = stockRepository.findByMaterialIdAndProjectIdAndVariant(materialId, projectId, safeVariant)
-                .orElseThrow(() -> new ResourceNotFoundException("Stock not found for material ID: " + materialId + " and project ID: " + projectId + " and variant: " + safeVariant));
+                .orElseGet(() -> stockRepository.findByMaterialIdAndProjectIdAndVariant(materialId, 0L, safeVariant)
+                        .orElseThrow(() -> new ResourceNotFoundException("Stock not found for material ID: " + materialId + " and variant: " + safeVariant)));
 
         if (stock.getCurrentStock().compareTo(quantity) < 0) {
             throw new IllegalArgumentException("Insufficient stock for material ID: " + materialId);

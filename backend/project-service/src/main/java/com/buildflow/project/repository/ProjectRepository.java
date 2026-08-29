@@ -5,6 +5,7 @@ import com.buildflow.project.enums.ProjectStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,4 +17,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     boolean existsByProjectCode(String projectCode);
 
     List<Project> findByStatus(ProjectStatus status);
+
+    List<Project> findByStatusNotIn(Collection<ProjectStatus> statuses);
 }

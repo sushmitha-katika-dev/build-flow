@@ -25,6 +25,7 @@ export interface LabourWorkforceSummary {
   id: number;
   firstName: string;
   lastName: string;
+  phoneNumber?: string;
   gender: Gender;
   role: LabourRole;
   projectId?: number;
@@ -36,6 +37,7 @@ export interface LabourWorkforceSummary {
   amountPaid: number;
   remainingAmount: number;
   paymentStatus: PaymentStatus;
+  status?: LabourStatus;
 }
 
 export interface FixedWorkAgreement {
@@ -73,6 +75,7 @@ export interface AttendanceRecord {
   checkInTime?: string;
   checkOutTime?: string;
   earned: number;
+  dailyRate?: number;
   notes?: string;
 }
 
@@ -91,6 +94,7 @@ export interface LogAttendanceRequest {
   projectId?: number | null;
   date: string;
   status: AttendanceStatus;
+  dailyRate?: number;
   notes?: string;
 }
 

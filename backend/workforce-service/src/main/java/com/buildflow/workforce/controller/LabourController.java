@@ -75,4 +75,10 @@ public class LabourController {
             @RequestParam LabourStatus status) {
         return ResponseEntity.ok(labourService.updateLabourStatus(id, status));
     }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete or deactivate labour")
+    public ResponseEntity<LabourResponse> deleteLabour(@PathVariable Long id) {
+        return ResponseEntity.ok(labourService.deleteLabour(id));
+    }
 }

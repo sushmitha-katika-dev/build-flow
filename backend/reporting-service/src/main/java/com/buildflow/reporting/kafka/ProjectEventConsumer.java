@@ -25,10 +25,20 @@ public class ProjectEventConsumer {
     public void consumeProjectCreated(Map<String, Object> event) {
         log.info("Consumed Project Created Event: {}", event);
         try {
+            if (event == null || event.get("id") == null) {
+                log.warn("Skipping null project created event");
+                return;
+            }
             Long projectId = Long.valueOf(event.get("id").toString());
-            String name = (String) event.get("name");
-            String status = (String) event.get("status");
-            BigDecimal budget = new BigDecimal(event.get("estimated_budget").toString());
+            
+            Object nameObj = event.get("projectName") != null ? event.get("projectName") : event.get("name");
+            String name = nameObj != null ? nameObj.toString() : "Project #" + projectId;
+            
+            Object statusObj = event.get("status");
+            String status = statusObj != null ? statusObj.toString() : "PLANNED";
+            
+            Object budgetObj = event.get("estimatedBudget") != null ? event.get("estimatedBudget") : event.get("estimated_budget");
+            BigDecimal budget = budgetObj != null ? new BigDecimal(budgetObj.toString()) : BigDecimal.ZERO;
             
             ProjectSummary summary = ProjectSummary.builder()
                     .projectId(projectId)

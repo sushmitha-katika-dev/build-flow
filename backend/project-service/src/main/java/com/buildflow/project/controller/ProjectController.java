@@ -37,8 +37,18 @@ public class ProjectController {
 
     @GetMapping
     @Operation(summary = "Get all projects")
-    public ResponseEntity<List<ProjectResponse>> getAllProjects() {
+    public ResponseEntity<List<ProjectResponse>> getAllProjects(
+            @RequestParam(required = false, defaultValue = "false") boolean activeOnly) {
+        if (activeOnly) {
+            return ResponseEntity.ok(projectService.getActiveProjects());
+        }
         return ResponseEntity.ok(projectService.getAllProjects());
+    }
+
+    @GetMapping("/active")
+    @Operation(summary = "Get active projects only")
+    public ResponseEntity<List<ProjectResponse>> getActiveProjects() {
+        return ResponseEntity.ok(projectService.getActiveProjects());
     }
 
     @PutMapping("/{id}")
@@ -59,6 +69,14 @@ public class ProjectController {
     @PatchMapping("/{id}/status")
     @Operation(summary = "Update project status")
     public ResponseEntity<ProjectResponse> updateProjectStatus(
+            @PathVariable Long id, 
+            @RequestParam ProjectStatus status) {
+        return ResponseEntity.ok(projectService.updateProjectStatus(id, status));
+    }
+
+    @PutMapping("/{id}/status")
+    @Operation(summary = "Update project status (PUT alternative)")
+    public ResponseEntity<ProjectResponse> updateProjectStatusPut(
             @PathVariable Long id, 
             @RequestParam ProjectStatus status) {
         return ResponseEntity.ok(projectService.updateProjectStatus(id, status));

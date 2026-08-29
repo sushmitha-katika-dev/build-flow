@@ -32,6 +32,11 @@ export const WorkforceService = {
     return response.data;
   },
 
+  deleteLabourer: async (id: number): Promise<Labourer> => {
+    const response = await axiosClient.delete<Labourer>(`/workforce/labour/${id}`);
+    return response.data;
+  },
+
   getLabourSummary: async (): Promise<LabourWorkforceSummary[]> => {
     const response = await axiosClient.get<LabourWorkforceSummary[]>('/workforce/labour/summary');
     return response.data;

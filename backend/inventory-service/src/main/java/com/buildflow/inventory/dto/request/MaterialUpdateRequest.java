@@ -11,5 +11,6 @@ public class MaterialUpdateRequest {
     private String name;
     private String description;
     private MaterialType type;
+    private MaterialUnit unit;
     private BigDecimal reorderLevel;
 }

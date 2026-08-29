@@ -29,7 +29,7 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "*"
-        spring.json.type.mapping: "com.buildflow.project.entity.Project:com.buildflow.finance.event.ProjectEvent,com.buildflow.workforce.event.AttendanceEvent:com.buildflow.finance.event.AttendanceEvent,com.buildflow.workforce.event.FixedWorkAgreementEvent:com.buildflow.finance.event.FixedWorkAgreementEvent,com.buildflow.workforce.event.WageEvent:com.buildflow.finance.event.WageEvent,com.buildflow.inventory.entity.InventoryTransaction:com.buildflow.finance.event.InventoryTransactionEvent,com.buildflow.equipment.dto.event.EquipmentUsageEvent:com.buildflow.finance.event.EquipmentUsageEvent"
+        spring.json.type.mapping: "com.buildflow.project.dto.response.ProjectResponse:com.buildflow.finance.event.ProjectEvent,com.buildflow.project.entity.Project:com.buildflow.finance.event.ProjectEvent,com.buildflow.workforce.event.AttendanceEvent:com.buildflow.finance.event.AttendanceEvent,com.buildflow.workforce.event.FixedWorkAgreementEvent:com.buildflow.finance.event.FixedWorkAgreementEvent,com.buildflow.workforce.event.WageEvent:com.buildflow.finance.event.WageEvent,com.buildflow.inventory.entity.InventoryTransaction:com.buildflow.finance.event.InventoryTransactionEvent,com.buildflow.equipment.dto.event.EquipmentUsageEvent:com.buildflow.finance.event.EquipmentUsageEvent"
 
 logging:
   level:

@@ -24,5 +24,6 @@ public class AttendanceCreateRequest {
     private LocalTime checkInTime;
     private LocalTime checkOutTime;
     
+    private java.math.BigDecimal dailyRate;
     private String notes;
 }

@@ -24,6 +24,7 @@ public class AttendanceResponse {
     private LocalTime checkInTime;
     private LocalTime checkOutTime;
     private BigDecimal earned;
+    private BigDecimal dailyRate;
     private String notes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
