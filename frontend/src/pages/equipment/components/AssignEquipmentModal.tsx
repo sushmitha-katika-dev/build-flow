@@ -80,8 +80,14 @@ export const AssignEquipmentModal = ({ isOpen, onClose, equipmentList }: Props) 
               <select
                 required
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                value={equipmentId}
-                onChange={(e) => setEquipmentId(Number(e.target.value))}
+                onChange={(e) => {
+                  const id = Number(e.target.value);
+                  setEquipmentId(id);
+                  const eq = equipmentList.find(item => item.id === id);
+                  if (eq && eq.unitRate) {
+                    setFormData(prev => ({ ...prev, agreedUnitRate: eq.unitRate }));
+                  }
+                }}
               >
                 <option value={0}>Select Equipment</option>
                 {equipmentList.filter(e => e.status === 'AVAILABLE' || e.isBulk).map(eq => (
@@ -132,6 +138,22 @@ export const AssignEquipmentModal = ({ isOpen, onClose, equipmentList }: Props) 
                   onChange={(e) => setFormData({ ...formData, assignmentDate: e.target.value })}
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Agreed Unit Rate (₹) for Project * ({selectedEquipment?.usageUnit === 'HOURLY' ? 'per hour' : 'per day'})
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                required
+                placeholder="e.g. 800"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold"
+                value={formData.agreedUnitRate ?? ''}
+                onChange={(e) => setFormData({ ...formData, agreedUnitRate: e.target.value ? parseFloat(e.target.value) : undefined })}
+              />
             </div>
 
             <div>

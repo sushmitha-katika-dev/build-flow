@@ -349,13 +349,17 @@ export const WorkforcePage = () => {
                       <span className={`px-2.5 py-1 text-xs font-bold rounded-lg border ${getRoleBadgeColor(worker.role)}`}>
                         {worker.role}
                       </span>
-                      {worker.projectId ? (
-                        <div className="text-xs text-gray-500 mt-1 font-medium">
-                          Project #{worker.projectId}
-                        </div>
-                      ) : (
-                        <div className="text-xs text-gray-400 mt-1 italic">Unassigned</div>
-                      )}
+                      {(() => {
+                        const matchedProj = projects.find(p => p.id === worker.projectId);
+                        return matchedProj ? (
+                          <div className="text-xs text-slate-700 font-bold mt-1 flex items-center">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 inline-block"></span>
+                            {matchedProj.projectName}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-400 mt-1 italic">Unassigned</div>
+                        );
+                      })()}
                     </td>
 
                     {/* 3. Wage Rate / Type */}
@@ -467,7 +471,7 @@ export const WorkforcePage = () => {
               onChange={(e) => setSelectedProjectId(e.target.value)}
             >
               <option value="">-- Select Project --</option>
-              {projects.map(p => (
+              {projects.filter(p => p.status !== 'COMPLETED' && p.status !== 'CANCELLED').map(p => (
                 <option key={p.id} value={p.id}>{p.projectName}</option>
               ))}
             </select>
@@ -483,18 +487,24 @@ export const WorkforcePage = () => {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Daily Wage Rate for this Day (₹)</label>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder={`Base rate: ₹${quickAttendanceWorker?.dailyRate || 0}`}
-              value={attendanceDailyRate}
-              onChange={(e) => setAttendanceDailyRate(e.target.value ? parseFloat(e.target.value) : '')}
-            />
-            <p className="text-[11px] text-gray-500 mt-1">Can be modified per day for overtime or special task adjustments.</p>
-          </div>
+          {quickAttendanceWorker?.compensationType === 'DAILY' ? (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Daily Wage Rate for this Day (₹)</label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder={`Base rate: ₹${quickAttendanceWorker?.dailyRate || 0}`}
+                value={attendanceDailyRate}
+                onChange={(e) => setAttendanceDailyRate(e.target.value ? parseFloat(e.target.value) : '')}
+              />
+              <p className="text-[11px] text-gray-500 mt-1">Can be modified per day for overtime or special task adjustments.</p>
+            </div>
+          ) : (
+            <div className="p-3.5 bg-slate-100/80 border border-slate-200 rounded-xl text-xs text-slate-700 font-medium">
+              💡 Attendance for <strong>{quickAttendanceWorker?.firstName} ({quickAttendanceWorker?.role})</strong> is recorded for site presence logs only. Compensation is governed by {quickAttendanceWorker?.compensationType === 'FIXED_WORK' ? 'Fixed Contract Agreements' : 'Monthly Fixed Salary'}.
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Attendance Status *</label>

@@ -141,8 +141,8 @@ export const FinancePage = () => {
 
           <Button 
             onClick={() => setIsExpenseModalOpen(true)} 
-            disabled={selectedProjectId === 0}
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-md flex items-center"
+            disabled={selectedProjectId === 0 || (projects.find(p => p.id === selectedProjectId)?.status === 'COMPLETED' || projects.find(p => p.id === selectedProjectId)?.status === 'CANCELLED')}
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-md flex items-center disabled:opacity-50"
           >
             <Plus className="w-4 h-4 mr-2" />
             Log General Expense
@@ -151,18 +151,26 @@ export const FinancePage = () => {
       </div>
 
       {/* Project Selector Bar */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center space-x-4">
-        <label className="text-sm font-bold text-gray-700 whitespace-nowrap">Select Project:</label>
-        <select
-          className="block w-full max-w-md rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm font-semibold focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
-          value={selectedProjectId}
-          onChange={(e) => setSelectedProjectId(Number(e.target.value))}
-        >
-          <option value={0}>-- Choose a Project to View Financial Ledger --</option>
-          {projects.map(p => (
-            <option key={p.id} value={p.id}>{p.projectName}</option>
-          ))}
-        </select>
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center space-x-4 w-full max-w-md">
+          <label className="text-sm font-bold text-gray-700 whitespace-nowrap">Select Project:</label>
+          <select
+            className="block w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm font-semibold focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+            value={selectedProjectId}
+            onChange={(e) => setSelectedProjectId(Number(e.target.value))}
+          >
+            <option value={0}>-- Choose a Project to View Financial Ledger --</option>
+            {projects.map(p => (
+              <option key={p.id} value={p.id}>{p.projectName} {p.status === 'COMPLETED' || p.status === 'CANCELLED' ? `(${p.status})` : ''}</option>
+            ))}
+          </select>
+        </div>
+
+        {selectedProjectId !== 0 && (projects.find(p => p.id === selectedProjectId)?.status === 'COMPLETED' || projects.find(p => p.id === selectedProjectId)?.status === 'CANCELLED') && (
+          <span className="text-xs font-bold px-3 py-1.5 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl flex items-center">
+            🔒 Project is {projects.find(p => p.id === selectedProjectId)?.status} — New general expenses disabled. Wage payments open for settlement.
+          </span>
+        )}
       </div>
 
       {error && <Alert type="error" message={error} />}

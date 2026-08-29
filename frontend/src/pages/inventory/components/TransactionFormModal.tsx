@@ -31,7 +31,7 @@ export const TransactionFormModal = ({ isOpen, onClose, materials, mode }: Props
 
   useEffect(() => {
     if (isOpen) {
-      ProjectService.getAllProjects().then(setProjects).catch(() => {});
+      ProjectService.getActiveProjects().then(setProjects).catch(() => {});
       
       setFormData({
         materialId: 0,
@@ -130,15 +130,19 @@ export const TransactionFormModal = ({ isOpen, onClose, materials, mode }: Props
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Specification / Variant / Size</label>
+              <label className="block text-sm font-semibold text-gray-800">
+                Brand / Specification / Variant (Optional)
+              </label>
               <input
                 type="text"
-                placeholder={mode === 'COMPANY_STOCK_IN' ? 'e.g. 8mm, OPC 53 Grade' : 'Enter exact variant to dispatch'}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder={mode === 'COMPANY_STOCK_IN' ? 'e.g. UltraTech, Birla Super, ACC 53 Grade, Vizag 12mm' : 'Enter brand/variant (e.g. UltraTech)'}
+                className="mt-1 block w-full rounded-xl border border-gray-300 px-3.5 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 value={formData.variant || ''}
                 onChange={(e) => setFormData({ ...formData, variant: e.target.value })}
               />
-              <p className="mt-1 text-xs text-gray-500">Leave blank for default</p>
+              <p className="mt-1 text-[11px] text-gray-500">
+                Specify brand (e.g. UltraTech, Birla) or grade specs. Leave blank if not specified.
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

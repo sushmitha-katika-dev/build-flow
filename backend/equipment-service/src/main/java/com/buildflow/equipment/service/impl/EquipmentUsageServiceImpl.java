@@ -22,6 +22,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.buildflow.equipment.entity.EquipmentAssignment;
+import com.buildflow.equipment.repository.EquipmentAssignmentRepository;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -29,6 +32,7 @@ public class EquipmentUsageServiceImpl implements EquipmentUsageService {
 
     private final EquipmentUsageRepository usageRepository;
     private final EquipmentRepository equipmentRepository;
+    private final EquipmentAssignmentRepository assignmentRepository;
     private final ProjectClient projectClient;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
@@ -48,11 +52,18 @@ public class EquipmentUsageServiceImpl implements EquipmentUsageService {
             throw new IllegalArgumentException("Cannot record usage for RETIRED equipment.");
         }
         
-        if (equipment.getUnitRate() == null) {
-            throw new IllegalArgumentException("Equipment unit rate is not configured. Cannot calculate usage cost.");
+        BigDecimal appliedUnitRate = null;
+        List<EquipmentAssignment> activeAssignments = assignmentRepository.findByEquipmentIdAndProjectIdAndReturnDateIsNull(request.getEquipmentId(), request.getProjectId());
+        if (!activeAssignments.isEmpty() && activeAssignments.get(0).getAgreedUnitRate() != null) {
+            appliedUnitRate = activeAssignments.get(0).getAgreedUnitRate();
+        } else {
+            appliedUnitRate = equipment.getUnitRate();
         }
 
-        BigDecimal appliedUnitRate = equipment.getUnitRate();
+        if (appliedUnitRate == null) {
+            throw new IllegalArgumentException("No agreed unit rate set for this project assignment.");
+        }
+
         BigDecimal totalCost = request.getUnitsUsed().multiply(appliedUnitRate);
 
         EquipmentUsageRecord record = EquipmentUsageRecord.builder()

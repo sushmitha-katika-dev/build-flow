@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.buildflow.finance.client.ProjectClient;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -25,11 +27,17 @@ public class ExpenseServiceImpl implements ExpenseService {
     private final ExpenseRepository expenseRepository;
     private final FinanceMapper financeMapper;
     private final BudgetService budgetService;
+    private final ProjectClient projectClient;
 
     @Override
     @Transactional
     public ExpenseResponse addExpense(ExpenseRequest request) {
         log.info("Adding expense for project id: {}", request.getProjectId());
+        String cat = request.getCategory() != null ? request.getCategory().name() : "";
+        boolean isWagePayment = "WORKFORCE".equals(cat) || "LABOUR".equals(cat) || "WAGE".equals(cat);
+        if (!isWagePayment && request.getProjectId() != null && request.getProjectId() > 0) {
+            projectClient.validateProjectIsActive(request.getProjectId());
+        }
         
         Expense expense = financeMapper.toEntity(request);
         Expense savedExpense = expenseRepository.save(expense);

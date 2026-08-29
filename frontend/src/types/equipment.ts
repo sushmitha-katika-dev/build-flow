@@ -39,6 +39,7 @@ export interface EquipmentAssignment {
   assignedQuantity: number;
   assignmentDate: string;
   returnDate?: string;
+  agreedUnitRate?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -48,6 +49,7 @@ export interface EquipmentAssignmentRequest {
   assignedQuantity: number;
   assignmentDate: string;
   returnDate?: string;
+  agreedUnitRate?: number;
 }
 
 export interface EquipmentUsageRecord {

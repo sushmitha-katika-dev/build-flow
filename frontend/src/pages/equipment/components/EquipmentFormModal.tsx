@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { EquipmentService } from '../../../services/equipmentService';
-import type { EquipmentCreateRequest, EquipmentType, EquipmentStatus } from '../../../types/equipment';
+import type { EquipmentCreateRequest, EquipmentType } from '../../../types/equipment';
 import { Button } from '../../../components/common/Button';
 import { Alert } from '../../../components/common/Alert';
 
@@ -87,38 +87,21 @@ export const EquipmentFormModal = ({ isOpen, onClose, onSuccess }: Props) => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Type *</label>
-                <select
-                  required
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value as EquipmentType })}
-                >
-                  <option value="HEAVY_MACHINERY">Heavy Machinery</option>
-                  <option value="VEHICLE">Vehicle</option>
-                  <option value="POWER_TOOL">Power Tool</option>
-                  <option value="HAND_TOOL">Hand Tool</option>
-                  <option value="SAFETY_GEAR">Safety Gear</option>
-                  <option value="OTHER">Other</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Status *</label>
-                <select
-                  required
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as EquipmentStatus })}
-                >
-                  <option value="AVAILABLE">Available</option>
-                  <option value="IN_USE">In Use</option>
-                  <option value="UNDER_MAINTENANCE">Maintenance</option>
-                  <option value="OUT_OF_SERVICE">Out of Service</option>
-                </select>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Type *</label>
+              <select
+                required
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                value={formData.type}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value as EquipmentType })}
+              >
+                <option value="HEAVY_MACHINERY">Heavy Machinery (Excavators, Cranes)</option>
+                <option value="VEHICLE">Vehicle (Dumpers, Trucks)</option>
+                <option value="POWER_TOOL">Power Tool (Generators, Mixers)</option>
+                <option value="HAND_TOOL">Hand Tool</option>
+                <option value="SAFETY_GEAR">Safety Gear</option>
+                <option value="OTHER">Other</option>
+              </select>
             </div>
 
             <div>
@@ -160,12 +143,17 @@ export const EquipmentFormModal = ({ isOpen, onClose, onSuccess }: Props) => {
             </div>
 
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700">Unit Rate (₹) *</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Default Base Rate (₹) <span className="text-gray-400 font-normal">(Optional)</span>
+              </label>
+              <p className="text-[11px] text-gray-400 mt-0.5">
+                Base fallback rate. The agreed rate for a site is configured during project assignment.
+              </p>
               <input
                 type="number"
                 min="0"
                 step="0.01"
-                required
+                placeholder="e.g. 800 (Optional)"
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 value={formData.unitRate === 0 ? '' : formData.unitRate}
                 onChange={(e) => setFormData({ ...formData, unitRate: e.target.value ? parseFloat(e.target.value) : 0 })}
@@ -178,7 +166,10 @@ export const EquipmentFormModal = ({ isOpen, onClose, onSuccess }: Props) => {
                 id="isBulk"
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 checked={formData.isBulk}
-                onChange={(e) => setFormData({ ...formData, isBulk: e.target.checked })}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setFormData({ ...formData, isBulk: checked, totalQuantity: checked ? (formData.totalQuantity || 10) : 1 });
+                }}
               />
               <label htmlFor="isBulk" className="text-sm font-medium text-gray-700">
                 Is Bulk Item? (e.g. Scaffolding, Helmets)
@@ -186,14 +177,17 @@ export const EquipmentFormModal = ({ isOpen, onClose, onSuccess }: Props) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Total Quantity *</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Total Quantity * {formData.isBulk ? '(Bulk Items)' : '(Single Machine Unit = 1)'}
+              </label>
               <input
                 type="number"
                 min="1"
                 required
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                value={formData.totalQuantity || ''}
-                onChange={(e) => setFormData({ ...formData, totalQuantity: parseInt(e.target.value) })}
+                disabled={!formData.isBulk}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500 font-semibold"
+                value={formData.isBulk ? (formData.totalQuantity || '') : 1}
+                onChange={(e) => setFormData({ ...formData, totalQuantity: parseInt(e.target.value) || 1 })}
               />
             </div>
 

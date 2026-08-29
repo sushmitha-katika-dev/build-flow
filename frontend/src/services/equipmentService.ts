@@ -24,6 +24,15 @@ export const EquipmentService = {
     return response.data;
   },
 
+  updateEquipment: async (id: number, data: Partial<EquipmentCreateRequest>): Promise<Equipment> => {
+    const response = await axiosClient.put<Equipment>(`/equipment/${id}`, data);
+    return response.data;
+  },
+
+  deleteEquipment: async (id: number): Promise<void> => {
+    await axiosClient.delete(`/equipment/${id}`);
+  },
+
   getProjectAssignments: async (projectId: number): Promise<EquipmentAssignment[]> => {
     const response = await axiosClient.get<EquipmentAssignment[]>(`/equipment/projects/${projectId}/assignments`);
     return response.data;

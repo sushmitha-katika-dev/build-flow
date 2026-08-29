@@ -77,7 +77,7 @@ export const EquipmentDetailsModal = ({ isOpen, onClose, equipment }: Props) => 
       <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
         <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={onClose} />
 
-        <div className="relative inline-block w-full max-w-2xl p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-xl">
+        <div className="relative inline-block w-full max-w-2xl p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
           {/* Header */}
           <div className="flex items-center justify-between border-b pb-4 mb-4">
             <div>
@@ -93,9 +93,6 @@ export const EquipmentDetailsModal = ({ isOpen, onClose, equipment }: Props) => 
               <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
                 {equipment.ownershipType}
               </span>
-              <p className="text-sm font-extrabold text-gray-900 mt-1">
-                ₹{equipment.unitRate?.toLocaleString()}/{equipment.usageUnit === 'HOURLY' ? 'hr' : 'day'}
-              </p>
             </div>
           </div>
 
@@ -109,21 +106,35 @@ export const EquipmentDetailsModal = ({ isOpen, onClose, equipment }: Props) => 
             </div>
           ) : (
             <div className="space-y-5">
-              {/* Summary Cards */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                  <p className="text-xs text-gray-500 font-medium">Total Usage Recorded</p>
-                  <p className="text-lg font-bold text-gray-900 mt-0.5">{usageRecords.length} Session(s)</p>
-                </div>
-                <div className="p-3 bg-blue-50/70 rounded-lg border border-blue-200">
-                  <p className="text-xs text-blue-700 font-medium">Total Usage Revenue/Cost</p>
-                  <p className="text-lg font-bold text-blue-800 mt-0.5">₹{totalUsageCost.toLocaleString()}</p>
-                </div>
-                <div className="p-3 bg-purple-50/70 rounded-lg border border-purple-200">
-                  <p className="text-xs text-purple-700 font-medium">Available Quantity</p>
-                  <p className="text-lg font-bold text-purple-800 mt-0.5">
-                    {equipment.isBulk ? `${equipment.availableQuantity} / ${equipment.totalQuantity}` : (equipment.status === 'AVAILABLE' ? '1 Available' : 'In Use')}
+              {/* Prominent Summary Cards (4 Cards) */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                  <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Base Rate</p>
+                  <p className="text-base font-black text-slate-900 mt-0.5">
+                    ₹{(equipment.unitRate || 0).toLocaleString()}
+                    <span className="text-[10px] text-slate-400 font-semibold block uppercase">
+                      / {equipment.usageUnit === 'HOURLY' ? 'hour' : 'day'}
+                    </span>
                   </p>
+                </div>
+
+                <div className="p-3 bg-purple-50/80 rounded-xl border border-purple-200">
+                  <p className="text-[11px] text-purple-700 font-bold uppercase tracking-wider">Available Count</p>
+                  <p className="text-base font-black text-purple-900 mt-0.5">
+                    {equipment.isBulk 
+                      ? `${equipment.availableQuantity} / ${equipment.totalQuantity} Units` 
+                      : (equipment.status === 'AVAILABLE' ? '1 Unit Available' : `0 Units (${equipment.status === 'IN_USE' ? 'Deployed' : 'Unavailable'})`)}
+                  </p>
+                </div>
+
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                  <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider">Total Usage Sessions</p>
+                  <p className="text-base font-black text-gray-900 mt-0.5">{usageRecords.length} Session(s)</p>
+                </div>
+
+                <div className="p-3 bg-blue-50/80 rounded-xl border border-blue-200">
+                  <p className="text-[11px] text-blue-700 font-bold uppercase tracking-wider">Total Usage Cost</p>
+                  <p className="text-base font-black text-blue-800 mt-0.5">₹{totalUsageCost.toLocaleString()}</p>
                 </div>
               </div>
 
@@ -165,11 +176,11 @@ export const EquipmentDetailsModal = ({ isOpen, onClose, equipment }: Props) => 
               {activeTab === 'USAGE' && (
                 <div>
                   {usageRecords.length === 0 ? (
-                    <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-200 text-xs text-gray-500">
+                    <div className="text-center py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-xs text-gray-500">
                       No usage history recorded for this equipment.
                     </div>
                   ) : (
-                    <div className="border border-gray-200 rounded-lg overflow-hidden max-h-60 overflow-y-auto">
+                    <div className="border border-gray-200 rounded-xl overflow-hidden max-h-60 overflow-y-auto">
                       <table className="min-w-full divide-y divide-gray-200 text-xs">
                         <thead className="bg-gray-50 sticky top-0">
                           <tr>
@@ -210,11 +221,11 @@ export const EquipmentDetailsModal = ({ isOpen, onClose, equipment }: Props) => 
               {activeTab === 'MAINTENANCE' && (
                 <div>
                   {maintenanceRecords.length === 0 ? (
-                    <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-200 text-xs text-gray-500">
+                    <div className="text-center py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-xs text-gray-500">
                       No maintenance records found.
                     </div>
                   ) : (
-                    <div className="border border-gray-200 rounded-lg overflow-hidden max-h-60 overflow-y-auto">
+                    <div className="border border-gray-200 rounded-xl overflow-hidden max-h-60 overflow-y-auto">
                       <table className="min-w-full divide-y divide-gray-200 text-xs">
                         <thead className="bg-gray-50 sticky top-0">
                           <tr>
@@ -243,11 +254,11 @@ export const EquipmentDetailsModal = ({ isOpen, onClose, equipment }: Props) => 
               {activeTab === 'FUEL' && (
                 <div>
                   {fuelRecords.length === 0 ? (
-                    <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-200 text-xs text-gray-500">
+                    <div className="text-center py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-xs text-gray-500">
                       No fuel logs recorded.
                     </div>
                   ) : (
-                    <div className="border border-gray-200 rounded-lg overflow-hidden max-h-60 overflow-y-auto">
+                    <div className="border border-gray-200 rounded-xl overflow-hidden max-h-60 overflow-y-auto">
                       <table className="min-w-full divide-y divide-gray-200 text-xs">
                         <thead className="bg-gray-50 sticky top-0">
                           <tr>
@@ -274,7 +285,7 @@ export const EquipmentDetailsModal = ({ isOpen, onClose, equipment }: Props) => 
           )}
 
           <div className="mt-6 sm:flex sm:flex-row-reverse">
-            <Button type="button" variant="secondary" className="w-full sm:w-auto" onClick={onClose}>
+            <Button type="button" variant="secondary" className="w-full sm:w-auto rounded-xl" onClick={onClose}>
               Close
             </Button>
           </div>
