@@ -9,9 +9,12 @@ import lombok.NoArgsConstructor;
 import com.buildflow.auth.enums.Role;
 import jakarta.validation.constraints.NotNull;
 
+import lombok.Builder;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class RegisterRequest {
     @NotBlank(message = "Username cannot be blank")
     private String username;
@@ -25,4 +28,13 @@ public class RegisterRequest {
 
     @NotNull(message = "Role cannot be null")
     private Role role;
+
+    private String adminSecretCode;
+
+    public RegisterRequest(String username, String email, String password, Role role) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+    }
 }

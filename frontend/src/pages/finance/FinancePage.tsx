@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { Plus, Search, Wallet, Receipt } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import { FinanceService } from '../../services/financeService';
 import { ProjectService } from '../../services/projectService';
 import { WorkforceService } from '../../services/workforceService';
@@ -15,6 +17,9 @@ import { Input } from '../../components/common/Input';
 import { ExpenseFormModal } from './components/ExpenseFormModal';
 
 export const FinancePage = () => {
+  const { user } = useAuth();
+  const isSupervisor = user?.role === 'SITE_SUPERVISOR' || user?.role === 'SUPERVISOR';
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<number>(0);
   
@@ -35,11 +40,13 @@ export const FinancePage = () => {
   const [wageError, setWageError] = useState<string | null>(null);
 
   useEffect(() => {
-    ProjectService.getAllProjects().then(setProjects).catch(() => {});
-  }, []);
+    if (!isSupervisor) {
+      ProjectService.getAllProjects().then(setProjects).catch(() => {});
+    }
+  }, [isSupervisor]);
 
   const fetchProjectFinance = async (projectId: number) => {
-    if (!projectId) return;
+    if (!projectId || isSupervisor) return;
     try {
       setIsLoading(true);
       setError(null);
@@ -59,10 +66,15 @@ export const FinancePage = () => {
   };
 
   useEffect(() => {
-    if (selectedProjectId !== 0) {
+    if (selectedProjectId !== 0 && !isSupervisor) {
       fetchProjectFinance(selectedProjectId);
     }
-  }, [selectedProjectId]);
+  }, [selectedProjectId, isSupervisor]);
+
+  // If user is a Site Supervisor, redirect to main Dashboard / Supervisor Portal
+  if (isSupervisor) {
+    return <Navigate to="/" replace />;
+  }
 
   const handlePayWorkerWage = async (e: React.FormEvent) => {
     e.preventDefault();

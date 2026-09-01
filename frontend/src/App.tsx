@@ -7,7 +7,8 @@ import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 
-import { DashboardPage } from './pages/dashboard/DashboardPage';
+import { DashboardRouter } from './pages/dashboard/DashboardRouter';
+import { SupervisorDashboardPage } from './pages/supervisor/SupervisorDashboardPage';
 import { ProjectsPage } from './pages/projects/ProjectsPage';
 import { ProjectDetailsPage } from './pages/projects/ProjectDetailsPage';
 import { WorkforcePage } from './pages/workforce/WorkforcePage';
@@ -42,7 +43,8 @@ function App() {
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
             <Route element={<MainLayout />}>
-              <Route path="/" element={<DashboardPage />} />
+              <Route path="/" element={<DashboardRouter />} />
+              <Route path="/supervisor" element={<SupervisorDashboardPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/projects/:id" element={<ProjectDetailsPage />} />
               <Route path="/workforce" element={<WorkforcePage />} />

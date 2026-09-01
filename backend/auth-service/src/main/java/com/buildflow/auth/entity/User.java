@@ -36,6 +36,10 @@ public class User {
     @Column(nullable = false)
     private Role role; // ADMIN, MANAGER, WORKER
 
+    @Column(nullable = false)
+    @Builder.Default
+    private String status = "APPROVED";
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { Building, MapPin, Phone, Mail, Edit3, X } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import { CompanyService } from '../../services/companyService';
 import type { CompanyProfile, CompanyProfileRequest } from '../../types/company';
 import { Alert } from '../../components/common/Alert';
 import { Skeleton } from '../../components/common/Skeleton';
 
 export const CompanyPage = () => {
+  const { user } = useAuth();
+  const isSupervisor = user?.role === 'SITE_SUPERVISOR' || user?.role === 'SUPERVISOR';
+
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +31,7 @@ export const CompanyPage = () => {
   const [modalError, setModalError] = useState<string | null>(null);
 
   const fetchCompanyProfile = async () => {
+    if (isSupervisor) return;
     try {
       setIsLoading(true);
       setError(null);
@@ -49,7 +55,12 @@ export const CompanyPage = () => {
 
   useEffect(() => {
     fetchCompanyProfile();
-  }, []);
+  }, [isSupervisor]);
+
+  // If user is a Site Supervisor, redirect to main Dashboard / Supervisor Portal
+  if (isSupervisor) {
+    return <Navigate to="/" replace />;
+  }
 
   const getInitials = (name: string) => {
     if (!name) return 'CO';

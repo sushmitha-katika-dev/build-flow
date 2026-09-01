@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, DollarSign, CheckCircle, XCircle, Trash2, AlertTriangle, BellRing, User, MapPin, Calendar, FileText } from 'lucide-react';
+import { ArrowLeft, DollarSign, CheckCircle, XCircle, Trash2, AlertTriangle, BellRing, User, MapPin, Calendar, FileText, HardHat } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import { ProjectService } from '../../services/projectService';
 import { FinanceService } from '../../services/financeService';
 import type { Project } from '../../types/project';
@@ -20,6 +21,9 @@ import { ProjectFinanceTab } from './ProjectFinanceTab';
 type Tab = 'overview' | 'workforce' | 'materials' | 'equipment' | 'finance';
 
 export const ProjectDetailsPage = () => {
+  const { user } = useAuth();
+  const isSupervisor = user?.role === 'SITE_SUPERVISOR' || user?.role === 'SUPERVISOR';
+
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
@@ -43,15 +47,17 @@ export const ProjectDetailsPage = () => {
       const data = await ProjectService.getProjectById(parseInt(id));
       setProject(data);
 
-      try {
-        const [budgetData, expensesData] = await Promise.all([
-          FinanceService.getProjectBudget(data.id!),
-          FinanceService.getProjectExpenses(data.id!)
-        ]);
-        setBudget(budgetData);
-        setExpenses(expensesData);
-      } catch (err) {
-        console.warn("Could not load financial data");
+      if (!isSupervisor) {
+        try {
+          const [budgetData, expensesData] = await Promise.all([
+            FinanceService.getProjectBudget(data.id!),
+            FinanceService.getProjectExpenses(data.id!)
+          ]);
+          setBudget(budgetData);
+          setExpenses(expensesData);
+        } catch (err) {
+          console.warn("Could not load financial data");
+        }
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load project details.');
@@ -62,9 +68,10 @@ export const ProjectDetailsPage = () => {
 
   useEffect(() => {
     fetchProjectData();
-  }, [id]);
+  }, [id, isSupervisor]);
 
   const handleConfirmStatusUpdate = async () => {
+    if (isSupervisor) return; // Prevent supervisors from status transitions
     if (!project?.id || !statusTarget) return;
     try {
       setIsSubmittingAction(true);
@@ -81,6 +88,7 @@ export const ProjectDetailsPage = () => {
   };
 
   const handleConfirmDelete = async () => {
+    if (isSupervisor) return; // Prevent supervisors from deleting project
     if (!project?.id) return;
     try {
       setIsSubmittingAction(true);
@@ -127,10 +135,14 @@ export const ProjectDetailsPage = () => {
   const isPaymentSettled = outstandingAmount <= 0;
   const budgetUsedPct = Math.min(((budget?.actualExpenses || 0) / (project.estimatedBudget || 1)) * 100, 100);
 
+  const availableTabs: Tab[] = isSupervisor 
+    ? ['overview', 'workforce', 'materials', 'equipment']
+    : ['overview', 'workforce', 'materials', 'equipment', 'finance'];
+
   return (
     <div className="space-y-6">
       {/* SCROLLING STATUS TICKER BAR FOR COMPLETED/CANCELLED PROJECTS */}
-      {isReadOnly && (
+      {isReadOnly && !isSupervisor && (
         <div className="bg-slate-900 text-white p-3 rounded-2xl shadow-xl border border-slate-800 flex items-center overflow-hidden">
           <div className="flex items-center px-3.5 py-1 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-wider flex-shrink-0 mr-3 shadow-md">
             <BellRing className="w-3.5 h-3.5 mr-1.5 animate-pulse" /> Project Status Ticker
@@ -178,32 +190,41 @@ export const ProjectDetailsPage = () => {
           </div>
         </div>
 
-        {/* Action Buttons: Complete, Cancel, Delete */}
+        {/* Action Buttons: Restricted for Supervisor */}
         <div className="flex flex-wrap items-center gap-3">
-          {!isReadOnly && (
+          {isSupervisor ? (
+            <span className="px-3.5 py-2 bg-amber-500/20 text-amber-300 rounded-xl text-xs font-bold border border-amber-500/30 flex items-center shadow-sm">
+              <HardHat className="w-4 h-4 mr-2 text-amber-400" />
+              Field Supervisor (Operational Access Only)
+            </span>
+          ) : (
             <>
-              <button
-                onClick={() => { setStatusTarget('COMPLETED'); setActionError(null); }}
-                className="inline-flex items-center text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-4 py-2.5 rounded-xl text-xs font-black shadow-lg shadow-emerald-600/20 transition-all hover:scale-105"
-              >
-                <CheckCircle className="w-4 h-4 mr-1.5" /> Mark Completed
-              </button>
+              {!isReadOnly && (
+                <>
+                  <button
+                    onClick={() => { setStatusTarget('COMPLETED'); setActionError(null); }}
+                    className="inline-flex items-center text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-4 py-2.5 rounded-xl text-xs font-black shadow-lg shadow-emerald-600/20 transition-all hover:scale-105"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-1.5" /> Mark Completed
+                  </button>
+
+                  <button
+                    onClick={() => { setStatusTarget('CANCELLED'); setActionError(null); }}
+                    className="inline-flex items-center text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-300 px-4 py-2.5 rounded-xl text-xs font-black transition-all hover:scale-105"
+                  >
+                    <XCircle className="w-4 h-4 mr-1.5" /> Cancel Project
+                  </button>
+                </>
+              )}
 
               <button
-                onClick={() => { setStatusTarget('CANCELLED'); setActionError(null); }}
-                className="inline-flex items-center text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-300 px-4 py-2.5 rounded-xl text-xs font-black transition-all hover:scale-105"
+                onClick={() => { setIsDeleteModalOpen(true); setActionError(null); }}
+                className="inline-flex items-center text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-4 py-2.5 rounded-xl text-xs font-black transition-all hover:scale-105"
               >
-                <XCircle className="w-4 h-4 mr-1.5" /> Cancel Project
+                <Trash2 className="w-4 h-4 mr-1.5" /> Delete Project
               </button>
             </>
           )}
-
-          <button
-            onClick={() => { setIsDeleteModalOpen(true); setActionError(null); }}
-            className="inline-flex items-center text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-4 py-2.5 rounded-xl text-xs font-black transition-all hover:scale-105"
-          >
-            <Trash2 className="w-4 h-4 mr-1.5" /> Delete Project
-          </button>
         </div>
       </div>
 
@@ -214,62 +235,64 @@ export const ProjectDetailsPage = () => {
               Read Only Mode
             </span>
             <p className="text-xs font-bold text-amber-900">
-              This project is <strong>{project.status}</strong>. Operations, material consumptions, and equipment assignments are locked. Financial ledgers remain preserved and worker wages can still be paid under Finance.
+              This project is <strong>{project.status}</strong>. Operations, material consumptions, and equipment assignments are locked.
             </p>
           </div>
         </div>
       )}
 
-      {/* Financial Overview Metric Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-5 bg-white border border-slate-200/80 shadow-md rounded-2xl hover:shadow-lg transition-all">
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Estimated Budget</p>
-            <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
-              <DollarSign className="w-5 h-5" />
+      {/* Financial Overview Metric Cards — Hidden for Site Supervisors */}
+      {!isSupervisor && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="p-5 bg-white border border-slate-200/80 shadow-md rounded-2xl hover:shadow-lg transition-all">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Estimated Budget</p>
+              <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
+                <DollarSign className="w-5 h-5" />
+              </div>
             </div>
-          </div>
-          <p className="text-2xl font-black text-slate-900 mt-2">₹{project.estimatedBudget?.toLocaleString('en-IN')}</p>
-        </Card>
+            <p className="text-2xl font-black text-slate-900 mt-2">₹{project.estimatedBudget?.toLocaleString('en-IN')}</p>
+          </Card>
 
-        <Card className="p-5 bg-white border border-slate-200/80 shadow-md rounded-2xl hover:shadow-lg transition-all">
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Invested / Actual Cost</p>
-            <div className="p-2.5 bg-rose-50 text-rose-600 rounded-xl">
-              <DollarSign className="w-5 h-5" />
+          <Card className="p-5 bg-white border border-slate-200/80 shadow-md rounded-2xl hover:shadow-lg transition-all">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Invested / Actual Cost</p>
+              <div className="p-2.5 bg-rose-50 text-rose-600 rounded-xl">
+                <DollarSign className="w-5 h-5" />
+              </div>
             </div>
-          </div>
-          <p className="text-2xl font-black text-rose-600 mt-2">₹{budget?.actualExpenses?.toLocaleString('en-IN') || '0'}</p>
-        </Card>
+            <p className="text-2xl font-black text-rose-600 mt-2">₹{budget?.actualExpenses?.toLocaleString('en-IN') || '0'}</p>
+          </Card>
 
-        <Card className="p-5 bg-white border border-slate-200/80 shadow-md rounded-2xl hover:shadow-lg transition-all">
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Remaining Budget</p>
-            <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
-              <DollarSign className="w-5 h-5" />
+          <Card className="p-5 bg-white border border-slate-200/80 shadow-md rounded-2xl hover:shadow-lg transition-all">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Remaining Budget</p>
+              <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
+                <DollarSign className="w-5 h-5" />
+              </div>
             </div>
-          </div>
-          <p className="text-2xl font-black text-blue-700 mt-2">₹{((project.estimatedBudget || 0) - (budget?.actualExpenses || 0)).toLocaleString('en-IN')}</p>
-        </Card>
+            <p className="text-2xl font-black text-blue-700 mt-2">₹{((project.estimatedBudget || 0) - (budget?.actualExpenses || 0)).toLocaleString('en-IN')}</p>
+          </Card>
 
-        <Card className="p-5 bg-white border border-slate-200/80 shadow-md rounded-2xl hover:shadow-lg transition-all">
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Budget Used</p>
-            <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
-              <DollarSign className="w-5 h-5" />
+          <Card className="p-5 bg-white border border-slate-200/80 shadow-md rounded-2xl hover:shadow-lg transition-all">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Budget Used</p>
+              <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
+                <DollarSign className="w-5 h-5" />
+              </div>
             </div>
-          </div>
-          <p className="text-2xl font-black text-amber-700 mt-2">{budgetUsedPct.toFixed(2)}%</p>
-          <div className="w-full bg-slate-100 rounded-full h-2 mt-2 overflow-hidden">
-            <div className="bg-gradient-to-r from-amber-500 to-rose-500 h-2 rounded-full transition-all" style={{ width: `${budgetUsedPct}%` }} />
-          </div>
-        </Card>
-      </div>
+            <p className="text-2xl font-black text-amber-700 mt-2">{budgetUsedPct.toFixed(2)}%</p>
+            <div className="w-full bg-slate-100 rounded-full h-2 mt-2 overflow-hidden">
+              <div className="bg-gradient-to-r from-amber-500 to-rose-500 h-2 rounded-full transition-all" style={{ width: `${budgetUsedPct}%` }} />
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* Modern Tabs Bar */}
       <div className="border-b border-slate-200 bg-white p-2 rounded-2xl border shadow-sm">
         <nav className="flex space-x-2 overflow-x-auto">
-          {(['overview', 'workforce', 'materials', 'equipment', 'finance'] as Tab[]).map((tab) => (
+          {availableTabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -336,88 +359,92 @@ export const ProjectDetailsPage = () => {
         {activeTab === 'workforce' && <ProjectWorkforceTab projectId={project.id!} />}
         {activeTab === 'materials' && <ProjectMaterialsTab projectId={project.id!} />}
         {activeTab === 'equipment' && <ProjectEquipmentTab projectId={project.id!} isReadOnly={isReadOnly} />}
-        {activeTab === 'finance' && budget && <ProjectFinanceTab projectId={project.id!} budget={budget} />}
+        {activeTab === 'finance' && !isSupervisor && budget && <ProjectFinanceTab projectId={project.id!} budget={budget} />}
       </div>
 
       {/* STATUS UPDATE CONFIRMATION MODAL */}
-      <Modal
-        isOpen={!!statusTarget}
-        onClose={() => setStatusTarget(null)}
-        title={`Confirm Status Transition — ${statusTarget}`}
-      >
-        {actionError && <Alert type="error" message={actionError} className="mb-4" />}
-        {statusTarget && (
-          <div className="space-y-4">
-            <p className="text-sm font-semibold text-slate-800">
-              Are you sure you want to transition project <strong>"{project.projectName}"</strong> to <span className="uppercase text-blue-600 font-bold">{statusTarget}</span>?
-            </p>
+      {!isSupervisor && (
+        <Modal
+          isOpen={!!statusTarget}
+          onClose={() => setStatusTarget(null)}
+          title={`Confirm Status Transition — ${statusTarget}`}
+        >
+          {actionError && <Alert type="error" message={actionError} className="mb-4" />}
+          {statusTarget && (
+            <div className="space-y-4">
+              <p className="text-sm font-semibold text-slate-800">
+                Are you sure you want to transition project <strong>"{project.projectName}"</strong> to <span className="uppercase text-blue-600 font-bold">{statusTarget}</span>?
+              </p>
 
-            {outstandingAmount > 0 ? (
-              <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 text-amber-900 space-y-2">
-                <div className="flex items-center font-bold text-amber-800 text-sm">
-                  <AlertTriangle className="w-5 h-5 mr-2 text-amber-600 flex-shrink-0" />
-                  Payment Warning: Incomplete Payments Remaining
+              {outstandingAmount > 0 ? (
+                <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 text-amber-900 space-y-2">
+                  <div className="flex items-center font-bold text-amber-800 text-sm">
+                    <AlertTriangle className="w-5 h-5 mr-2 text-amber-600 flex-shrink-0" />
+                    Payment Warning: Incomplete Payments Remaining
+                  </div>
+                  <p className="text-xs text-amber-800">
+                    This project currently has <strong>₹{outstandingAmount.toLocaleString('en-IN')}</strong> in remaining outstanding expenses / unpaid balances.
+                  </p>
+                  <p className="text-[11px] text-amber-700 italic">
+                    Note: Marking the project as {statusTarget} blocks new daily operational entries, but remaining worker wages and vendor expenses can still be paid and settled in the Finance module anytime.
+                  </p>
                 </div>
-                <p className="text-xs text-amber-800">
-                  This project currently has <strong>₹{outstandingAmount.toLocaleString('en-IN')}</strong> in remaining outstanding expenses / unpaid balances.
-                </p>
-                <p className="text-[11px] text-amber-700 italic">
-                  Note: Marking the project as {statusTarget} blocks new daily operational entries, but remaining worker wages and vendor expenses can still be paid and settled in the Finance module anytime.
-                </p>
-              </div>
-            ) : (
-              <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 text-emerald-900 flex items-center">
-                <CheckCircle className="w-5 h-5 mr-2 text-emerald-600 flex-shrink-0" />
-                <span className="text-xs font-bold">All financial payments for this project are fully settled (₹0 Outstanding).</span>
-              </div>
-            )}
+              ) : (
+                <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 text-emerald-900 flex items-center">
+                  <CheckCircle className="w-5 h-5 mr-2 text-emerald-600 flex-shrink-0" />
+                  <span className="text-xs font-bold">All financial payments for this project are fully settled (₹0 Outstanding).</span>
+                </div>
+              )}
 
-            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
-              <Button variant="secondary" onClick={() => setStatusTarget(null)} disabled={isSubmittingAction}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleConfirmStatusUpdate} 
-                disabled={isSubmittingAction}
-                className={statusTarget === 'COMPLETED' ? 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold' : 'bg-amber-600 hover:bg-amber-700 text-white font-bold'}
-              >
-                {isSubmittingAction ? 'Updating Status...' : `Confirm ${statusTarget}`}
-              </Button>
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                <Button variant="secondary" onClick={() => setStatusTarget(null)} disabled={isSubmittingAction}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleConfirmStatusUpdate} 
+                  disabled={isSubmittingAction}
+                  className={statusTarget === 'COMPLETED' ? 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold' : 'bg-amber-600 hover:bg-amber-700 text-white font-bold'}
+                >
+                  {isSubmittingAction ? 'Updating Status...' : `Confirm ${statusTarget}`}
+                </Button>
+              </div>
             </div>
-          </div>
-        )}
-      </Modal>
+          )}
+        </Modal>
+      )}
 
       {/* DELETE PROJECT CONFIRMATION MODAL */}
-      <Modal
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        title="Delete Project Confirmation"
-      >
-        {actionError && <Alert type="error" message={actionError} className="mb-4" />}
-        <div className="space-y-4">
-          <div className="flex items-center space-x-3 text-rose-900 bg-rose-50 p-5 rounded-2xl border border-rose-200">
-            <AlertTriangle className="w-7 h-7 text-rose-600 flex-shrink-0" />
-            <div>
-              <p className="text-sm font-extrabold">
-                Are you sure you want to permanently delete project "{project.projectName}"?
-              </p>
-              <p className="text-xs text-rose-700 mt-1 font-medium">
-                This action will delete the project record from the system.
-              </p>
+      {!isSupervisor && (
+        <Modal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          title="Delete Project Confirmation"
+        >
+          {actionError && <Alert type="error" message={actionError} className="mb-4" />}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3 text-rose-900 bg-rose-50 p-5 rounded-2xl border border-rose-200">
+              <AlertTriangle className="w-7 h-7 text-rose-600 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-extrabold">
+                  Are you sure you want to permanently delete project "{project.projectName}"?
+                </p>
+                <p className="text-xs text-rose-700 mt-1 font-medium">
+                  This action will delete the project record from the system.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+              <Button variant="secondary" onClick={() => setIsDeleteModalOpen(false)} disabled={isSubmittingAction}>
+                Cancel
+              </Button>
+              <Button variant="danger" onClick={handleConfirmDelete} disabled={isSubmittingAction} className="bg-rose-600 hover:bg-rose-700 text-white font-bold">
+                {isSubmittingAction ? 'Deleting...' : 'Confirm Delete'}
+              </Button>
             </div>
           </div>
-
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
-            <Button variant="secondary" onClick={() => setIsDeleteModalOpen(false)} disabled={isSubmittingAction}>
-              Cancel
-            </Button>
-            <Button variant="danger" onClick={handleConfirmDelete} disabled={isSubmittingAction} className="bg-rose-600 hover:bg-rose-700 text-white font-bold">
-              {isSubmittingAction ? 'Deleting...' : 'Confirm Delete'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        </Modal>
+      )}
     </div>
   );
 };

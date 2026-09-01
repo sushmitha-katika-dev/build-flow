@@ -1,4 +1,4 @@
-export type Role = 'ADMIN' | 'PROJECT_MANAGER' | 'SITE_SUPERVISOR' | 'INVENTORY_MANAGER' | 'FINANCE_MANAGER';
+export type Role = 'ADMIN' | 'PROJECT_MANAGER' | 'SITE_SUPERVISOR' | 'INVENTORY_MANAGER' | 'FINANCE_MANAGER' | 'CONTRACTOR' | 'SUPERVISOR' | 'MANAGER' | 'WORKER';
 
 export interface AuthResponse {
   token: string;
@@ -16,4 +16,14 @@ export interface RegisterCredentials {
   email: string;
   password?: string;
   role: Role;
+  adminSecretCode?: string;
+}
+
+export interface RegisteredUser {
+  id: number;
+  username: string;
+  email: string;
+  role: Role;
+  status?: string;
+  createdAt?: string;
 }

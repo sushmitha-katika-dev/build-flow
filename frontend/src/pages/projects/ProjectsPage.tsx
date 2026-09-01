@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Building2, Eye, Trash2, AlertTriangle, CheckCircle, Clock, XCircle, ChevronRight, Layers, MapPin } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import { ProjectService } from '../../services/projectService';
 import type { Project } from '../../types/project';
 import { Button } from '../../components/common/Button';
@@ -11,6 +12,9 @@ import { Modal } from '../../components/common/Modal';
 import { ProjectFormModal } from './ProjectFormModal';
 
 export const ProjectsPage = () => {
+  const { user } = useAuth();
+  const isSupervisor = user?.role === 'SITE_SUPERVISOR' || user?.role === 'SUPERVISOR';
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +43,7 @@ export const ProjectsPage = () => {
   }, []);
 
   const handleConfirmDelete = async () => {
-    if (!deleteTarget) return;
+    if (isSupervisor || !deleteTarget) return;
     try {
       setIsSubmittingAction(true);
       setActionError(null);
@@ -116,13 +120,15 @@ export const ProjectsPage = () => {
             </div>
           </div>
 
-          <Button 
-            onClick={() => setIsModalOpen(true)} 
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl font-bold text-xs uppercase tracking-wider px-6 py-3.5 shadow-xl shadow-blue-600/30 transition-all hover:scale-105 active:scale-95 flex items-center"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Create Project
-          </Button>
+          {!isSupervisor && (
+            <Button 
+              onClick={() => setIsModalOpen(true)} 
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl font-bold text-xs uppercase tracking-wider px-6 py-3.5 shadow-xl shadow-blue-600/30 transition-all hover:scale-105 active:scale-95 flex items-center"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create Project
+            </Button>
+          )}
         </div>
       </div>
 
@@ -188,12 +194,14 @@ export const ProjectsPage = () => {
           </div>
           <h3 className="text-base font-bold text-slate-900">No Construction Projects Created Yet</h3>
           <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">Get started by creating your first construction project to manage workforce, inventory, equipment, and financial ledgers.</p>
-          <div className="mt-6">
-            <Button onClick={() => setIsModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs uppercase px-5 py-3">
-              <Plus className="w-4 h-4 mr-2" />
-              Create Project
-            </Button>
-          </div>
+          {!isSupervisor && (
+            <div className="mt-6">
+              <Button onClick={() => setIsModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs uppercase px-5 py-3">
+                <Plus className="w-4 h-4 mr-2" />
+                Create Project
+              </Button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="bg-white shadow-2xl rounded-3xl overflow-hidden border border-slate-200/90">
@@ -257,13 +265,15 @@ export const ProjectsPage = () => {
                           <ChevronRight className="w-3.5 h-3.5 ml-1" />
                         </Link>
 
-                        <button
-                          onClick={() => { setDeleteTarget(project); setActionError(null); }}
-                          className="inline-flex items-center text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3.5 py-2.5 rounded-xl text-xs font-black transition-all hover:scale-105 active:scale-95 shadow-xs"
-                          title="Delete Project"
-                        >
-                          <Trash2 className="w-4 h-4 mr-1.5" /> Delete
-                        </button>
+                        {!isSupervisor && (
+                          <button
+                            onClick={() => { setDeleteTarget(project); setActionError(null); }}
+                            className="inline-flex items-center text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3.5 py-2.5 rounded-xl text-xs font-black transition-all hover:scale-105 active:scale-95 shadow-xs"
+                            title="Delete Project"
+                          >
+                            <Trash2 className="w-4 h-4 mr-1.5" /> Delete
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
@@ -275,41 +285,45 @@ export const ProjectsPage = () => {
       )}
 
       {/* DELETE PROJECT CONFIRMATION MODAL */}
-      <Modal
-        isOpen={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        title="Delete Project Confirmation"
-      >
-        {actionError && <Alert type="error" message={actionError} className="mb-4" />}
-        <div className="space-y-4">
-          <div className="flex items-center space-x-3 text-rose-900 bg-rose-50 p-5 rounded-2xl border border-rose-200">
-            <AlertTriangle className="w-7 h-7 text-rose-600 flex-shrink-0" />
-            <div>
-              <p className="text-sm font-extrabold">
-                Are you sure you want to permanently delete project "{deleteTarget?.projectName}"?
-              </p>
-              <p className="text-xs text-rose-700 mt-1 font-medium">
-                This action will delete the project record from the system.
-              </p>
+      {!isSupervisor && (
+        <Modal
+          isOpen={!!deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          title="Delete Project Confirmation"
+        >
+          {actionError && <Alert type="error" message={actionError} className="mb-4" />}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3 text-rose-900 bg-rose-50 p-5 rounded-2xl border border-rose-200">
+              <AlertTriangle className="w-7 h-7 text-rose-600 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-extrabold">
+                  Are you sure you want to permanently delete project "{deleteTarget?.projectName}"?
+                </p>
+                <p className="text-xs text-rose-700 mt-1 font-medium">
+                  This action will delete the project record from the system.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+              <Button variant="secondary" onClick={() => setDeleteTarget(null)} disabled={isSubmittingAction}>
+                Cancel
+              </Button>
+              <Button variant="danger" onClick={handleConfirmDelete} disabled={isSubmittingAction} className="bg-rose-600 hover:bg-rose-700 text-white font-bold">
+                {isSubmittingAction ? 'Deleting...' : 'Confirm Delete'}
+              </Button>
             </div>
           </div>
+        </Modal>
+      )}
 
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
-            <Button variant="secondary" onClick={() => setDeleteTarget(null)} disabled={isSubmittingAction}>
-              Cancel
-            </Button>
-            <Button variant="danger" onClick={handleConfirmDelete} disabled={isSubmittingAction} className="bg-rose-600 hover:bg-rose-700 text-white font-bold">
-              {isSubmittingAction ? 'Deleting...' : 'Confirm Delete'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      <ProjectFormModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onProjectCreated={fetchProjects} 
-      />
+      {!isSupervisor && (
+        <ProjectFormModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+          onProjectCreated={fetchProjects} 
+        />
+      )}
     </div>
   );
 };
