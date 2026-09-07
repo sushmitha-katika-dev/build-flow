@@ -1,57 +1,73 @@
 # Task Breakdown Document
 
-This document tracks the high-level development tasks required to build the BuildFlow platform.
+This document tracks the completed development milestones and tasks for the BuildFlow platform.
 
 ---
 
 ### Task ID: TSK-001
 - **Description:** Initialize Spring Boot Authentication Service and configure JWT Security.
-- **Priority:** High
-- **Estimated Time:** 8 Hours
-- **Dependencies:** None
-- **Deliverables:** A running Spring Boot microservice connected to the Auth MySQL database.
-- **Definition of Done:** Code committed, unit tests passing, `/api/v1/auth/login` successfully authenticates a user and returns a valid JWT token.
+- **Status:** COMPLETED
+- **Deliverables:** A running Spring Boot microservice (`auth-service`) connected to `buildflow_auth` MySQL database.
 
 ---
 
 ### Task ID: TSK-002
-- **Description:** Initialize React.js Frontend, configure React Router, and set up Redux state management.
-- **Priority:** High
-- **Estimated Time:** 6 Hours
-- **Dependencies:** None
-- **Deliverables:** Base React application scaffolded with the Login Screen UI.
-- **Definition of Done:** React app compiles without warnings, Login UI renders, and Redux is configured to store the JWT token upon successful login.
+- **Description:** Initialize React.js Frontend (Vite + TypeScript + Tailwind CSS) and set up `AuthContext`.
+- **Status:** COMPLETED
+- **Deliverables:** Base React application scaffolded with login/register components and Axios HTTP client.
 
 ---
 
 ### Task ID: TSK-003
-- **Description:** Build the Project Management Microservice and implement core CRUD REST APIs.
-- **Priority:** High
-- **Estimated Time:** 12 Hours
-- **Dependencies:** TSK-001 (Requires JWT validation for role-based access).
-- **Deliverables:** REST endpoints for creating, retrieving, and updating projects. Project Database schema initialized.
-- **Definition of Done:** Endpoints match the API contract in Phase 6, MySQL schema matches Phase 5, and all endpoints return correct Status Codes.
+- **Description:** Build Project, Workforce, Inventory, Equipment, Finance, and Reporting Microservices.
+- **Status:** COMPLETED
+- **Deliverables:** Isolated REST microservices connected to database-per-service MySQL schemas.
 
 ---
 
 ### Task ID: TSK-004
-- **Description:** Set up Apache Kafka and the Notification Service.
-- **Priority:** Medium
-- **Estimated Time:** 8 Hours
-- **Dependencies:** TSK-003 (Needs a service to produce events).
-- **Deliverables:** Kafka broker running, Notification Service listening to topics (e.g., `project-created-topic`).
-- **Definition of Done:** Producing a test event successfully triggers a log/email in the Notification service.
+- **Description:** Set up Apache Kafka Event Streaming and Redis Caching.
+- **Status:** COMPLETED
+- **Deliverables:** Apache Kafka brokers handling events (`project-created`, `attendance-logged`, `inventory-material-consumed`, `equipment-usage-logged`).
 
 ---
 
 ### Task ID: TSK-005
-- **Description:** Develop the React Main Dashboard Layout (Navbar, Sidebar, Grid).
-- **Priority:** Medium
-- **Estimated Time:** 10 Hours
-- **Dependencies:** TSK-002
-- **Deliverables:** Responsive dashboard UI with navigation links to empty module pages.
-- **Definition of Done:** Sidebar navigation correctly routes the user to different placeholder pages without full page reloads.
+- **Description:** Implement API Gateway (:8080) & Docker Compose composition.
+- **Status:** COMPLETED
+- **Deliverables:** Full Docker Compose setup running all 9 microservices, MySQL, Redis, and Kafka.
 
 ---
 
-*(Note: Additional tasks for Workforce, Inventory, Equipment, and Finance modules will be appended here iteratively as the project progresses).*
+### Task ID: TSK-006
+- **Description:** Implement Company Admin Access Passcode (`BF-ADMIN-2026`) in `auth-service` and frontend.
+- **Status:** COMPLETED
+- **Deliverables:** `adminSecretCode` validation during registration; REST endpoints `GET/POST /api/v1/auth/admin-passcode`; interactive passcode editor in Admin Dashboard.
+
+---
+
+### Task ID: TSK-007
+- **Description:** Implement Site Supervisor Registration Approval Workflow.
+- **Status:** COMPLETED
+- **Deliverables:** Supervisor registration defaults to `PENDING_APPROVAL`; login is blocked until approved; `PUT /api/v1/auth/users/{id}/status` endpoint implemented.
+
+---
+
+### Task ID: TSK-008
+- **Description:** Redesign Admin Executive Command Center & Workspace Drawer (`DashboardPage.tsx`).
+- **Status:** COMPLETED
+- **Deliverables:** Hero stats banner, 4 KPI cards, 1-row quick launch bar, and tab-segmented workspace drawer with collapse toggle.
+
+---
+
+### Task ID: TSK-009
+- **Description:** Redesign Public Landing Showcase & Auth Portal (`AuthLayout.tsx` & `LoginPage.tsx`).
+- **Status:** COMPLETED
+- **Deliverables:** 2-Column landing page showcasing platform capabilities; 1-click Demo Account Autofill pills (`Admin` & `Supervisor`).
+
+---
+
+### Task ID: TSK-010
+- **Description:** End-to-End System Validation & Code Cleanliness Audit.
+- **Status:** COMPLETED
+- **Deliverables:** `npm run build` passing with 0 errors; `mvn clean package` passing with BUILD SUCCESS; full documentation synchronized.

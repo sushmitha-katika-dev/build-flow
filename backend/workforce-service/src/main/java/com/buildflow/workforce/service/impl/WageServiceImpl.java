@@ -1,10 +1,13 @@
 package com.buildflow.workforce.service.impl;
 
+import com.buildflow.workforce.client.ProjectClient;
 import com.buildflow.workforce.constants.WorkforceConstants;
 import com.buildflow.workforce.dto.request.WageCreateRequest;
 import com.buildflow.workforce.dto.request.WageUpdateRequest;
 import com.buildflow.workforce.dto.response.WageResponse;
 import com.buildflow.workforce.entity.Wage;
+import com.buildflow.workforce.enums.WageStatus;
+import com.buildflow.workforce.event.WageEvent;
 import com.buildflow.workforce.exception.ResourceNotFoundException;
 import com.buildflow.workforce.mapper.WageMapper;
 import com.buildflow.workforce.repository.LabourRepository;
@@ -29,12 +32,17 @@ public class WageServiceImpl implements WageService {
     private final LabourRepository labourRepository;
     private final WageMapper wageMapper;
     private final WageValidator wageValidator;
+    private final ProjectClient projectClient;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Override
     @Transactional
     public WageResponse recordWage(WageCreateRequest request) {
-        log.info("Recording wage for labour: {} on project: {}", request.getLabourId(), request.getProjectId());
+        log.info("Recording wage for labour: {}", request.getLabourId());
+
+        if (request.getProjectId() != null && request.getProjectId() > 0) {
+            projectClient.validateProjectIsActive(request.getProjectId());
+        }
 
         if (!labourRepository.existsById(request.getLabourId())) {
             throw new ResourceNotFoundException("Labour not found with id: " + request.getLabourId());
@@ -43,9 +51,25 @@ public class WageServiceImpl implements WageService {
         wageValidator.validateCreateRequest(request);
 
         Wage wage = wageMapper.toEntity(request);
+        wage.setStatus(WageStatus.ACTIVE);
         wage = wageRepository.save(wage);
 
-        kafkaTemplate.send(WorkforceConstants.WAGE_PROCESSED_TOPIC, wage);
+        try {
+            WageEvent event = WageEvent.builder()
+                    .id(wage.getId())
+                    .labourId(wage.getLabourId())
+                    .agreementId(wage.getAgreementId())
+                    .projectId(wage.getProjectId())
+                    .amountPaid(wage.getAmountPaid())
+                    .paymentDate(wage.getPaymentDate())
+                    .status("PROCESSED")
+                    .eventType("PROCESSED")
+                    .build();
+
+            kafkaTemplate.send(WorkforceConstants.WAGE_PROCESSED_TOPIC, event);
+        } catch (Exception e) {
+            log.error("Failed to send wage processed event", e);
+        }
 
         return wageMapper.toResponse(wage);
     }
@@ -54,7 +78,7 @@ public class WageServiceImpl implements WageService {
     @Transactional(readOnly = true)
     public WageResponse getWageById(Long id) {
         Wage wage = wageRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Wage not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Wage record not found with id: " + id));
         return wageMapper.toResponse(wage);
     }
 
@@ -77,17 +101,67 @@ public class WageServiceImpl implements WageService {
     @Override
     @Transactional
     public WageResponse updateWage(Long id, WageUpdateRequest request) {
+        log.info("Updating wage id: {}", id);
+
         Wage wage = wageRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Wage not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Wage record not found with id: " + id));
 
-        wageValidator.validateUpdateRequest(request, wage);
+        if (wage.getProjectId() != null && wage.getProjectId() > 0) {
+            projectClient.validateProjectIsActive(wage.getProjectId());
+        }
 
-        if (request.getHourlyRate() != null) wage.setHourlyRate(request.getHourlyRate());
-        if (request.getTotalHours() != null) wage.setTotalHours(request.getTotalHours());
-        if (request.getAmountPaid() != null) wage.setAmountPaid(request.getAmountPaid());
-        if (request.getPaymentDate() != null) wage.setPaymentDate(request.getPaymentDate());
+        if (request.getAmountPaid() != null) {
+            wage.setAmountPaid(request.getAmountPaid());
+        }
+        if (request.getPaymentDate() != null) {
+            wage.setPaymentDate(request.getPaymentDate());
+        }
 
         wage = wageRepository.save(wage);
         return wageMapper.toResponse(wage);
+    }
+
+    @Override
+    @Transactional
+    public WageResponse cancelWage(Long id) {
+        log.info("Cancelling wage id: {}", id);
+        
+        Wage wage = wageRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Wage record not found with id: " + id));
+
+        if (wage.getStatus() == WageStatus.CANCELLED) {
+            throw new IllegalArgumentException("Wage record is already cancelled");
+        }
+
+        wage.setStatus(WageStatus.CANCELLED);
+        wage = wageRepository.save(wage);
+
+        try {
+            WageEvent event = WageEvent.builder()
+                    .id(wage.getId())
+                    .labourId(wage.getLabourId())
+                    .agreementId(wage.getAgreementId())
+                    .projectId(wage.getProjectId())
+                    .amountPaid(wage.getAmountPaid())
+                    .paymentDate(wage.getPaymentDate())
+                    .status("CANCELLED")
+                    .eventType("CANCELLED")
+                    .build();
+
+            kafkaTemplate.send("wage-cancelled", event);
+        } catch (Exception e) {
+            log.error("Failed to send wage cancelled event", e);
+        }
+
+        return wageMapper.toResponse(wage);
+    }
+
+    @Override
+    @Transactional
+    public void bulkCancelWages(List<Long> ids) {
+        log.info("Bulk cancelling wage records: {}", ids);
+        for (Long id : ids) {
+            cancelWage(id);
+        }
     }
 }

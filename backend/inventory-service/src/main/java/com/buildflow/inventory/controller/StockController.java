@@ -44,7 +44,11 @@ public class StockController {
     @Operation(summary = "Get stock by material ID and project ID")
     public ResponseEntity<StockResponse> getStockByMaterialAndProject(
             @PathVariable Long materialId, 
-            @PathVariable Long projectId) {
+            @PathVariable Long projectId,
+            @RequestParam(required = false) String variant) {
+        if (variant != null && !variant.trim().isEmpty()) {
+            return ResponseEntity.ok(stockService.getStockByMaterialAndProjectAndVariant(materialId, projectId, variant));
+        }
         return ResponseEntity.ok(stockService.getStockByMaterialAndProject(materialId, projectId));
     }
 

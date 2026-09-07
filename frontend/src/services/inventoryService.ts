@@ -31,6 +31,11 @@ export const InventoryService = {
     return response.data;
   },
 
+  getStockByMaterialAndProject: async (materialId: number, projectId: number): Promise<Stock> => {
+    const response = await axiosClient.get<Stock>(`/inventory/stocks/material/${materialId}/project/${projectId}`);
+    return response.data;
+  },
+
   addStock: async (data: StockCreateRequest): Promise<Stock> => {
     const response = await axiosClient.post<Stock>('/inventory/stocks', data);
     return response.data;
@@ -38,12 +43,12 @@ export const InventoryService = {
 
   // Transactions
   getProjectTransactions: async (projectId: number): Promise<InventoryTransaction[]> => {
-    const response = await axiosClient.get<InventoryTransaction[]>(`/inventory/inventory/project/${projectId}`);
+    const response = await axiosClient.get<InventoryTransaction[]>(`/inventory/transactions/project/${projectId}`);
     return response.data;
   },
 
   logTransaction: async (data: InventoryTransactionRequest): Promise<InventoryTransaction> => {
-    const response = await axiosClient.post<InventoryTransaction>('/inventory/inventory', data);
+    const response = await axiosClient.post<InventoryTransaction>('/inventory/transactions', data);
     return response.data;
   }
 };

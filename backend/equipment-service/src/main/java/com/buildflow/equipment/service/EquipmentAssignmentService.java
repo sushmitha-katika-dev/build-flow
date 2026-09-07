@@ -10,4 +10,5 @@ public interface EquipmentAssignmentService {
     EquipmentAssignmentResponse returnEquipment(Long assignmentId);
     List<EquipmentAssignmentResponse> getAssignmentsByEquipmentId(Long equipmentId);
     List<EquipmentAssignmentResponse> getAssignmentsByProjectId(Long projectId);
+    void closeActiveAssignmentsForProject(Long projectId);
 }

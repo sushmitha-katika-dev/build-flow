@@ -15,6 +15,8 @@ public interface ProjectService {
 
     List<ProjectResponse> getAllProjects();
 
+    List<ProjectResponse> getActiveProjects();
+
     ProjectResponse updateProject(Long id, ProjectUpdateRequest request);
 
     void deleteProject(Long id);

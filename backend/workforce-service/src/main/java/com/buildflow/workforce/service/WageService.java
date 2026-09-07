@@ -12,4 +12,6 @@ public interface WageService {
     List<WageResponse> getWagesByLabourId(Long labourId);
     List<WageResponse> getWagesByProjectId(Long projectId);
     WageResponse updateWage(Long id, WageUpdateRequest request);
+    WageResponse cancelWage(Long id);
+    void bulkCancelWages(List<Long> ids);
 }

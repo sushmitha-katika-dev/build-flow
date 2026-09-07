@@ -10,4 +10,5 @@ import java.util.List;
 public interface WageRepository extends JpaRepository<Wage, Long> {
     List<Wage> findByLabourId(Long labourId);
     List<Wage> findByProjectId(Long projectId);
+    List<Wage> findByAgreementId(Long agreementId);
 }

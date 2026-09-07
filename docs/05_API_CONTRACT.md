@@ -1,246 +1,249 @@
 # API Contract
 
-This document defines the core REST API endpoints for the BuildFlow Microservices. Following the ADF standards, no backend implementation will begin before these contracts are approved.
+This document defines the core REST API endpoints for the BuildFlow Microservices. Following the ADF standards, all endpoints are routed through the API Gateway (`:8080`).
 
 ---
 
-## 1. Authentication Service
+## 1. Authentication & User Service (`:8081`)
 
-### Login User
-- **Endpoint:** `/api/v1/auth/login`
+### 1.1 Register User
+- **Endpoint:** `/api/v1/auth/register`
 - **HTTP Method:** `POST`
-- **Description:** Authenticates a user and returns a JWT.
+- **Description:** Registers a new user. Registrations for Admin/Executive roles (`ADMIN`, `CONTRACTOR`, `PROJECT_MANAGER`, `FINANCE_MANAGER`) require a valid `adminSecretCode`. Site Supervisors register in `PENDING_APPROVAL` status.
 - **Authentication:** None (Public)
-- **Request Body:** Required (See Sample JSON)
-- **Query Parameters:** None
-- **Path Variables:** None
-- **Success Response:** Returns a JWT token and user role.
-- **Error Response:** Returns an error message for invalid credentials.
-- **Validation Rules:** `username` (Not Null, Not Empty), `password` (Not Null, Not Empty).
-- **Status Codes:** `200 OK`, `400 Bad Request`, `401 Unauthorized`
-- **Sample JSON:**
-  *Request:*
+- **Request Body:**
   ```json
   {
     "username": "admin_user",
-    "password": "securepassword123"
+    "email": "admin@buildflow.com",
+    "password": "securepassword123",
+    "role": "ADMIN",
+    "adminSecretCode": "BF-ADMIN-2026"
   }
   ```
-  *Response (Success):*
+- **Response (Success 201 Created):**
   ```json
   {
     "token": "eyJhbGciOiJIUzI1...",
-    "role": "ADMIN",
-    "expires_in": 3600
+    "username": "admin_user",
+    "role": "ADMIN"
+  }
+  ```
+
+### 1.2 Login User
+- **Endpoint:** `/api/v1/auth/login`
+- **HTTP Method:** `POST`
+- **Description:** Authenticates a user and returns a JWT. Returns HTTP 401 if account is `PENDING_APPROVAL` or `REJECTED`.
+- **Authentication:** None (Public)
+- **Request Body:**
+  ```json
+  {
+    "username": "katam",
+    "password": "katampassword"
+  }
+  ```
+- **Response (Success 200 OK):**
+  ```json
+  {
+    "token": "eyJhbGciOiJIUzI1...",
+    "username": "katam",
+    "role": "SITE_SUPERVISOR"
+  }
+  ```
+
+### 1.3 Get All Registered Users
+- **Endpoint:** `/api/v1/auth/users`
+- **HTTP Method:** `GET`
+- **Description:** Retrieves all registered users, their roles, and approval statuses.
+- **Authentication:** Required (Bearer JWT), Roles: `ADMIN`
+- **Response (Success 200 OK):**
+  ```json
+  [
+    {
+      "id": 1,
+      "username": "admin",
+      "email": "admin@buildflow.com",
+      "role": "ADMIN",
+      "status": "APPROVED"
+    },
+    {
+      "id": 2,
+      "username": "katam",
+      "email": "katam@buildflow.com",
+      "role": "SITE_SUPERVISOR",
+      "status": "PENDING_APPROVAL"
+    }
+  ]
+  ```
+
+### 1.4 Update User Status (Supervisor Approval)
+- **Endpoint:** `/api/v1/auth/users/{id}/status`
+- **HTTP Method:** `PUT`
+- **Query Parameters:** `status` (`APPROVED` or `REJECTED`)
+- **Authentication:** Required (Bearer JWT), Roles: `ADMIN`
+- **Response (Success 200 OK):**
+  ```json
+  {
+    "id": 2,
+    "username": "katam",
+    "status": "APPROVED"
+  }
+  ```
+
+### 1.5 Get Active Admin Access Passcode
+- **Endpoint:** `/api/v1/auth/admin-passcode`
+- **HTTP Method:** `GET`
+- **Description:** Retrieves the active secret passcode required for admin self-registration.
+- **Authentication:** Required (Bearer JWT), Roles: `ADMIN`
+- **Response (Success 200 OK):**
+  ```json
+  {
+    "passcode": "BF-ADMIN-2026"
+  }
+  ```
+
+### 1.6 Update Active Admin Access Passcode
+- **Endpoint:** `/api/v1/auth/admin-passcode`
+- **HTTP Method:** `POST`
+- **Request Body:**
+  ```json
+  {
+    "passcode": "MY-NEW-SECRET-2026"
+  }
+  ```
+- **Response (Success 200 OK):**
+  ```json
+  {
+    "passcode": "MY-NEW-SECRET-2026"
   }
   ```
 
 ---
 
-## 2. Project Management Service
+## 2. Project Management Service (`:8082`)
 
-### Create a New Project
+### 2.1 Get All Projects
+- **Endpoint:** `/api/v1/projects`
+- **HTTP Method:** `GET`
+- **Authentication:** Required (Bearer JWT)
+
+### 2.2 Create Project
 - **Endpoint:** `/api/v1/projects`
 - **HTTP Method:** `POST`
-- **Description:** Creates a new construction project.
-- **Authentication:** Required (Bearer JWT), Roles: `ADMIN`, `PROJECT_MANAGER`
-- **Request Body:** Required (See Sample JSON)
-- **Query Parameters:** None
-- **Path Variables:** None
-- **Success Response:** Returns the created project object with ID.
-- **Error Response:** Returns an error message if privileges are insufficient or data is invalid.
-- **Validation Rules:** `name` (Not Null, Length 3-100), `estimated_budget` (Minimum 0, Not Null).
-- **Status Codes:** `201 Created`, `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`
-- **Sample JSON:**
-  *Request:*
+- **Request Body:**
   ```json
   {
-    "name": "Downtown Highrise",
-    "client_name": "Apex Corp",
-    "manager_id": 101,
-    "supervisor_id": 205,
-    "start_date": "2026-09-01",
-    "estimated_budget": 5000000.00
-  }
-  ```
-  *Response (Success):*
-  ```json
-  {
-    "id": 1,
-    "name": "Downtown Highrise",
-    "status": "ACTIVE",
-    "message": "Project created successfully"
+    "projectName": "Kesaram Farm House",
+    "clientName": "Srikanth Reddy",
+    "location": "Kesaram Village",
+    "estimatedBudget": 5000000.00
   }
   ```
 
-### Get Project Details
-- **Endpoint:** `/api/v1/projects/{id}`
-- **HTTP Method:** `GET`
-- **Description:** Retrieves details of a specific project.
-- **Authentication:** Required (Bearer JWT)
-- **Request Body:** None
-- **Query Parameters:** None
-- **Path Variables:** `id` (Integer) - The unique ID of the project.
-- **Success Response:** Returns the project details.
-- **Error Response:** Returns 404 if the project ID does not exist.
-- **Validation Rules:** `id` must be a positive integer.
-- **Status Codes:** `200 OK`, `401 Unauthorized`, `404 Not Found`
-- **Sample JSON:**
-  *Response (Success):*
-  ```json
-  {
-    "id": 1,
-    "name": "Downtown Highrise",
-    "client_name": "Apex Corp",
-    "manager_id": 101,
-    "supervisor_id": 205,
-    "estimated_budget": 5000000.00,
-    "status": "ACTIVE"
-  }
-  ```
+### 2.3 Update Project Status
+- **Endpoint:** `/api/v1/projects/{id}/status`
+- **HTTP Method:** `PATCH`
+- **Query Parameters:** `status` (`PLANNED`, `ACTIVE`, `COMPLETED`, `CANCELLED`)
 
 ---
 
-## 3. Workforce Management Service
+## 3. Workforce Management Service (`:8083`)
 
-### Log Daily Attendance
+### 3.1 Log Daily Attendance
 - **Endpoint:** `/api/v1/workforce/attendance`
 - **HTTP Method:** `POST`
-- **Description:** Logs the daily attendance for a labourer on a specific project.
-- **Authentication:** Required (Bearer JWT), Roles: `ADMIN`, `SUPERVISOR`
-- **Request Body:** Required (See Sample JSON)
-- **Query Parameters:** None
-- **Path Variables:** None
-- **Success Response:** Returns the recorded attendance and calculated wage.
-- **Error Response:** Returns a conflict error if attendance is already logged today.
-- **Validation Rules:** `labourer_id` (Not Null), `project_id` (Not Null), `status` (Must be PRESENT, ABSENT, or HALF_DAY).
-- **Status Codes:** `201 Created`, `400 Bad Request`, `401 Unauthorized`, `409 Conflict`
-- **Sample JSON:**
-  *Request:*
+- **Request Body:**
   ```json
   {
-    "labourer_id": 501,
-    "project_id": 1,
-    "record_date": "2026-08-06",
+    "labourerId": 1,
+    "projectId": 2,
+    "recordDate": "2026-09-01",
     "status": "PRESENT"
   }
   ```
-  *Response (Success):*
+
+### 3.2 Process Wage Payment
+- **Endpoint:** `/api/v1/workforce/payments`
+- **HTTP Method:** `POST`
+- **Request Body:**
   ```json
   {
-    "id": 1050,
-    "calculated_wage": 850.00,
-    "message": "Attendance logged successfully"
+    "labourerId": 1,
+    "projectId": 2,
+    "amountPaid": 20000.00,
+    "paymentDate": "2026-09-01"
   }
   ```
 
 ---
 
-## 4. Equipment Management Service
+## 4. Material & Inventory Service (`:8084`)
 
-### Assign Equipment to Project
+### 4.1 Company Stock-In (`projectId = 0`)
+- **Endpoint:** `/api/v1/inventory/transactions`
+- **HTTP Method:** `POST`
+- **Request Body:**
+  ```json
+  {
+    "materialId": 1,
+    "projectId": 0,
+    "transactionType": "IN",
+    "quantity": 100.0,
+    "unitPrice": 450.00,
+    "transactionDate": "2026-09-01"
+  }
+  ```
+
+### 4.2 Project Stock Consumption
+- **Endpoint:** `/api/v1/inventory/transactions`
+- **HTTP Method:** `POST`
+- **Request Body:**
+  ```json
+  {
+    "materialId": 1,
+    "projectId": 2,
+    "transactionType": "OUT",
+    "quantity": 40.0,
+    "transactionDate": "2026-09-01"
+  }
+  ```
+
+---
+
+## 5. Equipment Management Service (`:8085`)
+
+### 5.1 Assign Equipment
 - **Endpoint:** `/api/v1/equipment/{id}/assignments`
 - **HTTP Method:** `POST`
-- **Description:** Assigns a quantity of equipment to a specific project.
-- **Authentication:** Required (Bearer JWT), Roles: `ADMIN`, `PROJECT_MANAGER`
-- **Request Body:** Required
-- **Query Parameters:** None
-- **Path Variables:** `id` (Integer) - The unique ID of the equipment.
-- **Success Response:** Returns the assignment details.
-- **Error Response:** Returns 400 if the assigned quantity exceeds available quantity.
-- **Status Codes:** `201 Created`, `400 Bad Request`, `404 Not Found`
-- **Sample JSON:**
-  *Request:*
-  ```json
-  {
-    "projectId": 1,
-    "assignedQuantity": 2,
-    "assignmentDate": "2026-08-09"
-  }
-  ```
-  *Response (Success):*
-  ```json
-  {
-    "id": 1,
-    "equipmentId": 1,
-    "projectId": 1,
-    "assignedQuantity": 2,
-    "assignmentDate": "2026-08-09"
-  }
-  ```
 
----
-
-## 5. Financial Management Service
-
-### Record a New Expense
-- **Endpoint:** `/api/v1/expenses`
+### 5.2 Record Equipment Usage
+- **Endpoint:** `/api/v1/equipment/usage`
 - **HTTP Method:** `POST`
-- **Description:** Records an expense for a project and updates the project's actual expenses.
-- **Authentication:** Required (Bearer JWT), Roles: `ADMIN`, `FINANCE_MANAGER`
-- **Request Body:** Required
-- **Query Parameters:** None
-- **Path Variables:** None
-- **Success Response:** Returns the newly created expense object.
-- **Status Codes:** `201 Created`, `400 Bad Request`
-- **Sample JSON:**
-  *Request:*
+- **Request Body:**
   ```json
   {
-    "projectId": 1,
-    "amount": 2000.00,
-    "category": "MATERIAL",
-    "date": "2026-08-09",
-    "description": "Cement purchase"
-  }
-  ```
-
-### Calculate Profit/Loss
-- **Endpoint:** `/api/v1/profit-loss/project/{projectId}`
-- **HTTP Method:** `GET`
-- **Description:** Dynamically calculates the profitability of a given project based on estimated budget, total expenses, and payments received.
-- **Authentication:** Required (Bearer JWT), Roles: `ADMIN`, `FINANCE_MANAGER`, `PROJECT_MANAGER`
-- **Request Body:** None
-- **Query Parameters:** None
-- **Path Variables:** `projectId` (Integer)
-- **Success Response:** Returns profit/loss breakdown.
-- **Status Codes:** `200 OK`
-- **Sample JSON:**
-  *Response (Success):*
-  ```json
-  {
-    "projectId": 1,
-    "totalEstimatedBudget": 5000000.00,
-    "totalExpenses": 25000.00,
-    "totalPaymentsReceived": 50000.00,
-    "netProfitOrLoss": 25000.00,
-    "status": "PROFIT"
+    "equipmentId": 1,
+    "projectId": 2,
+    "hoursUsed": 8.0,
+    "usageDate": "2026-09-01"
   }
   ```
 
 ---
 
-## 6. Reporting & Analytics Service
+## 6. Finance Management Service (`:8086`)
 
-### Get Dashboard Metrics
-- **Endpoint:** `/api/v1/reporting/dashboard`
+### 6.1 Get Project Financial Budget Ledger
+- **Endpoint:** `/api/v1/finance/budgets/project/{projectId}`
 - **HTTP Method:** `GET`
-- **Description:** Retrieves cached top-level dashboard metrics (active projects, low stock alerts, total revenue, and expenses).
-- **Authentication:** Required (Bearer JWT), Roles: `ADMIN`, `PROJECT_MANAGER`
-- **Request Body:** None
-- **Query Parameters:** None
-- **Path Variables:** None
-- **Success Response:** Returns aggregated dashboard metrics.
-- **Status Codes:** `200 OK`, `401 Unauthorized`
-- **Sample JSON:**
-  *Response (Success):*
+- **Response:**
   ```json
   {
-    "activeProjectsCount": 5,
-    "lowStockAlertsCount": 2,
-    "totalCompanyRevenue": 100000.00,
-    "totalCompanyExpenses": 60000.00,
-    "netProfitOrLoss": 40000.00,
-    "generatedAt": "2026-08-09T10:00:00"
+    "projectId": 2,
+    "estimatedBudget": 5000000.00,
+    "actualExpenses": 72800.00,
+    "amountPaid": 20000.00,
+    "outstandingAmount": 52800.00,
+    "remainingBudget": 4927200.00
   }
   ```

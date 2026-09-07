@@ -46,6 +46,9 @@ public class Payment {
     @Column(length = 500)
     private String description;
 
+    @Column(name = "reference_id", unique = true)
+    private String referenceId;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

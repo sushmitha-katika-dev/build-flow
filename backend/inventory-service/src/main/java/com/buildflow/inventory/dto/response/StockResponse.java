@@ -16,8 +16,10 @@ public class StockResponse {
     private Long id;
     private Long materialId;
     private Long projectId;
+    private String variant;
     private BigDecimal currentStock;
     private BigDecimal reorderLevel;
+    private BigDecimal averageUnitCost;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

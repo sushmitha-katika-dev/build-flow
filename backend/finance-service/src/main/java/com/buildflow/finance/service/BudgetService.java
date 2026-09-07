@@ -8,4 +8,5 @@ public interface BudgetService {
     BudgetResponse getBudgetByProjectId(Long projectId);
     BudgetResponse updateBudget(Long projectId, BudgetRequest request);
     void updateActualExpenses(Long projectId);
+    void updateAmountPaid(Long projectId);
 }

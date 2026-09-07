@@ -7,7 +7,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
@@ -76,6 +76,13 @@ services:
       - "8080:8080"
     environment:
       - JWT_SECRET=${JWT_SECRET}
+      - AUTH_SERVICE_URL=http://auth-service:8081
+      - PROJECT_SERVICE_URL=http://project-service:8082
+      - WORKFORCE_SERVICE_URL=http://workforce-service:8083
+      - INVENTORY_SERVICE_URL=http://inventory-service:8084
+      - EQUIPMENT_SERVICE_URL=http://equipment-service:8085
+      - FINANCE_SERVICE_URL=http://finance-service:8086
+      - REPORTING_SERVICE_URL=http://reporting-service:8087
     networks:
       - buildflow-net
     depends_on:
@@ -92,14 +99,18 @@ services:
       context: ./backend/auth-service
     container_name: auth-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/buildflow_auth?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/buildflow_auth?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=${JWT_SECRET}
     networks:
       - buildflow-net
     depends_on:
       mysql:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
 
   project-service:
@@ -107,13 +118,17 @@ services:
       context: ./backend/project-service
     container_name: project-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/buildflow_project?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/buildflow_project?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     networks:
       - buildflow-net
     depends_on:
       mysql:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
 
   workforce-service:
@@ -121,9 +136,10 @@ services:
       context: ./backend/workforce-service
     container_name: workforce-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/buildflow_workforce?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/buildflow_workforce?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     networks:
       - buildflow-net
@@ -138,9 +154,10 @@ services:
       context: ./backend/inventory-service
     container_name: inventory-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/buildflow_inventory?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/buildflow_inventory?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     networks:
       - buildflow-net
@@ -155,9 +172,10 @@ services:
       context: ./backend/equipment-service
     container_name: equipment-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/buildflow_equipment?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/buildflow_equipment?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     networks:
       - buildflow-net
@@ -172,9 +190,10 @@ services:
       context: ./backend/finance-service
     container_name: finance-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/buildflow_finance?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/buildflow_finance?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     networks:
       - buildflow-net
@@ -189,9 +208,10 @@ services:
       context: ./backend/reporting-service
     container_name: reporting-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/buildflow_reporting?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/buildflow_reporting?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - SPRING_REDIS_HOST=redis
       - SPRING_REDIS_PORT=6379
@@ -204,6 +224,17 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: buildflow-frontend
+    ports:
+      - "80:80"
+    networks:
+      - buildflow-net
+    depends_on:
+      - api-gateway
 
 networks:
   buildflow-net:

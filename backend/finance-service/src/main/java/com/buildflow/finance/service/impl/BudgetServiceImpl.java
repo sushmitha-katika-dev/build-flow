@@ -6,7 +6,9 @@ import com.buildflow.finance.entity.Expense;
 import com.buildflow.finance.entity.ProjectBudget;
 import com.buildflow.finance.exception.InvalidBudgetException;
 import com.buildflow.finance.mapper.FinanceMapper;
+import com.buildflow.finance.entity.Payment;
 import com.buildflow.finance.repository.ExpenseRepository;
+import com.buildflow.finance.repository.PaymentRepository;
 import com.buildflow.finance.repository.ProjectBudgetRepository;
 import com.buildflow.finance.service.BudgetService;
 import com.buildflow.finance.validator.FinanceValidator;
@@ -25,6 +27,7 @@ public class BudgetServiceImpl implements BudgetService {
 
     private final ProjectBudgetRepository budgetRepository;
     private final ExpenseRepository expenseRepository;
+    private final PaymentRepository paymentRepository;
     private final FinanceMapper financeMapper;
     private final FinanceValidator financeValidator;
 
@@ -40,6 +43,8 @@ public class BudgetServiceImpl implements BudgetService {
         ProjectBudget budget = financeMapper.toEntity(request);
         budget.setActualExpenses(BigDecimal.ZERO);
         budget.setRemainingBudget(request.getEstimatedBudget());
+        budget.setAmountPaid(BigDecimal.ZERO);
+        budget.setOutstandingAmount(BigDecimal.ZERO);
         
         financeValidator.validateBudgetCalculation(budget);
         
@@ -79,8 +84,16 @@ public class BudgetServiceImpl implements BudgetService {
         
         ProjectBudget budget = budgetRepository.findByProjectId(projectId).orElse(null);
         if (budget == null) {
-            log.warn("Cannot update expenses for project {} as no budget is initialized", projectId);
-            return;
+            log.warn("Budget not found for project {}. Auto-initializing with 0 estimated budget.", projectId);
+            budget = ProjectBudget.builder()
+                    .projectId(projectId)
+                    .estimatedBudget(BigDecimal.ZERO)
+                    .actualExpenses(BigDecimal.ZERO)
+                    .remainingBudget(BigDecimal.ZERO)
+                    .amountPaid(BigDecimal.ZERO)
+                    .outstandingAmount(BigDecimal.ZERO)
+                    .build();
+            budget = budgetRepository.save(budget);
         }
         
         List<Expense> expenses = expenseRepository.findByProjectId(projectId);
@@ -90,6 +103,40 @@ public class BudgetServiceImpl implements BudgetService {
                 
         budget.setActualExpenses(totalExpenses);
         budget.setRemainingBudget(budget.getEstimatedBudget().subtract(totalExpenses));
+        
+        BigDecimal amountPaid = budget.getAmountPaid() != null ? budget.getAmountPaid() : BigDecimal.ZERO;
+        budget.setOutstandingAmount(totalExpenses.subtract(amountPaid));
+        
+        budgetRepository.save(budget);
+    }
+
+    @Override
+    @Transactional
+    public void updateAmountPaid(Long projectId) {
+        log.info("Recalculating amount paid for project id: {}", projectId);
+        
+        ProjectBudget budget = budgetRepository.findByProjectId(projectId).orElse(null);
+        if (budget == null) {
+            log.warn("Budget not found for project {}. Auto-initializing with 0 estimated budget.", projectId);
+            budget = ProjectBudget.builder()
+                    .projectId(projectId)
+                    .estimatedBudget(BigDecimal.ZERO)
+                    .actualExpenses(BigDecimal.ZERO)
+                    .remainingBudget(BigDecimal.ZERO)
+                    .amountPaid(BigDecimal.ZERO)
+                    .outstandingAmount(BigDecimal.ZERO)
+                    .build();
+            budget = budgetRepository.save(budget);
+        }
+        
+        List<Payment> payments = paymentRepository.findByProjectId(projectId);
+        BigDecimal totalPaid = payments.stream()
+                .map(Payment::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                
+        budget.setAmountPaid(totalPaid);
+        BigDecimal actualExpenses = budget.getActualExpenses() != null ? budget.getActualExpenses() : BigDecimal.ZERO;
+        budget.setOutstandingAmount(actualExpenses.subtract(totalPaid));
         
         budgetRepository.save(budget);
     }

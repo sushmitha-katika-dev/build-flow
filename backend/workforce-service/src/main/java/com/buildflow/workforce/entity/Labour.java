@@ -1,5 +1,7 @@
 package com.buildflow.workforce.entity;
 
+import com.buildflow.workforce.enums.CompensationType;
+import com.buildflow.workforce.enums.Gender;
 import com.buildflow.workforce.enums.LabourRole;
 import com.buildflow.workforce.enums.LabourStatus;
 import jakarta.persistence.*;
@@ -30,15 +32,26 @@ public class Labour {
     @Column(nullable = false)
     private String lastName;
 
-    @Column(unique = true, nullable = false)
-    private String email;
-
-    @Column(nullable = false)
+    @Column(name = "phone_number")
     private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    private Gender gender;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private LabourRole role;
+
+    @Column(name = "daily_rate", precision = 10, scale = 2)
+    private java.math.BigDecimal dailyRate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "compensation_type", nullable = false)
+    private CompensationType compensationType;
+
+    @Column(name = "monthly_salary", precision = 10, scale = 2)
+    private java.math.BigDecimal monthlySalary;
 
     @Column(name = "project_id")
     private Long projectId;

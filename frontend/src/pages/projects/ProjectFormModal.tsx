@@ -4,6 +4,7 @@ import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { Alert } from '../../components/common/Alert';
 import { ProjectService } from '../../services/projectService';
+import { FinanceService } from '../../services/financeService';
 import type { CreateProjectRequest } from '../../types/project';
 
 interface ProjectFormModalProps {
@@ -14,12 +15,12 @@ interface ProjectFormModalProps {
 
 export const ProjectFormModal = ({ isOpen, onClose, onProjectCreated }: ProjectFormModalProps) => {
   const [formData, setFormData] = useState<CreateProjectRequest>({
-    name: '',
-    client_name: '',
-    manager_id: 1, // Defaulting for now
-    supervisor_id: 2, // Defaulting for now
-    start_date: new Date().toISOString().split('T')[0],
-    estimated_budget: 0,
+    projectName: '',
+    clientName: '',
+    location: '',
+    startDate: new Date().toISOString().split('T')[0],
+    expectedEndDate: new Date().toISOString().split('T')[0],
+    estimatedBudget: 0,
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -31,19 +32,31 @@ export const ProjectFormModal = ({ isOpen, onClose, onProjectCreated }: ProjectF
     setError(null);
     setValidationError(null);
 
-    if (!formData.name.trim() || formData.name.length < 3) {
+    if (!formData.projectName.trim() || formData.projectName.length < 3) {
       setValidationError('Project name must be at least 3 characters.');
       return;
     }
 
-    if (formData.estimated_budget <= 0) {
+    if (formData.estimatedBudget <= 0) {
       setValidationError('Estimated budget must be greater than 0.');
       return;
     }
 
     try {
       setIsLoading(true);
-      await ProjectService.createProject(formData);
+      const project = await ProjectService.createProject(formData);
+      
+      if (project.id) {
+        try {
+          await FinanceService.initializeBudget({
+            projectId: project.id,
+            estimatedBudget: formData.estimatedBudget
+          });
+        } catch (budgetErr) {
+          console.warn("Could not initialize budget:", budgetErr);
+        }
+      }
+
       onProjectCreated();
       onClose();
     } catch (err: any) {
@@ -61,35 +74,51 @@ export const ProjectFormModal = ({ isOpen, onClose, onProjectCreated }: ProjectF
 
         <Input
           label="Project Name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          value={formData.projectName}
+          onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
           placeholder="e.g. Downtown Highrise"
           disabled={isLoading}
         />
 
         <Input
           label="Client Name"
-          value={formData.client_name}
-          onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
+          value={formData.clientName}
+          onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
           placeholder="e.g. Apex Corp"
           disabled={isLoading}
         />
 
         <Input
-          label="Estimated Budget ($)"
+          label="Location"
+          value={formData.location}
+          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+          placeholder="e.g. 123 Main St"
+          disabled={isLoading}
+        />
+
+        <Input
+          label="Estimated Budget (₹)"
           type="number"
           min="0"
           step="0.01"
-          value={formData.estimated_budget}
-          onChange={(e) => setFormData({ ...formData, estimated_budget: parseFloat(e.target.value) || 0 })}
+          value={formData.estimatedBudget}
+          onChange={(e) => setFormData({ ...formData, estimatedBudget: parseFloat(e.target.value) || 0 })}
           disabled={isLoading}
         />
 
         <Input
           label="Start Date"
           type="date"
-          value={formData.start_date}
-          onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+          value={formData.startDate}
+          onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+          disabled={isLoading}
+        />
+
+        <Input
+          label="Expected End Date"
+          type="date"
+          value={formData.expectedEndDate}
+          onChange={(e) => setFormData({ ...formData, expectedEndDate: e.target.value })}
           disabled={isLoading}
         />
 

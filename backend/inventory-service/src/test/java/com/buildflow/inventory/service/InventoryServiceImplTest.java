@@ -61,6 +61,7 @@ class InventoryServiceImplTest {
         request.setProjectId(100L);
         request.setTransactionType(TransactionType.STOCK_IN);
         request.setQuantity(BigDecimal.valueOf(100));
+        request.setUnitCost(BigDecimal.valueOf(400));
 
         transaction = new InventoryTransaction();
         transaction.setId(1L);
@@ -80,14 +81,15 @@ class InventoryServiceImplTest {
         doNothing().when(transactionValidator).validateCreateRequest(any());
         when(transactionMapper.toEntity(any())).thenReturn(transaction);
         when(transactionRepository.save(any(InventoryTransaction.class))).thenReturn(transaction);
-        doNothing().when(stockService).processStockIn(1L, 100L, BigDecimal.valueOf(100));
+        when(stockService.processStockIn(1L, 100L, null, BigDecimal.valueOf(100), BigDecimal.valueOf(400)))
+            .thenReturn(new com.buildflow.inventory.entity.Stock());
         when(transactionMapper.toResponse(any(InventoryTransaction.class))).thenReturn(response);
 
         InventoryTransactionResponse result = inventoryService.recordTransaction(request);
 
         assertNotNull(result);
         assertEquals(TransactionType.STOCK_IN, result.getTransactionType());
-        verify(stockService, times(1)).processStockIn(1L, 100L, BigDecimal.valueOf(100));
+        verify(stockService, times(1)).processStockIn(1L, 100L, null, BigDecimal.valueOf(100), BigDecimal.valueOf(400));
         verify(kafkaTemplate, never()).send(anyString(), any());
     }
 }

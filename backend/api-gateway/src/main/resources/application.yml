@@ -8,41 +8,47 @@ spring:
     gateway:
       routes:
         - id: auth-service
-          uri: http://localhost:8081
+          uri: ${AUTH_SERVICE_URL:http://auth-service:8081}
           predicates:
             - Path=/api/v1/auth/**
+        - id: company-service
+          uri: ${AUTH_SERVICE_URL:http://auth-service:8081}
+          predicates:
+            - Path=/api/v1/company/**
+          filters:
+            - JwtAuthentication
         - id: project-service
-          uri: http://localhost:8082
+          uri: ${PROJECT_SERVICE_URL:http://project-service:8082}
           predicates:
             - Path=/api/v1/projects/**
           filters:
             - JwtAuthentication
         - id: workforce-service
-          uri: http://localhost:8083
+          uri: ${WORKFORCE_SERVICE_URL:http://workforce-service:8083}
           predicates:
             - Path=/api/v1/workforce/**
           filters:
             - JwtAuthentication
         - id: inventory-service
-          uri: http://localhost:8084
+          uri: ${INVENTORY_SERVICE_URL:http://inventory-service:8084}
           predicates:
             - Path=/api/v1/inventory/**,/api/v1/materials/**
           filters:
             - JwtAuthentication
         - id: equipment-service
-          uri: http://localhost:8085
+          uri: ${EQUIPMENT_SERVICE_URL:http://equipment-service:8085}
           predicates:
             - Path=/api/v1/equipment/**,/api/v1/maintenance/**,/api/v1/fuel/**
           filters:
             - JwtAuthentication
         - id: finance-service
-          uri: http://localhost:8086
+          uri: ${FINANCE_SERVICE_URL:http://finance-service:8086}
           predicates:
-            - Path=/api/v1/expenses/**,/api/v1/profit-loss/**,/api/v1/payments/**,/api/v1/budget/**
+            - Path=/api/v1/expenses/**,/api/v1/profit-loss/**,/api/v1/payments/**,/api/v1/budgets/**
           filters:
             - JwtAuthentication
         - id: reporting-service
-          uri: http://localhost:8087
+          uri: ${REPORTING_SERVICE_URL:http://reporting-service:8087}
           predicates:
             - Path=/api/v1/reporting/**
           filters:

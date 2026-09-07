@@ -12,7 +12,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "stock")
+@Table(name = "stock", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"material_id", "project_id", "variant"})
+})
 @Data
 @Builder
 @NoArgsConstructor
@@ -29,11 +31,17 @@ public class Stock {
     @Column(name = "project_id")
     private Long projectId;
 
+    @Column(name = "variant")
+    private String variant;
+
     @Column(precision = 10, scale = 2, nullable = false)
     private BigDecimal currentStock;
 
     @Column(precision = 10, scale = 2, nullable = false)
     private BigDecimal reorderLevel;
+
+    @Column(name = "average_unit_cost", precision = 12, scale = 2)
+    private BigDecimal averageUnitCost;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

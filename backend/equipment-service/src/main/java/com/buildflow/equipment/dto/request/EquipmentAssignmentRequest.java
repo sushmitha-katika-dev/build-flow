@@ -26,4 +26,6 @@ public class EquipmentAssignmentRequest {
     private LocalDate assignmentDate;
     
     private LocalDate returnDate;
+
+    private java.math.BigDecimal agreedUnitRate;
 }

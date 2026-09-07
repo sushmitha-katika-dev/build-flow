@@ -3,6 +3,7 @@ package com.buildflow.workforce.controller;
 import com.buildflow.workforce.dto.request.LabourCreateRequest;
 import com.buildflow.workforce.dto.request.LabourUpdateRequest;
 import com.buildflow.workforce.dto.response.LabourResponse;
+import com.buildflow.workforce.dto.response.LabourWorkforceSummaryResponse;
 import com.buildflow.workforce.enums.LabourStatus;
 import com.buildflow.workforce.service.LabourService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -47,10 +48,22 @@ public class LabourController {
         return ResponseEntity.ok(labourService.getLabourByProject(projectId));
     }
 
+    @GetMapping("/summary")
+    @Operation(summary = "Get workforce summary for all labourers")
+    public ResponseEntity<List<LabourWorkforceSummaryResponse>> getLabourSummary() {
+        return ResponseEntity.ok(labourService.getLabourSummary());
+    }
+
+    @GetMapping("/summary/project/{projectId}")
+    @Operation(summary = "Get workforce summary by project ID")
+    public ResponseEntity<List<LabourWorkforceSummaryResponse>> getLabourSummaryByProject(@PathVariable Long projectId) {
+        return ResponseEntity.ok(labourService.getLabourSummaryByProject(projectId));
+    }
+
     @PutMapping("/{id}")
     @Operation(summary = "Update labour details")
     public ResponseEntity<LabourResponse> updateLabour(
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @Valid @RequestBody LabourUpdateRequest request) {
         return ResponseEntity.ok(labourService.updateLabour(id, request));
     }
@@ -58,8 +71,14 @@ public class LabourController {
     @PatchMapping("/{id}/status")
     @Operation(summary = "Update labour status")
     public ResponseEntity<LabourResponse> updateLabourStatus(
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @RequestParam LabourStatus status) {
         return ResponseEntity.ok(labourService.updateLabourStatus(id, status));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete or deactivate labour")
+    public ResponseEntity<LabourResponse> deleteLabour(@PathVariable Long id) {
+        return ResponseEntity.ok(labourService.deleteLabour(id));
     }
 }

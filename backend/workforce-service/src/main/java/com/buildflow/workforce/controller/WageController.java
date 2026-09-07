@@ -53,4 +53,17 @@ public class WageController {
             @Valid @RequestBody WageUpdateRequest request) {
         return ResponseEntity.ok(wageService.updateWage(id, request));
     }
+
+    @PutMapping("/{id}/cancel")
+    @Operation(summary = "Cancel a wage payment")
+    public ResponseEntity<WageResponse> cancelWage(@PathVariable Long id) {
+        return ResponseEntity.ok(wageService.cancelWage(id));
+    }
+
+    @PutMapping("/bulk-cancel")
+    @Operation(summary = "Bulk cancel wage payments")
+    public ResponseEntity<Void> bulkCancelWages(@RequestBody List<Long> ids) {
+        wageService.bulkCancelWages(ids);
+        return ResponseEntity.ok().build();
+    }
 }

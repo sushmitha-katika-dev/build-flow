@@ -35,6 +35,12 @@ public class ProjectBudget {
     @Column(precision = 15, scale = 2)
     private BigDecimal remainingBudget;
 
+    @Column(name = "amount_paid", precision = 15, scale = 2)
+    private BigDecimal amountPaid;
+
+    @Column(name = "outstanding_amount", precision = 15, scale = 2)
+    private BigDecimal outstandingAmount;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

@@ -1,7 +1,8 @@
 package com.buildflow.workforce.enums;
 
 public enum LabourStatus {
-    ACTIVE,
+    AVAILABLE,
+    ASSIGNED,
     ON_LEAVE,
     INACTIVE
 }

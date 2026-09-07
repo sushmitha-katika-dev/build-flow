@@ -10,4 +10,5 @@ import java.util.List;
 public interface EquipmentAssignmentRepository extends JpaRepository<EquipmentAssignment, Long> {
     List<EquipmentAssignment> findByEquipmentId(Long equipmentId);
     List<EquipmentAssignment> findByProjectId(Long projectId);
+    List<EquipmentAssignment> findByEquipmentIdAndProjectIdAndReturnDateIsNull(Long equipmentId, Long projectId);
 }

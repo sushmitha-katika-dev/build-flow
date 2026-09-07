@@ -1,255 +1,102 @@
 # Project Context
 
 ## Overview
-This document outlines the high-level context, architecture, and strategies used for the BuildFlow project, adhering to the TrainingMug AI Development Framework (ADF).
+This document outlines the high-level context, architecture, and strategies used for the BuildFlow platform, adhering to the TrainingMug AI Development Framework (ADF).
 
 ## Technology Stack
-- **Frontend:** React.js, TypeScript, Tailwind CSS, Axios, React Router, Chart.js / Recharts
-- **Backend:** Java 21, Spring Boot, Spring Security (JWT), Spring Cloud Gateway, Spring Data JPA, Hibernate, Maven
-- **Database:** MySQL (Database-per-Service Architecture)
-- **Event-Driven Communication:** Apache Kafka
-- **Caching:** Redis
-- **API Documentation:** Swagger / OpenAPI
+- **Frontend:** React.js (Vite), TypeScript, Tailwind CSS, Axios, React Router, Lucide Icons, React Context API (`AuthContext`)
+- **Backend:** Java 17/21, Spring Boot 3.x, Spring Security (JWT), Spring Cloud Gateway, Spring Data JPA, Hibernate, Maven
+- **Database:** MySQL (Database-per-Service Architecture across isolated microservice schemas)
+- **Event-Driven Communication:** Apache Kafka (Message Broker & Event Streaming)
+- **Caching & Telemetry:** Redis
+- **API Documentation:** Swagger / OpenAPI 3.0
 - **Containerization & DevOps:** Docker, Docker Compose, Git, GitHub
 
 ## Coding Standards
-The project strictly follows the standards defined in the `08_CODING_STANDARDS.md` (to be created in a later phase). Core principles include:
-- SOLID Principles
-- Layered Architecture (Controller -> Service -> Repository)
-- DTO Pattern
-- Global Exception Handler
-- Constructor Injection
+The project strictly adheres to clean architecture principles:
+- SOLID Principles & Clean Code
+- Layered Architecture (`Controller` -> `Service` / `ServiceImpl` -> `Repository` -> `Entity`)
+- DTO Pattern (`Request` / `Response` DTOs with validation annotations)
+- Global Exception Handler (`@RestControllerAdvice`)
+- Constructor Injection (`Lombok` / Explicit Constructors)
+- Idempotent Kafka Event Processing (`referenceId` duplicate protection in Finance Service)
 
 ## Architecture
-BuildFlow uses a **Microservices Architecture**. An API Gateway routes traffic from the React frontend to individual microservices (Auth, Project, Workforce, Material, Equipment, Finance, Reporting). Each service connects to its own isolated MySQL database. Asynchronous communication and event-driven data flow are handled by Apache Kafka, and the Reporting Service leverages Redis for fast read access to dashboard analytics.
+BuildFlow uses a **Microservices Architecture**. An API Gateway (`port: 8080`) routes traffic from the React frontend to individual microservices (`auth-service: 8081`, `project-service: 8082`, `workforce-service: 8083`, `inventory-service: 8084`, `equipment-service: 8085`, `finance-service: 8086`, `reporting-service: 8087`). Each service connects to its own isolated MySQL database schema. Asynchronous event-driven communication and data synchronization are handled by Apache Kafka topics, and the Reporting Service leverages Redis for fast read access to aggregated dashboard analytics.
 
 ## Folder Structure
 ```
 build-flow/
 ├── docs/                                   # Project Documentation
-│   ├── PROJECT_PROPOSAL.md
-│   ├── PROJECT_CONTEXT.md
-│   ├── REQUIREMENTS.md
-│   ├── ARCHITECTURE.md
-│   ├── DATABASE_DESIGN.md
-│   ├── API_CONTRACT.md
-│   ├── UI_FLOW.md
-│   ├── TASKS.md
-│   ├── TEST_REPORT.md
-│   └── DEPLOYMENT_GUIDE.md
+│   ├── 00_PROJECT_UNDERSTANDING.md
+│   ├── 01_PROJECT_CONTEXT.md
+│   ├── 02_REQUIREMENTS.md
+│   ├── 03_ARCHITECTURE.md
+│   ├── 04_DATABASE.md
+│   ├── 05_API_CONTRACT.md
+│   ├── 06_UI_FLOW.md
+│   ├── 07_TASKS.md
+│   ├── buildflow-final-validation.md
+│   ├── equipment-integration-audit.md
+│   └── BuildFlow_Postman_Collection.json
 │
 ├── backend/
-│   │
-│   ├── api-gateway/
-│   │   ├── src/
-│   │   ├── Dockerfile
-│   │   ├── pom.xml
-│   │   └── README.md
-│   │
-│   ├── auth-service/
-│   │   ├── src/
-│   │   │   ├── main/
-│   │   │   │   ├── java/com/buildflow/auth/
-│   │   │   │   │   ├── config/
-│   │   │   │   │   ├── controller/
-│   │   │   │   │   ├── dto/
-│   │   │   │   │   ├── entity/
-│   │   │   │   │   ├── exception/
-│   │   │   │   │   ├── repository/
-│   │   │   │   │   ├── security/
-│   │   │   │   │   ├── service/
-│   │   │   │   │   ├── util/
-│   │   │   │   │   └── AuthServiceApplication.java
-│   │   │   └── resources/
-│   │   │       ├── application.yml
-│   │   │       └── db/
-│   │   ├── src/test/
-│   │   ├── Dockerfile
-│   │   └── pom.xml
-│   │
-│   ├── project-service/
-│   │   ├── src/
-│   │   ├── Dockerfile
-│   │   └── pom.xml
-│   │
-│   ├── workforce-service/
-│   │   ├── src/
-│   │   ├── Dockerfile
-│   │   └── pom.xml
-│   │
-│   ├── inventory-service/
-│   │   ├── src/
-│   │   ├── Dockerfile
-│   │   └── pom.xml
-│   │
-│   ├── equipment-service/
-│   │   ├── src/
-│   │   ├── Dockerfile
-│   │   └── pom.xml
-│   │
-│   ├── finance-service/
-│   │   ├── src/
-│   │   ├── Dockerfile
-│   │   └── pom.xml
-│   │
-│   └── reporting-service/
-│       ├── src/
-│       ├── Dockerfile
-│       └── pom.xml
+│   ├── api-gateway/                        # Spring Cloud Gateway (8080)
+│   ├── auth-service/                       # JWT Auth, User & Passcode Management (8081)
+│   ├── project-service/                    # Project Lifecycle & Budgets (8082)
+│   ├── workforce-service/                  # Labourers, Attendance & Wage Agreements (8083)
+│   ├── inventory-service/                  # Dynamic Materials, Stock & WAC Consumption (8084)
+│   ├── equipment-service/                  # Machinery Registry, Usage & Fuel Logs (8085)
+│   ├── finance-service/                    # Aggregated Ledger, Expenses & Payments (8086)
+│   └── reporting-service/                  # Analytics & Redis Dashboard Views (8087)
 │
 ├── frontend/
 │   ├── public/
 │   ├── src/
-│   │   ├── api/
+│   │   ├── api/                            # Axios client instance
 │   │   ├── assets/
 │   │   ├── components/
-│   │   │   ├── common/
-│   │   │   ├── dashboard/
-│   │   │   ├── projects/
-│   │   │   ├── workforce/
-│   │   │   ├── inventory/
-│   │   │   ├── equipment/
-│   │   │   ├── finance/
-│   │   │   └── reports/
-│   │   ├── hooks/
-│   │   ├── layouts/
+│   │   │   ├── common/                     # Reusable UI components (Input, Button, Alert, Badge)
+│   │   │   └── layout/                     # Sidebar, Header navigation
+│   │   ├── context/                        # AuthContext (JWT, Login, Logout)
+│   │   ├── layouts/                        # AuthLayout (2-Column Landing), MainLayout
 │   │   ├── pages/
-│   │   ├── routes/
-│   │   ├── services/
-│   │   ├── store/
-│   │   ├── types/
-│   │   ├── utils/
+│   │   │   ├── auth/                       # LoginPage, RegisterPage
+│   │   │   ├── company/                    # CompanyPage
+│   │   │   ├── dashboard/                  # DashboardPage (Admin Command Center), DashboardRouter
+│   │   │   ├── equipment/                  # EquipmentPage
+│   │   │   ├── finance/                    # FinancePage
+│   │   │   ├── inventory/                  # InventoryPage
+│   │   │   ├── profile/                    # ProfilePage
+│   │   │   ├── projects/                   # ProjectsPage, ProjectDetailsPage
+│   │   │   ├── settings/                   # SettingsPage
+│   │   │   ├── supervisor/                 # SupervisorDashboardPage
+│   │   │   └── workforce/                  # WorkforcePage, WorkerHistoryPage
+│   │   ├── routes/                         # ProtectedRoute (Role & JWT check)
+│   │   ├── services/                       # API Services (authService, projectService, etc.)
+│   │   ├── types/                          # TypeScript Interfaces & Role definitions
 │   │   ├── App.tsx
 │   │   └── main.tsx
 │   ├── package.json
 │   ├── Dockerfile
 │   └── vite.config.ts
 │
-├── database/
-│   ├── auth-db/
-│   ├── project-db/
-│   ├── workforce-db/
-│   ├── inventory-db/
-│   ├── equipment-db/
-│   ├── finance-db/
-│   └── reporting-db/
-│
-├── docker/
-│   ├── docker-compose.yml
-│   ├── kafka/
-│   ├── mysql/
-│   └── redis/
-│
-├── postman/
-│   └── BuildFlow.postman_collection.json
-│
-├── scripts/
-│   ├── setup.sh
-│   └── setup.bat
-│
-├── .github/
-│   └── workflows/
-│       └── ci.yml
-│
-├── .gitignore
+├── docker-compose.yml                      # Full multi-container composition
 ├── README.md
 └── LICENSE
 ```
 
-## Development order 
-build-flow
-│
-├── Documentation
-│
-├── API Gateway
-│
-├── Authentication Service
-│
-├── Project Service
-│
-├── Workforce Service
-│
-├── Inventory Service
-│
-├── Equipment Service
-│
-├── Finance Service
-│
-├── Reporting Service
-│
-├── Frontend
-│
-├── Testing
-│
-├── Docker
-│
-├── CI/CD
-│
-└── Deployment
-
-
-## Structure inside every service 
-
-project-service/
-│
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/
-│   │   │       └── buildflow/
-│   │   │           └── project/
-│   │   │
-│   │   │               ├── config/
-│   │   │               │
-│   │   │               ├── controller/
-│   │   │               │
-│   │   │               ├── dto/
-│   │   │               │   ├── request/
-│   │   │               │   └── response/
-│   │   │               │
-│   │   │               ├── entity/
-│   │   │               │
-│   │   │               ├── enums/
-│   │   │               │
-│   │   │               ├── exception/
-│   │   │               │
-│   │   │               ├── mapper/
-│   │   │               │
-│   │   │               ├── repository/
-│   │   │               │
-│   │   │               ├── security/
-│   │   │               │
-│   │   │               ├── service/
-│   │   │               │
-│   │   │               ├── service/
-│   │   │               │    └── impl/
-│   │   │               │
-│   │   │               ├── util/
-│   │   │               │
-│   │   │               ├── validator/
-│   │   │               │
-│   │   │               └── ProjectServiceApplication.java
-│   │   │
-│   │   └── resources/
-│   │        ├── application.yml
-│   │        ├── application-dev.yml
-│   │        ├── application-prod.yml
-│   │        └── db/
-│   │
-│   └── test/
-│
-├── Dockerfile
-│
-├── pom.xml
-│
-└── README.md
+## Security & Access Control Model
+- **Company Admin Access Passcode (`BF-ADMIN-2026`):**
+  Self-registration for executive roles (`ADMIN`, `CONTRACTOR`, `PROJECT_MANAGER`, `FINANCE_MANAGER`) strictly requires providing the valid Company Security Key. Admins can view, copy, or change the passcode dynamically from the Admin Dashboard.
+- **Site Supervisor Approval Workflow:**
+  Self-registration for `SITE_SUPERVISOR` accounts defaults to `PENDING_APPROVAL` status. Supervisors are blocked from logging in until an Admin explicitly authorizes them (`APPROVED`). If an account is marked `REJECTED`, authentication is denied.
 
 ## Branching Strategy
-- `main`: Stable, production-ready code.
-- `develop`: Integration branch for active development.
-- `feature/<feature-name>`: Dedicated branches for specific features or modules (e.g., `feature/login`, `feature/inventory`).
-- `bugfix/<issue>`: Branches used to resolve issues found during testing.
+- `main`: Production-ready release branch.
+- `develop`: Primary integration branch for active development.
+- `feature/<feature-name>`: Dedicated feature development branches.
 
 ## Deployment Strategy
-- **Local Development:** Handled via Docker Compose for backing services (MySQL, Redis, Kafka) and standard runtime environments for apps.
-- **Cloud Deployment:** Target deployment includes Azure Static Web Apps for the frontend, Azure Container Apps / App Service for the backend microservices, and Azure MySQL for the databases.
+- **Local Containerization:** Managed via Docker Compose for all 9 microservices, MySQL, Redis, and Apache Kafka.
+- **Production Target:** Containerized deployment via cloud Virtual Machines (AWS EC2 / DigitalOcean Droplets) or Azure Container Apps with Docker Compose.

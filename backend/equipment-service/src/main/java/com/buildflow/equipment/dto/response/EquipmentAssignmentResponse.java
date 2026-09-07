@@ -19,6 +19,7 @@ public class EquipmentAssignmentResponse {
     private Integer assignedQuantity;
     private LocalDate assignmentDate;
     private LocalDate returnDate;
+    private java.math.BigDecimal agreedUnitRate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

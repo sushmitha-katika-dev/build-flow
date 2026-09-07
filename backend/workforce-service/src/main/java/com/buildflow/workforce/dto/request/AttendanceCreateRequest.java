@@ -13,6 +13,8 @@ public class AttendanceCreateRequest {
     @NotNull(message = "Labour ID cannot be null")
     private Long labourId;
 
+    private Long projectId;
+
     @NotNull(message = "Date cannot be null")
     private LocalDate date;
 
@@ -21,4 +23,7 @@ public class AttendanceCreateRequest {
 
     private LocalTime checkInTime;
     private LocalTime checkOutTime;
+    
+    private java.math.BigDecimal dailyRate;
+    private String notes;
 }

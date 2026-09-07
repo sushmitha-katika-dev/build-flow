@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 @Builder
 public class DashboardResponse {
     private Integer activeProjectsCount;
+    private Integer workersCount;
+    private BigDecimal materialInvestment;
     private Integer lowStockAlertsCount;
     private BigDecimal totalCompanyRevenue;
     private BigDecimal totalCompanyExpenses;

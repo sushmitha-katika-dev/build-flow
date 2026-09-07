@@ -1,22 +1,27 @@
-export type ProjectStatus = 'PLANNED' | 'ACTIVE' | 'COMPLETED' | 'ON_HOLD';
+export type ProjectStatus = 'PLANNED' | 'ACTIVE' | 'COMPLETED' | 'ON_HOLD' | 'CANCELLED';
 
 export interface Project {
   id: number;
-  name: string;
-  client_name: string;
-  manager_id: number;
-  supervisor_id: number;
-  start_date: string;
-  estimated_budget: number;
+  projectCode: string;
+  projectName: string;
+  description?: string;
+  clientName: string;
+  clientContact?: string;
+  location: string;
+  startDate: string;
+  expectedEndDate: string;
+  actualEndDate?: string;
+  estimatedBudget: number;
   status: ProjectStatus;
-  message?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CreateProjectRequest {
-  name: string;
-  client_name: string;
-  manager_id: number;
-  supervisor_id: number;
-  start_date: string;
-  estimated_budget: number;
+  projectName: string;
+  clientName: string;
+  location: string;
+  startDate: string;
+  expectedEndDate: string;
+  estimatedBudget: number;
 }

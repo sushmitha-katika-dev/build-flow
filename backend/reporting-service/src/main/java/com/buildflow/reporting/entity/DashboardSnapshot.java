@@ -24,6 +24,8 @@ public class DashboardSnapshot {
     private Long id; // Typically just a single row with ID 1
     
     private Integer activeProjectsCount;
+    private Integer workersCount;
+    private BigDecimal materialInvestment;
     private Integer lowStockAlertsCount;
     private BigDecimal totalCompanyRevenue;
     private BigDecimal totalCompanyExpenses;

@@ -46,6 +46,7 @@ public class StockServiceImpl implements StockService {
 
         Stock stock = stockMapper.toEntity(request);
         stock.setReorderLevel(BigDecimal.ZERO); // default
+        stock.setAverageUnitCost(BigDecimal.ZERO);
         stock = stockRepository.save(stock);
 
         return stockMapper.toResponse(stock);
@@ -70,8 +71,47 @@ public class StockServiceImpl implements StockService {
     @Override
     @Transactional(readOnly = true)
     public StockResponse getStockByMaterialAndProject(Long materialId, Long projectId) {
-        Stock stock = stockRepository.findByMaterialIdAndProjectId(materialId, projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Stock not found for material ID: " + materialId + " and project ID: " + projectId));
+        List<Stock> stocks = stockRepository.findByMaterialIdAndProjectId(materialId, projectId);
+        if (stocks.isEmpty()) {
+            throw new ResourceNotFoundException("Stock not found for material ID: " + materialId + " and project ID: " + projectId);
+        }
+        if (stocks.size() == 1) {
+            return stockMapper.toResponse(stocks.get(0));
+        }
+
+        BigDecimal totalCurrentStock = BigDecimal.ZERO;
+        BigDecimal totalInventoryValue = BigDecimal.ZERO;
+
+        for (Stock stock : stocks) {
+            BigDecimal qty = stock.getCurrentStock() != null ? stock.getCurrentStock() : BigDecimal.ZERO;
+            BigDecimal avgCost = stock.getAverageUnitCost() != null ? stock.getAverageUnitCost() : BigDecimal.ZERO;
+            totalCurrentStock = totalCurrentStock.add(qty);
+            totalInventoryValue = totalInventoryValue.add(qty.multiply(avgCost));
+        }
+
+        BigDecimal weightedAvgCost = BigDecimal.ZERO;
+        if (totalCurrentStock.compareTo(BigDecimal.ZERO) > 0) {
+            weightedAvgCost = totalInventoryValue.divide(totalCurrentStock, 2, java.math.RoundingMode.HALF_UP);
+        }
+
+        Stock aggregated = new Stock();
+        aggregated.setId(stocks.get(0).getId());
+        aggregated.setMaterialId(materialId);
+        aggregated.setProjectId(projectId);
+        aggregated.setVariant("ALL");
+        aggregated.setCurrentStock(totalCurrentStock);
+        aggregated.setAverageUnitCost(weightedAvgCost);
+        aggregated.setReorderLevel(stocks.get(0).getReorderLevel());
+
+        return stockMapper.toResponse(aggregated);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public StockResponse getStockByMaterialAndProjectAndVariant(Long materialId, Long projectId, String variant) {
+        String safeVariant = (variant == null || variant.trim().isEmpty()) ? "DEFAULT" : variant.trim();
+        Stock stock = stockRepository.findByMaterialIdAndProjectIdAndVariant(materialId, projectId, safeVariant)
+                .orElseThrow(() -> new ResourceNotFoundException("Stock not found for material ID: " + materialId + ", project ID: " + projectId + ", variant: " + safeVariant));
         return stockMapper.toResponse(stock);
     }
 
@@ -91,28 +131,49 @@ public class StockServiceImpl implements StockService {
 
     @Override
     @Transactional
-    public void processStockIn(Long materialId, Long projectId, BigDecimal quantity) {
-        Stock stock = stockRepository.findByMaterialIdAndProjectId(materialId, projectId)
+    public Stock processStockIn(Long materialId, Long projectId, String variant, BigDecimal quantity, BigDecimal unitCost) {
+        String safeVariant = (variant == null || variant.trim().isEmpty()) ? "DEFAULT" : variant.trim();
+        Stock stock = stockRepository.findByMaterialIdAndProjectIdAndVariant(materialId, projectId, safeVariant)
                 .orElseGet(() -> {
                     Stock newStock = new Stock();
                     newStock.setMaterialId(materialId);
                     newStock.setProjectId(projectId);
+                    newStock.setVariant(safeVariant);
                     newStock.setCurrentStock(BigDecimal.ZERO);
                     newStock.setReorderLevel(BigDecimal.ZERO);
+                    newStock.setAverageUnitCost(BigDecimal.ZERO);
                     return newStock;
                 });
 
-        stock.setCurrentStock(stock.getCurrentStock().add(quantity));
+        BigDecimal currentStock = stock.getCurrentStock() != null ? stock.getCurrentStock() : BigDecimal.ZERO;
+        BigDecimal currentAverage = stock.getAverageUnitCost() != null ? stock.getAverageUnitCost() : BigDecimal.ZERO;
+        BigDecimal incomingCost = unitCost != null ? unitCost : BigDecimal.ZERO;
+        
+        BigDecimal totalCurrentValue = currentStock.multiply(currentAverage);
+        BigDecimal totalIncomingValue = quantity.multiply(incomingCost);
+        
+        BigDecimal newTotalStock = currentStock.add(quantity);
+        
+        if (newTotalStock.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal newAverageCost = totalCurrentValue.add(totalIncomingValue)
+                    .divide(newTotalStock, 2, java.math.RoundingMode.HALF_UP);
+            stock.setAverageUnitCost(newAverageCost);
+        }
+
+        stock.setCurrentStock(newTotalStock);
         stock = stockRepository.save(stock);
 
         kafkaTemplate.send(InventoryConstants.STOCK_UPDATED_TOPIC, stock);
+        return stock;
     }
 
     @Override
     @Transactional
-    public void processStockOut(Long materialId, Long projectId, BigDecimal quantity) {
-        Stock stock = stockRepository.findByMaterialIdAndProjectId(materialId, projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Stock not found for material ID: " + materialId + " and project ID: " + projectId));
+    public Stock processStockOut(Long materialId, Long projectId, String variant, BigDecimal quantity) {
+        String safeVariant = (variant == null || variant.trim().isEmpty()) ? "DEFAULT" : variant.trim();
+        Stock stock = stockRepository.findByMaterialIdAndProjectIdAndVariant(materialId, projectId, safeVariant)
+                .orElseGet(() -> stockRepository.findByMaterialIdAndProjectIdAndVariant(materialId, 0L, safeVariant)
+                        .orElseThrow(() -> new ResourceNotFoundException("Stock not found for material ID: " + materialId + " and variant: " + safeVariant)));
 
         if (stock.getCurrentStock().compareTo(quantity) < 0) {
             throw new IllegalArgumentException("Insufficient stock for material ID: " + materialId);
@@ -122,5 +183,6 @@ public class StockServiceImpl implements StockService {
         stock = stockRepository.save(stock);
 
         kafkaTemplate.send(InventoryConstants.STOCK_UPDATED_TOPIC, stock);
+        return stock;
     }
 }

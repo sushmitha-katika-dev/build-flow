@@ -37,6 +37,9 @@ public class EquipmentAssignment {
 
     private LocalDate returnDate;
 
+    @Column(name = "agreed_unit_rate")
+    private java.math.BigDecimal agreedUnitRate;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

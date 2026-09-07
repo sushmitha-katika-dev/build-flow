@@ -1,4 +1,4 @@
-export type ExpenseCategory = 'LABOUR' | 'MATERIAL' | 'EQUIPMENT' | 'FUEL' | 'TRANSPORT' | 'MISCELLANEOUS';
+export type ExpenseCategory = 'WORKFORCE' | 'WORKER' | 'LABOUR' | 'MATERIAL' | 'EQUIPMENT' | 'FUEL' | 'TRANSPORT' | 'MISCELLANEOUS';
 export type PaymentType = 'ADVANCE' | 'MILESTONE' | 'FINAL';
 export type PaymentStatus = 'PENDING' | 'COMPLETED' | 'FAILED';
 
@@ -30,4 +30,16 @@ export interface ProfitLossSummary {
   totalPaymentsReceived: number;
   netProfitOrLoss: number;
   status: 'PROFIT' | 'LOSS' | 'BREAK_EVEN';
+}
+
+export interface ProjectBudget {
+  id: number;
+  projectId: number;
+  estimatedBudget: number;
+  actualExpenses: number;
+  remainingBudget: number;
+  amountPaid: number;
+  outstandingAmount: number;
+  createdAt?: string;
+  updatedAt?: string;
 }

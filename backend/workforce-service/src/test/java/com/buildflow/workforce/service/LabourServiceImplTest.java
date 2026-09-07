@@ -52,7 +52,6 @@ class LabourServiceImplTest {
         createRequest = new LabourCreateRequest();
         createRequest.setFirstName("John");
         createRequest.setLastName("Doe");
-        createRequest.setEmail("john.doe@test.com");
         createRequest.setPhoneNumber("1234567890");
         createRequest.setRole(LabourRole.LABORER);
         createRequest.setProjectId(100L);
@@ -61,7 +60,7 @@ class LabourServiceImplTest {
         labour.setId(1L);
         labour.setFirstName("John");
         labour.setLastName("Doe");
-        labour.setStatus(LabourStatus.ACTIVE);
+        labour.setStatus(LabourStatus.AVAILABLE);
 
         response = new LabourResponse();
         response.setId(1L);

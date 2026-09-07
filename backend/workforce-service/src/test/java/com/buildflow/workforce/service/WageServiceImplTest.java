@@ -4,6 +4,7 @@ import com.buildflow.workforce.constants.WorkforceConstants;
 import com.buildflow.workforce.dto.request.WageCreateRequest;
 import com.buildflow.workforce.dto.response.WageResponse;
 import com.buildflow.workforce.entity.Wage;
+import com.buildflow.workforce.event.WageEvent;
 import com.buildflow.workforce.exception.ResourceNotFoundException;
 import com.buildflow.workforce.mapper.WageMapper;
 import com.buildflow.workforce.repository.LabourRepository;
@@ -56,9 +57,7 @@ class WageServiceImplTest {
         createRequest = new WageCreateRequest();
         createRequest.setLabourId(1L);
         createRequest.setProjectId(100L);
-        createRequest.setHourlyRate(BigDecimal.valueOf(20));
-        createRequest.setTotalHours(BigDecimal.valueOf(8));
-        createRequest.setAmountPaid(BigDecimal.valueOf(160));
+        createRequest.setAmountPaid(new BigDecimal("1500.00"));
         createRequest.setPaymentDate(LocalDate.now());
 
         wage = new Wage();
@@ -84,7 +83,7 @@ class WageServiceImplTest {
 
         assertNotNull(result);
         assertEquals(BigDecimal.valueOf(160), result.getAmountPaid());
-        verify(kafkaTemplate).send(eq(WorkforceConstants.WAGE_PROCESSED_TOPIC), any(Wage.class));
+        verify(kafkaTemplate).send(eq(WorkforceConstants.WAGE_PROCESSED_TOPIC), any(WageEvent.class));
     }
 
     @Test
