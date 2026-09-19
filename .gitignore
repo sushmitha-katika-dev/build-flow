@@ -1,4 +1,17 @@
-# Maven
+# Node / Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Temporary Scratch Files & Directories
+scratch/
+temp/
+tmp/
+*.tmp
+*.temp
+
+# Maven & Build Artifacts
 target/
 pom.xml.tag
 pom.xml.releaseBackup
@@ -10,7 +23,7 @@ buildNumber.properties
 .mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
 
-# IDEs
+# IDEs & Editors
 .idea/
 *.iml
 *.iws
@@ -21,11 +34,15 @@ buildNumber.properties
 *.sublime-workspace
 *.sublime-project
 
-# Mac
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+
+# OS Files
 .DS_Store
+Thumbs.db
 
 # Logs
 *.log
-
-# Docker
-.env
+logs/
