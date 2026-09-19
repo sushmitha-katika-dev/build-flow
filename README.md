@@ -12,6 +12,11 @@
 
 > **BuildFlow** is an enterprise-grade, event-driven Construction Resource Planning (CRP) platform architected using **Java Spring Boot microservices**, **Apache Kafka**, **Redis**, and a high-performance **React 19 / TypeScript** single-page application.
 
+<div align="center">
+  <img src="docs/assets/screenshots/buildflow_landing_preview.png" alt="BuildFlow Platform Interface" width="100%" />
+  <p><em>✨ BuildFlow Unified Construction & Field Operations Interface</em></p>
+</div>
+
 ---
 
 ## 📑 Table of Contents
