@@ -34,34 +34,34 @@ BuildFlow employs a **Microservices Architecture** with a centralized **Spring C
 
 ```mermaid
 graph TD
-    Client["🖥️ Web Browser / React 19 SPA (Port 80 / 5173)"] -->|REST API + Bearer JWT| Gateway["🛡️ Spring Cloud API Gateway (Port 8080)"]
+    Client["🖥️ Web Browser / React 19 SPA :5173"] -->|"REST API + Bearer JWT"| Gateway["🛡️ Spring Cloud API Gateway :8080"]
 
-    Gateway -->|Authentication & RBAC| Auth["🔑 Auth Service (:8081)"]
-    Gateway -->|Projects & Milestones| Proj["🏗️ Project Service (:8082)"]
-    Gateway -->|Workers, Shifts & Wages| Work["👷 Workforce Service (:8083)"]
-    Gateway -->|Material & Stock Logs| Inv["📦 Inventory Service (:8084)"]
-    Gateway -->|Machinery & Fuel Tracking| Equip["🚜 Equipment Service (:8085)"]
-    Gateway -->|Expenses, Invoices & P&L| Fin["💰 Finance Service (:8086)"]
-    Gateway -->|Aggregated Analytics & KPIs| Rep["📊 Reporting Service (:8087)"]
+    Gateway -->|"Authentication & RBAC"| Auth["🔑 Auth Service :8081"]
+    Gateway -->|"Projects & Milestones"| Proj["🏗️ Project Service :8082"]
+    Gateway -->|"Workers, Shifts & Wages"| Work["👷 Workforce Service :8083"]
+    Gateway -->|"Material & Stock Logs"| Inv["📦 Inventory Service :8084"]
+    Gateway -->|"Machinery & Fuel Tracking"| Equip["🚜 Equipment Service :8085"]
+    Gateway -->|"Expenses, Invoices & P&L"| Fin["💰 Finance Service :8086"]
+    Gateway -->|"Aggregated Analytics & KPIs"| Rep["📊 Reporting Service :8087"]
 
     %% Kafka Events
-    Work -.->|kafka: attendance.events| Kafka(("⚡ Apache Kafka (:9093)"))
-    Inv -.->|kafka: inventory.events| Kafka
-    Equip -.->|kafka: equipment.events| Kafka
-    Kafka -.->|Event Consumer (Auto-Expense)| Fin
-    Kafka -.->|Event Consumer (Analytics Sink)| Rep
+    Work -.->|"kafka: attendance.events"| Kafka["⚡ Apache Kafka :9093"]
+    Inv -.->|"kafka: inventory.events"| Kafka
+    Equip -.->|"kafka: equipment.events"| Kafka
+    Kafka -.->|"Event Consumer: Auto-Expense"| Fin
+    Kafka -.->|"Event Consumer: Analytics Sink"| Rep
 
     %% Caching Layer
-    Rep --- Redis[("⚡ Redis Cache (:6379)")]
+    Rep --- Redis["⚡ Redis Cache :6379"]
 
     %% Isolated Databases
-    Auth --> DBAuth[("🗄️ MySQL: buildflow_auth")]
-    Proj --> DBProj[("🗄️ MySQL: buildflow_project")]
-    Work --> DBWork[("🗄️ MySQL: buildflow_workforce")]
-    Inv --> DBInv[("🗄️ MySQL: buildflow_inventory")]
-    Equip --> DBEquip[("🗄️ MySQL: buildflow_equipment")]
-    Fin --> DBFin[("🗄️ MySQL: buildflow_finance")]
-    Rep --> DBRep[("🗄️ MySQL: buildflow_reporting")]
+    Auth --> DBAuth[("MySQL: buildflow_auth")]
+    Proj --> DBProj[("MySQL: buildflow_project")]
+    Work --> DBWork[("MySQL: buildflow_workforce")]
+    Inv --> DBInv[("MySQL: buildflow_inventory")]
+    Equip --> DBEquip[("MySQL: buildflow_equipment")]
+    Fin --> DBFin[("MySQL: buildflow_finance")]
+    Rep --> DBRep[("MySQL: buildflow_reporting")]
 ```
 
 ---
