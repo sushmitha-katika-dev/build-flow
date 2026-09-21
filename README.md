@@ -37,36 +37,42 @@
 
 BuildFlow employs a **Microservices Architecture** with a centralized **Spring Cloud API Gateway**, service-to-service asynchronous event streaming via **Apache Kafka**, and an in-memory **Redis** cache for near real-time executive dashboard KPIs.
 
-```mermaid
-graph TD
-    Client["🖥️ Web Browser / React 19 SPA :5173"] -->|"REST API + Bearer JWT"| Gateway["🛡️ Spring Cloud API Gateway :8080"]
+```
+    graph TD
+    %% Styling Definitions
+    classDef gateway fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
+    classDef service fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#15803d;
+    classDef finance fill:#fef9c3,stroke:#ca8a04,stroke-width:2px,color:#a16207;
+    classDef infra fill:#fae8ff,stroke:#c084fc,stroke-width:2px,color:#7e22ce;
+    classDef db fill:#f1f5f9,stroke:#64748b,stroke-width:2px,color:#334155;
 
-    Gateway -->|"Authentication & RBAC"| Auth["🔑 Auth Service :8081"]
-    Gateway -->|"Projects & Milestones"| Proj["🏗️ Project Service :8082"]
-    Gateway -->|"Workers, Shifts & Wages"| Work["👷 Workforce Service :8083"]
-    Gateway -->|"Material & Stock Logs"| Inv["📦 Inventory Service :8084"]
-    Gateway -->|"Machinery & Fuel Tracking"| Equip["🚜 Equipment Service :8085"]
-    Gateway -->|"Expenses, Invoices & P&L"| Fin["💰 Finance Service :8086"]
-    Gateway -->|"Aggregated Analytics & KPIs"| Rep["📊 Reporting Service :8087"]
+    %% Client & Gateway
+    Client["🖥️ React 19 SPA (:5173)"] --> Gateway["🛡️ API Gateway (:8080)"]:::gateway
 
-    %% Kafka Events
-    Work -.->|"kafka: attendance.events"| Kafka["⚡ Apache Kafka :9093"]
-    Inv -.->|"kafka: inventory.events"| Kafka
-    Equip -.->|"kafka: equipment.events"| Kafka
-    Kafka -.->|"Event Consumer: Auto-Expense"| Fin
-    Kafka -.->|"Event Consumer: Analytics Sink"| Rep
+    %% Core Services
+    Gateway --> Auth["🔑 Auth Service (:8081)"]:::gateway
+    Gateway --> Project["🏗️ Project Service (:8082)"]:::service
+    Gateway --> Workforce["👷 Workforce Service (:8083)"]:::service
+    Gateway --> Inventory["📦 Inventory Service (:8084)"]:::service
+    Gateway --> Equipment["🚜 Equipment Service (:8085)"]:::service
+    Gateway --> Finance["💰 Finance Service (:8086)"]:::finance
+    Gateway --> Reporting["📊 Reporting Service (:8087)"]:::finance
 
-    %% Caching Layer
-    Rep --- Redis["⚡ Redis Cache :6379"]
+    %% Databases
+    Auth --> DBAuth[(MySQL: buildflow_auth)]:::db
+    Project --> DBProject[(MySQL: buildflow_project)]:::db
+    Workforce --> DBWorkforce[(MySQL: buildflow_workforce)]:::db
+    Inventory --> DBInventory[(MySQL: buildflow_inventory)]:::db
+    Equipment --> DBEquipment[(MySQL: buildflow_equipment)]:::db
+    Finance --> DBFinance[(MySQL: buildflow_finance)]:::db
+    Reporting --> DBReporting[(MySQL: buildflow_reporting)]:::db
 
-    %% Isolated Databases
-    Auth --> DBAuth[("MySQL: buildflow_auth")]
-    Proj --> DBProj[("MySQL: buildflow_project")]
-    Work --> DBWork[("MySQL: buildflow_workforce")]
-    Inv --> DBInv[("MySQL: buildflow_inventory")]
-    Equip --> DBEquip[("MySQL: buildflow_equipment")]
-    Fin --> DBFin[("MySQL: buildflow_finance")]
-    Rep --> DBRep[("MySQL: buildflow_reporting")]
+    %% Event-Driven Kafka / Redis
+    Workforce -.->|"attendance.events"| Kafka["⚡ Apache Kafka (:9093)"]:::infra
+    Inventory -.->|"inventory.events"| Kafka
+    Equipment -.->|"equipment.events"| Kafka
+    Kafka -.-> Finance
+    Reporting -.-> Redis[(⚡ Redis Cache (:6379))]:::infra
 ```
 
 ---
