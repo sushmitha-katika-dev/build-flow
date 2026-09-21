@@ -10,31 +10,7 @@
 
 BuildFlow is a full-stack enterprise Construction Resource Planning (CRP) platform designed to orchestrate construction projects, site workforce, material inventories, heavy equipment fleet, and project finances in real-time.
 
-```mermaid
-graph TD
-    Client[Web Browser Frontend - Port 80] -->|HTTP / REST| Gateway[API Gateway - Port 8080]
-    
-    Gateway -->|JWT Auth Validation| Auth[Auth Service - Port 8081]
-    Gateway -->|Project Management| Project[Project Service - Port 8082]
-    Gateway -->|Workforce & Wages| Workforce[Workforce Service - Port 8083]
-    Gateway -->|Material Stock| Inventory[Inventory Service - Port 8084]
-    Gateway -->|Machinery & Usage| Equipment[Equipment Service - Port 8085]
-    Gateway -->|Expenses & P&L| Finance[Finance Service - Port 8086]
-    Gateway -->|Analytics & Redis Cache| Reporting[Reporting Service - Port 8087]
-    
-    Workforce -->|Kafka Events: Attendance/Wages| Kafka((Apache Kafka - Port 9093))
-    Equipment -->|Kafka Events: Equipment Usage| Kafka
-    Inventory -->|Kafka Events: Material Logs| Kafka
-    Kafka -->|Event Consumer| Finance
-    
-    Auth --> MySQL[(MySQL 8.0 - Port 3307)]
-    Project --> MySQL
-    Workforce --> MySQL
-    Inventory --> MySQL
-    Equipment --> MySQL
-    Finance --> MySQL
-    Reporting --> Redis[(Redis 7.2 - Port 6379)]
-```
+![BuildFlow System Architecture](images/system_architecture.png)
 
 ---
 
