@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/buildflow_demo_walkthrough.webp" alt="BuildFlow Screen Recording & Live Demo Walkthrough" width="100%" />
+  <img src="docs/assets/screenrecordings/buildflow_demo_walkthrough.webp" alt="BuildFlow Platform Screen Recording & Live Demo Walkthrough" width="100%" />
   <br />
   <em>🎥 BuildFlow Complete Platform Screen Recording & Live End-to-End Walkthrough</em>
 </p>
