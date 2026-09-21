@@ -8,6 +8,8 @@ export interface Material {
   name: string;
   type: MaterialType;
   unit: MaterialUnit;
+  description?: string;
+  reorderLevel?: number;
   specifications?: string;
   createdAt?: string;
   updatedAt?: string;
