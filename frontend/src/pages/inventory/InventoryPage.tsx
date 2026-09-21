@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, PackageSearch, ArrowRightLeft, Eye, Package } from 'lucide-react';
+import { Plus, PackageSearch, ArrowRightLeft, Eye, Package, Edit3 } from 'lucide-react';
 import { InventoryService } from '../../services/inventoryService';
 import type { Material, Stock } from '../../types/inventory';
 import { Button } from '../../components/common/Button';
@@ -8,6 +8,7 @@ import { Skeleton } from '../../components/common/Skeleton';
 import { MaterialFormModal } from './components/MaterialFormModal';
 import { TransactionFormModal } from './components/TransactionFormModal';
 import { MaterialDetailsModal } from './components/MaterialDetailsModal';
+import { EditMaterialModal } from './components/EditMaterialModal';
 
 export const InventoryPage = () => {
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -19,6 +20,7 @@ export const InventoryPage = () => {
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [transactionMode, setTransactionMode] = useState<'COMPANY_STOCK_IN' | 'PROJECT_DISPATCH' | 'GENERIC'>('GENERIC');
   const [selectedMaterialId, setSelectedMaterialId] = useState<number | null>(null);
+  const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
 
   const fetchData = async () => {
     try {
@@ -201,15 +203,24 @@ export const InventoryPage = () => {
                         </div>
                       </td>
 
-                      {/* 4. ACTIONS COLUMN (Fourth Column: View Details Symbol) */}
-                      <td className="px-8 py-5 whitespace-nowrap text-right text-xs font-medium min-w-[140px]">
-                        <button 
-                          onClick={() => setSelectedMaterialId(material.id)}
-                          className="inline-flex items-center text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 font-black px-4 py-2.5 rounded-xl shadow-md shadow-blue-500/20 transition-all hover:scale-105 active:scale-95"
-                          title="View Material Details & Stock Breakdown"
-                        >
-                          <Eye className="w-4 h-4 mr-1.5" /> Details
-                        </button>
+                      {/* 4. ACTIONS COLUMN (Fourth Column: View Details & Edit) */}
+                      <td className="px-8 py-5 whitespace-nowrap text-right text-xs font-medium min-w-[180px]">
+                        <div className="flex items-center justify-end space-x-2">
+                          <button 
+                            onClick={() => setEditingMaterial(material)}
+                            className="inline-flex items-center text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 font-bold px-3 py-2 rounded-xl transition-all shadow-xs"
+                            title="Edit Material Category Name or Unit of Measurement"
+                          >
+                            <Edit3 className="w-3.5 h-3.5 mr-1 text-slate-600" /> Edit Unit
+                          </button>
+                          <button 
+                            onClick={() => setSelectedMaterialId(material.id)}
+                            className="inline-flex items-center text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 font-black px-4 py-2 rounded-xl shadow-md shadow-blue-500/20 transition-all hover:scale-105 active:scale-95"
+                            title="View Material Details & Stock Breakdown"
+                          >
+                            <Eye className="w-4 h-4 mr-1.5" /> Details
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -225,6 +236,13 @@ export const InventoryPage = () => {
         onClose={() => setIsMaterialModalOpen(false)} 
         onSuccess={fetchData} 
         existingMaterials={materials}
+      />
+
+      <EditMaterialModal
+        isOpen={editingMaterial !== null}
+        onClose={() => setEditingMaterial(null)}
+        onSuccess={fetchData}
+        material={editingMaterial}
       />
 
       <TransactionFormModal

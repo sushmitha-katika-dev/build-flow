@@ -101,8 +101,12 @@ export const ProjectFormModal = ({ isOpen, onClose, onProjectCreated }: ProjectF
           type="number"
           min="0"
           step="0.01"
-          value={formData.estimatedBudget}
-          onChange={(e) => setFormData({ ...formData, estimatedBudget: parseFloat(e.target.value) || 0 })}
+          placeholder="e.g. 500000"
+          value={formData.estimatedBudget === 0 ? '' : formData.estimatedBudget}
+          onChange={(e) => {
+            const val = e.target.value;
+            setFormData({ ...formData, estimatedBudget: val === '' ? 0 : parseFloat(val) || 0 });
+          }}
           disabled={isLoading}
         />
 

@@ -81,10 +81,32 @@ export const MaterialFormModal = ({ isOpen, onClose, onSuccess, existingMaterial
 
   const handleCustomNameChange = (nameInput: string) => {
     setCustomCategoryName(nameInput);
+    
+    // Auto-detect & suggest standard engineering unit based on material keyword
+    const lower = nameInput.trim().toLowerCase();
+    let suggestedUnit: MaterialUnit = 'PCS';
+    
+    if (lower.includes('sand') || lower.includes('aggregate') || lower.includes('gravel') || lower.includes('dust') || lower.includes('stone')) {
+      suggestedUnit = 'TON';
+    } else if (lower.includes('brick') || lower.includes('block') || lower.includes('tile') || lower.includes('fitting') || lower.includes('door') || lower.includes('window')) {
+      suggestedUnit = 'PCS';
+    } else if (lower.includes('cement') || lower.includes('bag')) {
+      suggestedUnit = 'BAG';
+    } else if (lower.includes('steel') || lower.includes('rebar') || lower.includes('iron')) {
+      suggestedUnit = 'TON';
+    } else if (lower.includes('wire') || lower.includes('mesh')) {
+      suggestedUnit = 'KG';
+    } else if (lower.includes('paint') || lower.includes('primer') || lower.includes('chemical') || lower.includes('oil') || lower.includes('thinner')) {
+      suggestedUnit = 'LTR';
+    } else if (lower.includes('pipe') || lower.includes('cable') || lower.includes('conduit') || lower.includes('bar')) {
+      suggestedUnit = 'METER';
+    }
+
     setFormData({
       ...formData,
       name: nameInput,
-      type: 'GENERAL'
+      type: 'GENERAL',
+      unit: suggestedUnit
     });
   };
 
@@ -209,22 +231,42 @@ export const MaterialFormModal = ({ isOpen, onClose, onSuccess, existingMaterial
 
             {/* Unit Selection */}
             <div>
-              <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1">
-                Standard Unit of Measurement *
-              </label>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                  Standard Unit of Measurement *
+                </label>
+                <span className="text-[10px] font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                  Auto-Suggested
+                </span>
+              </div>
               <select
                 required
                 className="block w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white"
                 value={formData.unit}
                 onChange={(e) => setFormData({ ...formData, unit: e.target.value as MaterialUnit })}
               >
-                <option value="BAG">Bags (BAG) — e.g. Cement</option>
-                <option value="TON">Tons (TON) — e.g. Steel, Sand</option>
-                <option value="KG">Kilograms (KG) — e.g. Binding Wire</option>
-                <option value="LTR">Liters (LTR) — e.g. Paint, Chemicals</option>
-                <option value="PCS">Pieces (PCS) — e.g. Bricks, Blocks, Fittings</option>
-                <option value="METER">Meters (METER) — e.g. Cables, Pipes</option>
+                <option value="TON">Tons (TON) — e.g. Sand, Steel, Aggregates, Stone</option>
+                <option value="PCS">Pieces (PCS) — e.g. Bricks, Blocks, Tiles, Doors</option>
+                <option value="BAG">Bags (BAG) — e.g. Cement, Putty, Mortar</option>
+                <option value="KG">Kilograms (KG) — e.g. Binding Wire, Nails, Mesh</option>
+                <option value="LTR">Liters (LTR) — e.g. Paint, Thinner, Chemicals</option>
+                <option value="METER">Meters (METER) — e.g. Pipes, Cables, Wires</option>
               </select>
+
+              {/* Standard Engineering Unit Guide Box */}
+              <div className="mt-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-600 space-y-1">
+                <p className="font-extrabold text-slate-900 flex items-center">
+                  💡 Unit Selection Guide (Avoid Mismatches):
+                </p>
+                <div className="grid grid-cols-2 gap-x-2 text-[10px] text-slate-700 font-medium pt-0.5">
+                  <span>• <strong>Sand / Gravel / Stone</strong> → TONS</span>
+                  <span>• <strong>Bricks / Blocks / Tiles</strong> → PCS</span>
+                  <span>• <strong>Cement / Putty</strong> → BAGS</span>
+                  <span>• <strong>Steel / Rebar</strong> → TONS / KG</span>
+                  <span>• <strong>Paint / Chemicals</strong> → LITERS</span>
+                  <span>• <strong>Pipes / Cables</strong> → METERS</span>
+                </div>
+              </div>
             </div>
 
             <div>
@@ -235,9 +277,12 @@ export const MaterialFormModal = ({ isOpen, onClose, onSuccess, existingMaterial
                 type="number"
                 min="0"
                 className="block w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                value={formData.reorderLevel || ''}
-                onChange={(e) => setFormData({ ...formData, reorderLevel: parseFloat(e.target.value) || 0 })}
                 placeholder="e.g. 20"
+                value={formData.reorderLevel === 0 ? '' : formData.reorderLevel}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFormData({ ...formData, reorderLevel: val === '' ? 0 : parseFloat(val) || 0 });
+                }}
               />
             </div>
 

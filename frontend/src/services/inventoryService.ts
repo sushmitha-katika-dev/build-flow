@@ -25,6 +25,11 @@ export const InventoryService = {
     return response.data;
   },
 
+  updateMaterial: async (id: number, data: Partial<MaterialCreateRequest>): Promise<Material> => {
+    const response = await axiosClient.put<Material>(`/inventory/materials/${id}`, data);
+    return response.data;
+  },
+
   // Stocks
   getProjectStock: async (projectId: number): Promise<Stock[]> => {
     const response = await axiosClient.get<Stock[]>(`/inventory/stocks/project/${projectId}`);
