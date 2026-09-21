@@ -37,8 +37,7 @@
 
 BuildFlow employs a **Microservices Architecture** with a centralized **Spring Cloud API Gateway**, service-to-service asynchronous event streaming via **Apache Kafka**, and an in-memory **Redis** cache for near real-time executive dashboard KPIs.
 
-```
-    graph TD
+graph TD
     %% Styling Definitions
     classDef gateway fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
     classDef service fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#15803d;
@@ -73,7 +72,6 @@ BuildFlow employs a **Microservices Architecture** with a centralized **Spring C
     Equipment -.->|"equipment.events"| Kafka
     Kafka -.-> Finance
     Reporting -.-> Redis[(⚡ Redis Cache (:6379))]:::infra
-```
 
 ---
 
