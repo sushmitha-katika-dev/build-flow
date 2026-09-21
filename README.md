@@ -1,227 +1,658 @@
-# 🏗️ BuildFlow — Enterprise Construction Resource Planning (CRP)
+# 🏗️ BuildFlow
 
-[![Java 21](https://img.shields.io/badge/Java-21-orange.svg?logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
-[![Spring Boot 3](https://img.shields.io/badge/Spring%20Boot-3.2.x-brightgreen.svg?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
-[![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2023.x-green.svg?logo=spring&logoColor=white)](https://spring.io/projects/spring-cloud)
-[![React 19](https://img.shields.io/badge/React-19-61DAFB.svg?logo=react&logoColor=black)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-Distributed%20Events-231F20.svg?logo=apachekafka&logoColor=white)](https://kafka.apache.org/)
-[![Redis](https://img.shields.io/badge/Redis-7.2-DC382D.svg?logo=redis&logoColor=white)](https://redis.io/)
-[![MySQL 8.0](https://img.shields.io/badge/MySQL-8.0-4479A1.svg?logo=mysql&logoColor=white)](https://www.mysql.com/)
-[![Docker Compose](https://img.shields.io/badge/Docker%20Compose-Containerized-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com/)
+### Smart Construction Operations Platform
 
-> **BuildFlow** is an enterprise-grade, event-driven Construction Resource Planning (CRP) platform architected using **Java Spring Boot microservices**, **Apache Kafka**, **Redis**, and a high-performance **React 19 / TypeScript** single-page application.
+> A real-world microservices platform that digitizes construction projects, workforce, materials, equipment, expenses, and financial analytics in one system.
 
-<div align="center">
-  <img src="docs/assets/screenshots/buildflow_landing_preview.png" alt="BuildFlow Platform Interface" width="100%" />
-  <p><em>✨ BuildFlow Unified Construction & Field Operations Interface</em></p>
-</div>
+<p align="center">
 
----
+`Java 21` • `Spring Boot 3` • `Spring Cloud` • `React 19` • `TypeScript` • `Kafka` • `Redis` • `MySQL` • `Docker`
 
-## 📑 Table of Contents
-- [System Architecture](#-system-architecture)
-- [Microservices Ecosystem](#-microservices-ecosystem)
-- [Key Enterprise Features](#-key-enterprise-features)
-- [Event-Driven Flow (Kafka)](#-event-driven-flow-kafka)
-- [Database-per-Service Architecture](#-database-per-service-architecture)
-- [Tech Stack](#-tech-stack)
-- [Quickstart with Docker Compose](#-quickstart-with-docker-compose)
-- [Local Development Setup](#-local-development-setup)
-- [API Documentation & Postman](#-api-documentation--postman)
-- [Project Directory Structure](#-project-directory-structure)
+</p>
+
+<p align="center">
+
+<a href="#-architecture">Architecture</a> • <a href="#-features">Features</a> • <a href="#-tech-stack">Tech Stack</a> • <a href="#-quick-start">Quick Start</a> • <a href="#-engineering-highlights">Engineering</a>
+
+</p>
+
+<p align="center">
+  <img src="docs/images/buildflow_demo_walkthrough.webp" alt="BuildFlow Screen Recording & Live Demo Walkthrough" width="100%" />
+  <br />
+  <em>🎥 BuildFlow Complete Platform Screen Recording & Live End-to-End Walkthrough</em>
+</p>
 
 ---
 
-## 🏛️ System Architecture
+## 🎯 The Problem
 
-BuildFlow employs a **Microservices Architecture** with a centralized **Spring Cloud API Gateway**, service-to-service asynchronous event streaming via **Apache Kafka**, and an in-memory **Redis** cache for near real-time executive dashboard KPIs.
+Small construction businesses often manage **projects, workers, materials, equipment, expenses and payments** using WhatsApp, spreadsheets and handwritten records.
 
-![BuildFlow System Architecture](docs/images/system_architecture.png)
+This makes it difficult to answer simple questions:
 
----
+> **How much did this project actually cost?**  
+> **How much material was consumed?**  
+> **How much was spent on labour?**  
+> **Is the project profitable?**
 
-## 🧩 Microservices Ecosystem
+### 💡 The Solution
 
-| Service | Port | Database Schema | Primary Responsibility |
-| :--- | :---: | :--- | :--- |
-| **API Gateway** | `8080` | *Stateless* | Central ingress routing, CORS policies, JWT validation filter, rate limiting. |
-| **Auth Service** | `8081` | `buildflow_auth` | User registration, admin passcode verification, BCrypt hashing, JWT issuance & RBAC. |
-| **Project Service** | `8082` | `buildflow_project` | Construction projects, client metadata, budget allocations, stage & milestone tracking. |
-| **Workforce Service** | `8083` | `buildflow_workforce` | Worker profiles, daily attendance logging, shift management, automated wage computations. |
-| **Inventory Service** | `8084` | `buildflow_inventory` | Raw material stock levels, consumption logs, reorder thresholds, supplier orders. |
-| **Equipment Service** | `8085` | `buildflow_equipment` | Heavy machinery fleet, maintenance schedules, operational hours, and fuel consumption logs. |
-| **Finance Service** | `8086` | `buildflow_finance` | Project budgets, expense tracking, P&L statements, automated Kafka event cost processing. |
-| **Reporting Service** | `8087` | `buildflow_reporting` | Real-time executive dashboards, cross-service metric aggregation, Redis caching. |
+**BuildFlow connects daily site operations with financial and analytical data.**
 
----
-
-## 🚀 Key Enterprise Features
-
-### 🔐 1. Role-Based Access Control (RBAC) & Security
-- Secure registration requiring an authorized company secret key (`BF-ADMIN-2026`) for `ADMIN` role creation.
-- Fine-grained permissions for `ADMIN` and `SITE_SUPERVISOR`.
-- Stateless JWT verification on every downstream request via the Gateway.
-
-### 👷 2. Workforce & Auto-Wage Computation
-- Real-time clock-in/clock-out tracking with shift categorization (`DAY`, `NIGHT`, `OVERTIME`).
-- Automated daily wage calculation based on specialized skill rates (Mason, Electrician, Carpenter, Welder, Laborer).
-- Produces `attendance.events` on Kafka to automatically debit wage expenditures in the Finance Service.
-
-### 📦 3. Smart Material Inventory
-- Real-time stock decrement tracking upon job-site consumption.
-- Visual warning badges for stock levels below safety thresholds (`CRITICAL`, `LOW`, `OPTIMAL`).
-- Produces `inventory.events` on Kafka for automated purchase order ledger entries.
-
-### 🚜 4. Heavy Equipment Fleet Management
-- Machinery health telemetry, runtime hour tracking, and routine maintenance scheduling.
-- Automated fuel consumption cost logging published directly to Kafka.
-
-### 💰 5. Automated Financial Expense Pipeline
-- Consumes Kafka events across Workforce, Materials, and Equipment to create immutable, synchronized expense transactions without direct synchronous coupling.
-- Live budget-vs-actual variance tracking per project.
-
-### 📊 6. Executive Dashboards & Analytics
-- Visual interactive charts powered by Recharts (Burn-down charts, project cost distribution, workforce productivity).
-- In-memory Redis caching for sub-10ms response times on aggregated KPI endpoints.
-
----
-
-## ⚡ Event-Driven Flow (Kafka)
-
-```
-[Workforce Service]  ──▶  (Topic: workforce-attendance)  ──┐
-[Inventory Service]  ──▶  (Topic: inventory-consumption) ──┼──▶  [Finance Service] (Auto-Expense)
-[Equipment Service]  ──▶  (Topic: equipment-usage)       ──┘     └──▶ [Reporting Service] (Realtime KPIs)
+```text
+Site Operations
+      ↓
+Microservices
+      ↓
+Kafka Events
+      ↓
+Finance + Reporting
+      ↓
+Project Cost & Profitability
 ```
 
-- **Loose Coupling**: Services operate independently without blocking REST calls during high-concurrency site operations.
-- **Data Consistency**: Eventual consistency guarantees financial ledgers always reconcile with physical job-site actions.
+---
+
+# 🏛️ Architecture
+
+<p align="center">
+  <img src="docs/images/buildflow-architecture.png"
+       alt="BuildFlow Microservices Architecture"
+       width="100%">
+</p>
+
+### Architecture at a Glance
+
+```text
+React 19
+   ↓
+Spring Cloud API Gateway
+   ↓
+7 Domain Microservices
+   ↓
+Database-per-Service
+   ↓
+Apache Kafka
+   ↓
+Finance + Reporting
+   ↓
+Redis
+```
+
+<details>
+<summary><strong>🔍 View Detailed Architecture</strong></summary>
+
+### System Components
+
+| Component         | Responsibility                        |
+| ----------------- | ------------------------------------- |
+| React SPA         | User interface                        |
+| API Gateway       | Routing, authentication, RBAC         |
+| Auth Service      | Users, authentication & authorization |
+| Project Service   | Projects, milestones & planning       |
+| Workforce Service | Workers, attendance, shifts & wages   |
+| Inventory Service | Materials, stock & consumption        |
+| Equipment Service | Machinery, fuel & maintenance         |
+| Finance Service   | Expenses, invoices & P&L              |
+| Reporting Service | KPIs, analytics & dashboards          |
+| Apache Kafka      | Asynchronous event communication      |
+| Redis             | Reporting and dashboard caching       |
+| MySQL             | Database per microservice             |
+
+### Service Communication
+
+```text
+Client
+  │
+  ▼
+API Gateway
+  │
+  ├── Auth Service
+  ├── Project Service
+  ├── Workforce Service
+  ├── Inventory Service
+  ├── Equipment Service
+  ├── Finance Service
+  └── Reporting Service
+
+Workforce ───────┐
+Inventory ───────┼──→ Kafka ──→ Finance
+Equipment ───────┘          └──→ Reporting
+                                  │
+                                  ▼
+                              Redis Cache
+```
+
+</details>
 
 ---
 
-## 🛠️ Tech Stack
+# ⚡ Features
+
+|     | Capability         | What it does                               |
+| --- | ------------------ | ------------------------------------------ |
+| 🔐  | Authentication     | JWT-based authentication and RBAC          |
+| 🏗️ | Project Management | Projects, milestones, clients and planning |
+| 👷  | Workforce          | Workers, attendance, shifts and wages      |
+| 📦  | Inventory          | Materials, stock and consumption tracking  |
+| 🚜  | Equipment          | Machinery, fuel and maintenance tracking   |
+| 💰  | Finance            | Expenses, invoices, payments and P&L       |
+| 📊  | Reporting          | KPIs, analytics and dashboards             |
+
+<details>
+<summary><strong>🔍 View Detailed Features</strong></summary>
+
+### 🔐 Authentication & Authorization
+
+* JWT authentication
+* Spring Security
+* Role-based access control
+* Protected API routes
+* Centralized authentication through API Gateway
+
+### 🏗️ Project Management
+
+* Project creation and management
+* Client information
+* Project budgets
+* Milestone tracking
+* Project status management
+
+### 👷 Workforce Management
+
+* Worker management
+* Daily attendance
+* Shift tracking
+* Wage calculation
+* Supervisor management
+
+### 📦 Inventory Management
+
+* Cement tracking
+* Steel tracking
+* Material stock
+* Material consumption
+* Stock movement history
+* Low-stock monitoring
+
+### 🚜 Equipment Management
+
+* Equipment registration
+* Machinery usage
+* Fuel tracking
+* Maintenance records
+* Equipment operating costs
+
+### 💰 Finance Management
+
+* Project expenses
+* Labour expenses
+* Material expenses
+* Equipment expenses
+* Client payments
+* Invoices
+* Project profitability
+* P&L tracking
+
+### 📊 Reporting & Analytics
+
+* Project KPIs
+* Budget vs actual cost
+* Workforce analytics
+* Material consumption analytics
+* Equipment analytics
+* Financial dashboards
+* Redis-backed reporting cache
+
+</details>
+
+---
+
+# 🔥 Key Business Flow
+
+### From Daily Site Activity → Project Profitability
+
+```text
+┌───────────────┐
+│ Site Activity │
+└───────┬───────┘
+        ↓
+┌────────────────────┐
+│ Domain Microservice│
+└─────────┬──────────┘
+          ↓
+┌────────────────────┐
+│   Apache Kafka     │
+└───────┬───────┬────┘
+        ↓       ↓
+   Finance    Reporting
+      ↓           ↓
+  Expenses      KPIs
+      ↓           ↓
+      └─────┬─────┘
+            ↓
+      Project P&L
+```
+
+<details>
+<summary><strong>🔍 View Event-Driven Workflows</strong></summary>
+
+### Workforce → Finance
+
+```text
+Attendance
+    ↓
+Workforce Service
+    ↓
+attendance event
+    ↓
+Apache Kafka
+    ↓
+Finance Service
+    ↓
+Labour Expense
+```
+
+### Inventory → Finance
+
+```text
+Material Consumption
+    ↓
+Inventory Service
+    ↓
+inventory event
+    ↓
+Apache Kafka
+    ↓
+Finance Service
+    ↓
+Material Expense
+```
+
+### Equipment → Finance
+
+```text
+Equipment Usage / Fuel
+    ↓
+Equipment Service
+    ↓
+equipment event
+    ↓
+Apache Kafka
+    ↓
+Finance Service
+    ↓
+Equipment Expense
+```
+
+### Events → Reporting
+
+```text
+Operational Events
+       ↓
+Apache Kafka
+       ↓
+Reporting Service
+       ↓
+Redis Cache
+       ↓
+Dashboard KPIs
+```
+
+</details>
+
+---
+
+# 🧩 Microservices
+
+| Service   |   Port | Database              |
+| --------- | -----: | --------------------- |
+| Auth      | `8081` | `buildflow_auth`      |
+| Project   | `8082` | `buildflow_project`   |
+| Workforce | `8083` | `buildflow_workforce` |
+| Inventory | `8084` | `buildflow_inventory` |
+| Equipment | `8085` | `buildflow_equipment` |
+| Finance   | `8086` | `buildflow_finance`   |
+| Reporting | `8087` | `buildflow_reporting` |
+
+<details>
+<summary><strong>🔍 View Service Responsibilities</strong></summary>
+
+### Auth Service — `8081`
+
+Authentication, user management, JWT generation and role-based authorization.
+
+### Project Service — `8082`
+
+Project lifecycle, clients, milestones, budgets and project planning.
+
+### Workforce Service — `8083`
+
+Workers, attendance, shifts, wages and supervisor management.
+
+### Inventory Service — `8084`
+
+Construction materials, stock levels, material consumption and stock logs.
+
+### Equipment Service — `8085`
+
+Machinery, fuel consumption, usage and maintenance tracking.
+
+### Finance Service — `8086`
+
+Expenses, invoices, client payments and project-level profit/loss.
+
+### Reporting Service — `8087`
+
+Aggregated analytics, KPIs, dashboards and cached reporting data.
+
+</details>
+
+---
+
+# 🛠️ Tech Stack
 
 ### Backend
-- **Core Framework**: Java 21, Spring Boot 3.2.x, Spring Cloud Gateway
-- **Persistence**: Spring Data JPA, Hibernate, MySQL 8.0 (Database-per-Service)
-- **Messaging & Event Streaming**: Apache Kafka, Zookeeper
-- **Caching**: Redis 7.2
-- **Security**: Spring Security 6, JJWT (JSON Web Token), BCrypt
+
+`Java 21` `Spring Boot 3` `Spring Cloud Gateway` `Spring Security` `JWT` `Spring Data JPA` `Hibernate`
 
 ### Frontend
-- **Framework**: React 19, TypeScript, Vite 8
-- **Styling**: Tailwind CSS 3.4, Lucide React Icons
-- **Visualizations**: Recharts
-- **Routing & Networking**: React Router DOM 7, Axios (Interceptors for Bearer Token)
 
-### DevOps & Infrastructure
-- **Containerization**: Docker, Docker Compose (Multi-stage builds)
-- **CI/CD Readiness**: Production-ready environment variable externalization
+`React 19` `TypeScript` `Vite` `Tailwind CSS` `React Router` `Axios` `Recharts` `Lucide React`
+
+### Distributed Systems
+
+`Apache Kafka` `Redis` `Zookeeper`
+
+### Database
+
+`MySQL 8`
+
+### DevOps
+
+`Docker` `Docker Compose` `Maven`
+
+<details>
+<summary><strong>🔍 View Technology Details</strong></summary>
+
+| Layer         | Technology            | Purpose                          |
+| ------------- | --------------------- | -------------------------------- |
+| Frontend      | React 19              | SPA user interface               |
+| Language      | TypeScript            | Type-safe frontend development   |
+| Styling       | Tailwind CSS          | UI styling                       |
+| API Client    | Axios                 | REST communication               |
+| Backend       | Spring Boot 3         | Microservice development         |
+| Gateway       | Spring Cloud Gateway  | Routing and centralized security |
+| Security      | Spring Security + JWT | Authentication and authorization |
+| Persistence   | Spring Data JPA       | Database access                  |
+| Database      | MySQL 8               | Persistent service data          |
+| Messaging     | Apache Kafka          | Event-driven communication       |
+| Cache         | Redis                 | Fast analytics access            |
+| Coordination  | Zookeeper             | Kafka coordination               |
+| Containers    | Docker                | Service containerization         |
+| Orchestration | Docker Compose        | Local multi-service deployment   |
+
+</details>
 
 ---
 
-## 🐳 Quickstart with Docker Compose
+# 🗄️ Database Architecture
 
-Spin up the entire platform (Databases, Kafka, Redis, 7 Microservices, and Frontend) in **one command**:
+```text
+Auth Service       → buildflow_auth
+Project Service    → buildflow_project
+Workforce Service  → buildflow_workforce
+Inventory Service  → buildflow_inventory
+Equipment Service  → buildflow_equipment
+Finance Service    → buildflow_finance
+Reporting Service  → buildflow_reporting
+```
 
-### Prerequisites
-- [Docker](https://docs.docker.com/get-docker/) (v24.0+) & [Docker Compose](https://docs.docker.com/compose/)
+<details>
+<summary><strong>🔍 Why Database-per-Service?</strong></summary>
 
-### 1. Clone the repository
+Each microservice owns its own database instead of sharing a single database.
+
+This provides:
+
+* Data isolation
+* Independent service evolution
+* Reduced coupling
+* Clear domain ownership
+* Better scalability
+* Independent persistence boundaries
+
+A service accesses its own data through its own repository layer rather than directly accessing another service's database.
+
+</details>
+
+---
+
+# ⚡ Event-Driven Architecture
+
+```text
+Workforce ──────→ attendance events ────┐
+                                       │
+Inventory ──────→ inventory events ─────┼──→ Kafka
+                                       │
+Equipment ──────→ equipment events ─────┘
+                                          │
+                         ┌────────────────┴──────────────┐
+                         ↓                               ↓
+                      Finance                        Reporting
+                         ↓                               ↓
+                   Auto Expenses                    Analytics
+                                                         ↓
+                                                       Redis
+```
+
+<details>
+<summary><strong>🔍 View Kafka Design</strong></summary>
+
+Apache Kafka decouples operational services from downstream financial and reporting workflows.
+
+Instead of forcing services to communicate synchronously for every operation, domain services publish events that consumers can process independently.
+
+This allows BuildFlow to support:
+
+* Asynchronous processing
+* Loose coupling
+* Event-driven workflows
+* Scalable consumers
+* Independent service evolution
+
+</details>
+
+---
+
+# 🔐 Security
+
+```text
+React Client
+     ↓
+Bearer JWT
+     ↓
+API Gateway
+     ↓
+JWT Validation
+     ↓
+RBAC
+     ↓
+Protected Microservice
+```
+
+<details>
+<summary><strong>🔍 View Security Architecture</strong></summary>
+
+BuildFlow uses Spring Security and JWT-based authentication.
+
+The API Gateway acts as the primary entry point for client requests and validates authentication before routing requests to protected backend services.
+
+Role-based access control determines which operations are available to different users.
+
+> Production secrets should be supplied through environment variables or a secrets manager rather than committed to the repository.
+
+</details>
+
+---
+
+# 🐳 Quick Start
+
+### Requirements
+
+* Java 21
+* Node.js
+* Docker
+* Docker Compose
+* Git
+
+### Clone
+
 ```bash
 git clone https://github.com/sushmitha-katika-dev/build-flow.git
+
 cd build-flow
 ```
 
-### 2. Launch the entire cluster
+### Start the Platform
+
 ```bash
-docker compose up -d --build
+docker compose up --build
 ```
 
-### 3. Access the Application
-- 🌐 **Web Application**: [http://localhost:5173](http://localhost:5173) (or `http://localhost:80` in production mode)
-- 🛡️ **API Gateway**: [http://localhost:8080](http://localhost:8080)
-- 📊 **Redis Cache**: `localhost:6379`
-- ⚡ **Kafka Broker**: `localhost:9093`
-- 🗄️ **MySQL Database**: `localhost:3307`
+### Services
+
+```text
+Frontend       → :5173
+API Gateway    → :8080
+
+Auth           → :8081
+Project        → :8082
+Workforce      → :8083
+Inventory      → :8084
+Equipment      → :8085
+Finance        → :8086
+Reporting      → :8087
+
+Kafka          → :9093
+Redis          → :6379
+MySQL          → :3307
+Zookeeper      → :2181
+```
+
+<details>
+<summary><strong>🔍 View Development Setup</strong></summary>
+
+Additional development and configuration instructions can be maintained here without making the main README difficult to scan.
+
+</details>
 
 ---
 
-## 💻 Local Development Setup
+# 🧠 Engineering Highlights
 
-If you prefer to run services individually for debugging:
+| Concept          | Implementation                     |
+| ---------------- | ---------------------------------- |
+| Microservices    | 7 independent Spring Boot services |
+| API Gateway      | Spring Cloud Gateway               |
+| Authentication   | JWT                                |
+| Authorization    | RBAC                               |
+| Messaging        | Apache Kafka                       |
+| Caching          | Redis                              |
+| Persistence      | Database-per-Service               |
+| Containerization | Docker                             |
+| Orchestration    | Docker Compose                     |
+| Frontend         | React + TypeScript                 |
+| Analytics        | Reporting Service + Redis          |
 
-### 1. Start Infrastructure Dependencies
-```bash
-# Starts MySQL, Kafka, Zookeeper, and Redis
-docker compose up -d mysql zookeeper kafka redis
-```
+<details>
+<summary><strong>🔍 View Advanced Engineering Details</strong></summary>
 
-### 2. Start Backend Microservices
-Run each service in `backend/` using Maven:
-```bash
-cd backend/<service-name>
-./mvnw spring-boot:run
-```
-*(Recommended startup order: `auth-service` &rarr; `project-service` &rarr; `workforce-service` &rarr; `inventory-service` &rarr; `equipment-service` &rarr; `finance-service` &rarr; `reporting-service` &rarr; `api-gateway`)*
+### Patterns Demonstrated
 
-### 3. Start Frontend Client
-```bash
-cd frontend
-npm install
-npm run dev
-```
+* Microservices Architecture
+* API Gateway Pattern
+* Database-per-Service Pattern
+* Event-Driven Architecture
+* Asynchronous Messaging
+* Centralized Authentication
+* Role-Based Access Control
+* Caching
+* Domain-based service separation
+* Containerized deployment
+
+### Reliability & Observability
+
+The architecture can be extended with distributed tracing, centralized logging, health checks and resilience mechanisms as the platform moves toward production deployment.
+
+</details>
 
 ---
 
-## 📑 API Documentation & Postman
+# 📁 Project Structure
 
-A complete Postman collection covering all authentication, project, workforce, inventory, equipment, finance, and reporting endpoints is available in the repository:
-
-- 📂 Postman Collection: [`docs/BuildFlow_Postman_Collection.json`](docs/BuildFlow_Postman_Collection.json)
-- 📄 Comprehensive Project Walkthrough: [`docs/08_COMPLETE_PROJECT_WALKTHROUGH.md`](docs/08_COMPLETE_PROJECT_WALKTHROUGH.md)
-- 📄 Architecture Specification: [`docs/03_ARCHITECTURE.md`](docs/03_ARCHITECTURE.md)
-- 📄 Database Schemas: [`docs/04_DATABASE.md`](docs/04_DATABASE.md)
-
----
-
-## 📂 Project Directory Structure
+<details>
+<summary><strong>📂 View Project Structure</strong></summary>
 
 ```text
 build-flow/
-├── docker-compose.yml            # Multi-container orchestration config
-├── docs/                         # Architecture, schemas, API specifications & guides
-│   ├── 03_ARCHITECTURE.md
-│   ├── 04_DATABASE.md
-│   ├── 05_API_CONTRACT.md
-│   ├── 08_COMPLETE_PROJECT_WALKTHROUGH.md
-│   └── BuildFlow_Postman_Collection.json
-├── backend/                      # Spring Boot Microservices
-│   ├── api-gateway/              # Spring Cloud Gateway (Port 8080)
-│   ├── auth-service/             # Authentication & User Service (Port 8081)
-│   ├── project-service/          # Construction Projects Service (Port 8082)
-│   ├── workforce-service/        # Workforce & Attendance Service (Port 8083)
-│   ├── inventory-service/        # Material & Inventory Service (Port 8084)
-│   ├── equipment-service/        # Heavy Machinery Service (Port 8085)
-│   ├── finance-service/          # Finance & Budgeting Service (Port 8086)
-│   └── reporting-service/        # Executive Analytics & Redis Cache (Port 8087)
-└── frontend/                     # React 19 + Vite + TypeScript SPA
-    ├── src/
-    │   ├── components/           # Reusable UI components & modals
-    │   ├── context/              # Auth & Global state providers
-    │   ├── pages/                # Projects, Workforce, Inventory, Finance, Analytics
-    │   └── services/             # Axios API client instances
-    └── package.json
+│
+├── frontend/
+│
+├── api-gateway/
+│
+├── auth-service/
+├── project-service/
+├── workforce-service/
+├── inventory-service/
+├── equipment-service/
+├── finance-service/
+├── reporting-service/
+│
+├── docker-compose.yml
+│
+└── docs/
+    └── images/
+        ├── buildflow-architecture.png
+        └── buildflow_demo_walkthrough.webp
 ```
 
+</details>
+
 ---
 
-## 👤 Author & Contact
+# 📈 Project Scope
+
+<details>
+<summary><strong>🚀 View Future Enhancements</strong></summary>
+
+Potential extensions include:
+
+* AI-assisted project cost prediction
+* Advanced construction analytics
+* Mobile/PWA site operations
+* Automated alerts
+* Advanced reporting
+* Cloud deployment
+* Centralized observability
+* CI/CD automation
+
+</details>
+
+---
+
+# 👩‍💻 Author
 
 **Sushmitha Katika**
-- GitHub: [@sushmitha-katika-dev](https://github.com/sushmitha-katika-dev)
-- Project Repository: [build-flow](https://github.com/sushmitha-katika-dev/build-flow)
+
+B.Tech — Information Technology
+
+**Software Engineering • Backend Development • Full Stack Development • Distributed Systems**
 
 ---
-*Built with passion for scalable distributed systems and modern web engineering.*
+
+<p align="center">
+
+### 🏗️ From Site Operations → Data → Decisions
+
+</p>
