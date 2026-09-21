@@ -5,49 +5,7 @@ BuildFlow utilizes a Microservices Architecture to ensure scalability, fault iso
 
 The platform consists of a single-page application (React.js + Vite) communicating via REST APIs through an API Gateway (`port 8080`) with multiple Spring Boot microservices. Each microservice manages its own isolated MySQL database schema (Database-per-Service pattern). Asynchronous event-driven communication is handled by Apache Kafka to decouple services, and Redis is used for caching aggregated analytics data to ensure rapid dashboard load times.
 
-```mermaid
-graph LR
-    User(["Construction Staff / Admins / Supervisors"]) --> |Uses| UI["React.js Web App (Vite)"]
-    UI --> |REST API + Bearer JWT| Gateway["API Gateway (:8080)"]
-    Gateway --> |Routes| Microservices["Spring Boot Microservices"]
-    Microservices --> |Reads/Writes| DB[("MySQL Database Schemas")]
-    Microservices -.-> |Event Streaming| Kafka["Apache Kafka Message Broker"]
-    Microservices --- Cache[("Redis Cache")]
-```
-
-## Microservice Diagram
-```mermaid
-graph TD
-    Client["Web Browser / React Frontend"] --> APIGateway["Spring Cloud Gateway (:8080)"]
-    
-    APIGateway --> AuthService["Authentication & User Service (:8081)"]
-    APIGateway --> ProjService["Project Management Service (:8082)"]
-    APIGateway --> WorkService["Workforce Management Service (:8083)"]
-    APIGateway --> InvService["Material & Inventory Service (:8084)"]
-    APIGateway --> EquipService["Equipment Management Service (:8085)"]
-    APIGateway --> FinService["Finance & Expense Service (:8086)"]
-    APIGateway --> RepService["Reporting & Analytics Service (:8087)"]
-    
-    AuthService --> DBAuth[("MySQL: buildflow_auth")]
-    ProjService --> DBProj[("MySQL: buildflow_project")]
-    WorkService --> DBWork[("MySQL: buildflow_workforce")]
-    InvService --> DBInv[("MySQL: buildflow_inventory")]
-    EquipService --> DBEquip[("MySQL: buildflow_equipment")]
-    FinService --> DBFin[("MySQL: buildflow_finance")]
-    RepService --> DBRep[("MySQL: buildflow_reporting")]
-
-    %% Event-Driven Data Flow
-    ProjService -.-> Kafka["Apache Kafka (Message Topics)"]
-    WorkService -.-> Kafka
-    InvService -.-> Kafka
-    EquipService -.-> Kafka
-    FinService -.-> Kafka
-    
-    Kafka -.-> RepService
-    
-    %% Caching Layer
-    RepService --- Redis[("Redis Cache")]
-```
+![BuildFlow System Architecture](images/system_architecture.png)
 
 ## Component Diagram
 ```mermaid
