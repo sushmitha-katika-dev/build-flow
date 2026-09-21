@@ -498,52 +498,101 @@ Role-based access control determines which operations are available to different
 
 # 🐳 Quick Start
 
-### Requirements
+<details>
+<summary><strong>🚀 Click to Expand Step-by-Step Installation & Execution Guide</strong></summary>
 
-* Java 21
-* Node.js
-* Docker
-* Docker Compose
-* Git
+<br />
 
-### Clone
+### 📋 Prerequisites
+Ensure you have the following installed on your machine:
+* **Java 21 JDK** (for local backend service execution)
+* **Node.js 18+ & npm** (for frontend Vite SPA development)
+* **Docker Desktop** (with Docker Compose enabled)
+* **Git CLI**
 
+---
+
+### 1️⃣ Step 1: Clone the Repository
+Open your terminal/command prompt and run:
 ```bash
 git clone https://github.com/sushmitha-katika-dev/build-flow.git
-
 cd build-flow
 ```
 
-### Start the Platform
+---
+
+### 2️⃣ Step 2: Option A — Launch Entire Platform via Docker (Recommended)
+Build and spin up all 13 containerized services (Frontend, API Gateway, 7 Spring Boot Microservices, MySQL, Kafka, Redis, Zookeeper) with a single command:
 
 ```bash
 docker compose up --build
 ```
 
-### Services
+> **Note:** Allow 2-3 minutes on initial launch for Maven compilation and database migrations to complete.
 
-```text
-Frontend       → :5173
-API Gateway    → :8080
+---
 
-Auth           → :8081
-Project        → :8082
-Workforce      → :8083
-Inventory      → :8084
-Equipment      → :8085
-Finance        → :8086
-Reporting      → :8087
+### 3️⃣ Step 3: Option B — Run Manually in Local Development Mode
 
-Kafka          → :9093
-Redis          → :6379
-MySQL          → :3307
-Zookeeper      → :2181
+#### A. Start Core Infrastructure Containers (Databases & Messaging)
+If running services manually, spin up only MySQL, Kafka, Zookeeper & Redis:
+```bash
+docker compose up buildflow-mysql buildflow-zookeeper buildflow-kafka buildflow-redis -d
 ```
 
-<details>
-<summary><strong>🔍 View Development Setup</strong></summary>
+#### B. Run Frontend SPA
+```bash
+cd frontend
+npm install
+npm run dev
+```
+The frontend web app will start on `http://localhost:5173`.
 
-Additional development and configuration instructions can be maintained here without making the main README difficult to scan.
+#### C. Run Spring Boot Microservices
+Navigate into each microservice directory (`api-gateway`, `auth-service`, `project-service`, `workforce-service`, `inventory-service`, `equipment-service`, `finance-service`, `reporting-service`) and run:
+```bash
+./mvnw spring-boot:run
+```
+
+---
+
+### 🌐 Microservice Ports & Endpoints
+
+| Service | Port | Local Endpoint | Description |
+| :--- | :---: | :--- | :--- |
+| **Frontend Web App** | `5173` / `80` | `http://localhost:5173` | React 19 Single Page Application |
+| **API Gateway** | `8080` | `http://localhost:8080` | Centralized REST Routing & Security Passcode |
+| **Auth Service** | `8081` | `http://localhost:8081` | JWT Authentication & User Approval |
+| **Project Service** | `8082` | `http://localhost:8082` | Projects, Locations & Budget Tracking |
+| **Workforce Service** | `8083` | `http://localhost:8083` | Workers, Attendance & Daily Wages |
+| **Inventory Service** | `8084` | `http://localhost:8084` | Stock Logs, Material Catalog & Consumption |
+| **Equipment Service** | `8085` | `http://localhost:8085` | Machinery Fleet, Fuel & Maintenance |
+| **Finance Service** | `8086` | `http://localhost:8086` | Expense Ledger & Project Profit/Loss |
+| **Reporting Service** | `8087` | `http://localhost:8087` | Real-time Dashboard Analytics |
+| **Apache Kafka** | `9093` | `localhost:9093` | Event Streaming Broker |
+| **Redis Cache** | `6379` | `localhost:6379` | Analytics Materialized View Cache |
+| **MySQL Database** | `3307` | `localhost:3307` | Database per Microservice Server |
+
+---
+
+### 🔑 Demo Login Credentials
+
+* **Company Admin Login:**
+  * **Email:** `admin@buildflow.com`
+  * **Password:** `admin123`
+  * **Company Admin Passcode:** `BF-ADMIN-2026`
+
+* **Site Supervisor Login:**
+  * **Email:** `supervisor@buildflow.com`
+  * **Password:** `supervisor123`
+
+---
+
+### 🛑 Stopping the Containers
+To stop all services cleanly:
+```bash
+docker compose down
+```
 
 </details>
 
