@@ -22,7 +22,28 @@ public class EquipmentResponse {
     private EquipmentType type;
     private EquipmentStatus status;
     private String registrationNumber;
+    @com.fasterxml.jackson.annotation.JsonProperty("isBulk")
     private boolean isBulk;
+
+    @com.fasterxml.jackson.annotation.JsonProperty("isBulk")
+    public boolean getIsBulk() {
+        return isBulk;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("isBulk")
+    public boolean isBulk() {
+        return isBulk;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("isBulk")
+    public void setIsBulk(boolean isBulk) {
+        this.isBulk = isBulk;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("isBulk")
+    public void setBulk(boolean isBulk) {
+        this.isBulk = isBulk;
+    }
     private Integer totalQuantity;
     private Integer availableQuantity;
     private OwnershipType ownershipType;

@@ -30,7 +30,28 @@ public class EquipmentCreateRequest {
 
     private String registrationNumber;
 
+    @com.fasterxml.jackson.annotation.JsonProperty("isBulk")
     private boolean isBulk;
+
+    @com.fasterxml.jackson.annotation.JsonProperty("isBulk")
+    public boolean getIsBulk() {
+        return isBulk;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("isBulk")
+    public boolean isBulk() {
+        return isBulk;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("isBulk")
+    public void setIsBulk(boolean isBulk) {
+        this.isBulk = isBulk;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("isBulk")
+    public void setBulk(boolean isBulk) {
+        this.isBulk = isBulk;
+    }
 
     @NotNull(message = "Total quantity is mandatory")
     @Min(value = 0, message = "Total quantity must be greater than or equal to 0")

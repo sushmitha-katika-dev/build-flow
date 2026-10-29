@@ -40,8 +40,29 @@ public class Equipment {
 
     private String registrationNumber;
 
-    @Column(nullable = false)
+    @Column(name = "is_bulk", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonProperty("isBulk")
     private boolean isBulk;
+
+    @com.fasterxml.jackson.annotation.JsonProperty("isBulk")
+    public boolean getIsBulk() {
+        return isBulk;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("isBulk")
+    public boolean isBulk() {
+        return isBulk;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("isBulk")
+    public void setIsBulk(boolean isBulk) {
+        this.isBulk = isBulk;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("isBulk")
+    public void setBulk(boolean isBulk) {
+        this.isBulk = isBulk;
+    }
 
     @Column(nullable = false)
     private Integer totalQuantity;
