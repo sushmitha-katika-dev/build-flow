@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { LoginCredentials, Role } from '../types/auth';
 import { AuthService } from '../services/authService';
+import { getAuthErrorMessage } from '../utils/authError';
 
 interface User {
   username: string;
@@ -22,10 +23,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true); // Initial load is true
+  // Tracks initial localStorage session hydration only so login attempts keep form state mounted.
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize from localStorage
   useEffect(() => {
     const token = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
@@ -43,23 +44,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const login = async (credentials: LoginCredentials) => {
-    setIsLoading(true);
     setError(null);
     try {
       const data = await AuthService.login(credentials);
-      
-      // Store in localStorage
+
       localStorage.setItem('token', data.token);
-      
+
       const userData: User = { username: data.username, role: data.role };
       localStorage.setItem('user', JSON.stringify(userData));
-      
+
       setUser(userData);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Invalid credentials or server error.');
+    } catch (err: unknown) {
+      setError(getAuthErrorMessage(err, 'Invalid username or password.'));
       throw err;
-    } finally {
-      setIsLoading(false);
     }
   };
 

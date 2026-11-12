@@ -1,11 +1,17 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Input } from '../../components/common/Input';
-import { Button } from '../../components/common/Button';
-import { Alert } from '../../components/common/Alert';
+import { AlertCircle, CheckCircle2, KeyRound, Loader2, ShieldAlert } from 'lucide-react';
+import { AuthField } from '../../components/auth/AuthField';
 import { AuthService } from '../../services/authService';
 import type { RegisterCredentials, Role } from '../../types/auth';
-import { KeyRound, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { getAuthErrorMessage } from '../../utils/authError';
+
+interface RegisterFieldErrors {
+  username?: string;
+  email?: string;
+  password?: string;
+  adminSecretCode?: string;
+}
 
 export const RegisterPage = () => {
   const navigate = useNavigate();
@@ -14,41 +20,73 @@ export const RegisterPage = () => {
     email: '',
     password: '',
     role: 'ADMIN',
-    adminSecretCode: ''
+    adminSecretCode: '',
   });
 
+  const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const isAdminRole = formData.role === 'ADMIN' || 
-                      formData.role === 'CONTRACTOR' || 
-                      formData.role === 'PROJECT_MANAGER' || 
-                      formData.role === 'FINANCE_MANAGER';
+  const isAdminRole =
+    formData.role === 'ADMIN' ||
+    formData.role === 'CONTRACTOR' ||
+    formData.role === 'PROJECT_MANAGER' ||
+    formData.role === 'FINANCE_MANAGER';
+
+  const clearFieldError = (key: keyof RegisterFieldErrors) => {
+    if (fieldErrors[key]) {
+      setFieldErrors((prev) => ({ ...prev, [key]: undefined }));
+    }
+    if (error) setError(null);
+  };
+
+  const validate = (): boolean => {
+    const nextErrors: RegisterFieldErrors = {};
+
+    if (!formData.username.trim()) {
+      nextErrors.username = 'Username is required.';
+    }
+    if (!formData.email.trim()) {
+      nextErrors.email = 'Email is required.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      nextErrors.email = 'Enter a valid email address.';
+    }
+    if (!formData.password?.trim()) {
+      nextErrors.password = 'Password is required.';
+    } else if (formData.password.trim().length < 6) {
+      nextErrors.password = 'Password must be at least 6 characters.';
+    }
+    if (isAdminRole && !formData.adminSecretCode?.trim()) {
+      nextErrors.adminSecretCode = 'Company access passcode is required for this role.';
+    }
+
+    setFieldErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!formData.username.trim() || !formData.email.trim() || !formData.password?.trim()) {
-      setError('All fields are required.');
-      return;
-    }
-
-    if (isAdminRole && !formData.adminSecretCode?.trim()) {
-      setError('Company Admin Access Passcode is required to register an Admin or Manager account.');
+    if (!validate()) {
       return;
     }
 
     try {
       setIsSubmitting(true);
-      await AuthService.register(formData);
+      await AuthService.register({
+        ...formData,
+        username: formData.username.trim(),
+        email: formData.email.trim(),
+        adminSecretCode: formData.adminSecretCode?.trim(),
+      });
       setSuccess(true);
       setTimeout(() => {
         navigate('/login');
       }, 2500);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to register account.');
+    } catch (err: unknown) {
+      setError(getAuthErrorMessage(err, 'Failed to register account.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -56,18 +94,25 @@ export const RegisterPage = () => {
 
   if (success) {
     return (
-      <div className="text-center py-6 space-y-4">
-        <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-sm">
-          <CheckCircle2 className="w-8 h-8" />
+      <div className="text-center py-4 space-y-4">
+        <div className="w-11 h-11 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto border border-emerald-200 dark:border-emerald-800">
+          <CheckCircle2 className="w-6 h-6" aria-hidden="true" />
         </div>
-        <h3 className="text-xl font-black text-slate-900">Registration Successful!</h3>
-        <p className="text-slate-600 text-xs max-w-sm mx-auto">
-          {formData.role === 'SITE_SUPERVISOR'
-            ? 'Your supervisor account has been created. Awaiting Admin authorization before sign-in.'
-            : 'Your Admin account has been authorized & created successfully. Redirecting to login...'}
-        </p>
-        <Link to="/login" className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow-sm transition-all">
-          Go to Login now →
+        <div className="space-y-1">
+          <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+            Account created
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {formData.role === 'SITE_SUPERVISOR'
+              ? 'Awaiting administrator approval before you can sign in.'
+              : 'Redirecting you to sign in...'}
+          </p>
+        </div>
+        <Link
+          to="/login"
+          className="inline-flex items-center justify-center rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-amber-600 dark:hover:bg-amber-500 text-white text-sm font-medium px-5 py-2.5 transition-colors"
+        >
+          Go to sign in
         </Link>
       </div>
     );
@@ -75,95 +120,143 @@ export const RegisterPage = () => {
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-gray-900 text-center mb-1">
-        Create a New Account
-      </h2>
-      <p className="text-xs text-gray-500 text-center mb-6">
-        BuildFlow Enterprise Operations Portal
-      </p>
+      <div className="mb-6">
+        <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
+          Create account
+        </h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          Set up your BuildFlow access credentials.
+        </p>
+      </div>
+
+      {error && (
+        <div
+          role="alert"
+          className="mb-5 flex items-start gap-2.5 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50/80 dark:bg-red-950/40 px-3.5 py-2.5 text-sm text-red-700 dark:text-red-300"
+        >
+          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-red-600 dark:text-red-400" aria-hidden="true" />
+          <span>{error}</span>
+        </div>
+      )}
 
       <form className="space-y-4" onSubmit={handleSubmit} noValidate>
-        {error && <Alert type="error" message={error} className="mb-4" />}
-
-        <Input
+        <AuthField
+          id="register-username"
           label="Username"
           type="text"
           value={formData.username}
-          onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-          placeholder="admin_user"
+          onChange={(e) => {
+            setFormData({ ...formData, username: e.target.value });
+            clearFieldError('username');
+          }}
+          error={fieldErrors.username}
+          placeholder="Choose a username"
+          autoComplete="username"
           disabled={isSubmitting}
         />
 
-        <Input
+        <AuthField
+          id="register-email"
           label="Email"
           type="email"
           value={formData.email}
-          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          placeholder="admin@buildflow.com"
+          onChange={(e) => {
+            setFormData({ ...formData, email: e.target.value });
+            clearFieldError('email');
+          }}
+          error={fieldErrors.email}
+          placeholder="name@company.com"
+          autoComplete="email"
           disabled={isSubmitting}
         />
 
-        <Input
+        <AuthField
+          id="register-password"
           label="Password"
           type="password"
+          enablePasswordToggle
           value={formData.password}
-          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-          placeholder="Enter a secure password"
+          onChange={(e) => {
+            setFormData({ ...formData, password: e.target.value });
+            clearFieldError('password');
+          }}
+          error={fieldErrors.password}
+          placeholder="Minimum 6 characters"
+          autoComplete="new-password"
           disabled={isSubmitting}
         />
 
-        <div className="space-y-1 mb-4">
-          <label className="block text-sm font-medium text-gray-700">Account Role Privilege</label>
+        <div className="space-y-1.5">
+          <label
+            htmlFor="register-role"
+            className="block text-sm font-medium text-slate-700 dark:text-slate-200"
+          >
+            Role
+          </label>
           <select
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
+            id="register-role"
+            className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-slate-900 dark:focus:border-amber-500 focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-amber-500/20 transition-colors"
             value={formData.role}
-            onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
+            onChange={(e) => {
+              setFormData({ ...formData, role: e.target.value as Role });
+              clearFieldError('adminSecretCode');
+            }}
             disabled={isSubmitting}
           >
             <option value="ADMIN">Admin / Owner</option>
             <option value="PROJECT_MANAGER">Project Manager</option>
             <option value="FINANCE_MANAGER">Finance Manager</option>
-            <option value="SITE_SUPERVISOR">Site Supervisor (Requires Admin Approval)</option>
+            <option value="SITE_SUPERVISOR">Site Supervisor</option>
           </select>
         </div>
 
-        {/* ADMIN SECURITY ACCESS PASSCODE FIELD */}
         {isAdminRole ? (
-          <div className="p-3.5 bg-amber-50/80 rounded-xl border border-amber-200 space-y-2">
-            <div className="flex items-center space-x-2 text-amber-900 font-bold text-xs">
-              <KeyRound className="w-4 h-4 text-amber-600" />
-              <span>Company Admin Access Passcode Required</span>
+          <div className="rounded-lg border border-amber-200/80 dark:border-amber-900/50 bg-amber-50/60 dark:bg-amber-950/20 p-3.5 space-y-2.5">
+            <div className="flex items-center gap-2 text-xs font-medium text-amber-900 dark:text-amber-300">
+              <KeyRound className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
+              <span>Company passcode required for elevated roles</span>
             </div>
-            <p className="text-[11px] text-amber-800">
-              Security Notice: Admin accounts require the active company passcode provided by your company owner.
-            </p>
-            <Input
-              label="Company Security Key"
+            <AuthField
+              id="register-passcode"
+              label="Access Passcode"
               type="password"
+              enablePasswordToggle
               value={formData.adminSecretCode || ''}
-              onChange={(e) => setFormData({ ...formData, adminSecretCode: e.target.value })}
-              placeholder="e.g. BF-ADMIN-2026"
+              onChange={(e) => {
+                setFormData({ ...formData, adminSecretCode: e.target.value });
+                clearFieldError('adminSecretCode');
+              }}
+              error={fieldErrors.adminSecretCode}
+              placeholder="Enter company passcode"
               disabled={isSubmitting}
             />
           </div>
         ) : (
-          <div className="p-3 bg-blue-50/80 rounded-xl border border-blue-200 text-xs text-blue-900 flex items-start space-x-2">
-            <ShieldAlert className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-            <span>Site Supervisors register into <strong>Pending Approval</strong> state until authorized by an Admin.</span>
+          <div className="flex items-start gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-3 text-xs text-slate-600 dark:text-slate-300">
+            <ShieldAlert className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" aria-hidden="true" />
+            <span>Supervisor accounts require administrator approval before first sign-in.</span>
           </div>
         )}
 
-        <Button type="submit" className="w-full mt-2" isLoading={isSubmitting}>
-          Create Authorized Account
-        </Button>
-
-        <div className="text-center mt-4 text-sm">
-          <span className="text-gray-600">Already have an account? </span>
-          <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
-            Sign in
-          </Link>
-        </div>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="mt-2 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 hover:bg-slate-800 active:bg-slate-950 dark:bg-amber-600 dark:hover:bg-amber-500 px-4 py-2.5 text-sm font-medium text-white shadow-xs transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600/40 focus-visible:ring-offset-2 disabled:opacity-65 disabled:cursor-not-allowed"
+        >
+          {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />}
+          <span>{isSubmitting ? 'Creating account...' : 'Create account'}</span>
+        </button>
       </form>
+
+      <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 text-center text-sm text-slate-500 dark:text-slate-400">
+        Already have an account?{' '}
+        <Link
+          to="/login"
+          className="font-medium text-slate-900 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors underline-offset-4 hover:underline"
+        >
+          Sign in
+        </Link>
+      </div>
     </div>
   );
 };
