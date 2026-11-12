@@ -2,16 +2,28 @@ import React from 'react';
 
 interface BrandMarkProps {
   className?: string;
+  compact?: boolean;
+  inverted?: boolean;
+  subtitle?: string;
 }
 
 /**
- * Minimal architectural brand mark for BuildFlow auth screens.
+ * Minimal architectural brand mark shared across auth and application shell.
  */
-export const BrandMark: React.FC<BrandMarkProps> = ({ className = '' }) => {
+export const BrandMark: React.FC<BrandMarkProps> = ({
+  className = '',
+  compact = false,
+  inverted = false,
+  subtitle = 'Operations Portal',
+}) => {
   return (
     <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>
       <div
-        className="w-9 h-9 rounded-lg bg-slate-900 dark:bg-slate-800 flex items-center justify-center shadow-xs border border-slate-800 dark:border-slate-700"
+        className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border ${
+          inverted
+            ? 'bg-slate-900 border-slate-700/90 shadow-xs'
+            : 'bg-slate-900 dark:bg-slate-800 border-slate-800 dark:border-slate-700 shadow-xs'
+        }`}
         aria-hidden="true"
       >
         <svg
@@ -43,15 +55,25 @@ export const BrandMark: React.FC<BrandMarkProps> = ({ className = '' }) => {
           />
         </svg>
       </div>
-      <div className="flex flex-col leading-none">
-        <span className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-50">
-          BuildFlow
-        </span>
-        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 tracking-wide mt-0.5">
-          Operations Portal
-        </span>
-      </div>
+
+      {!compact && (
+        <div className="flex flex-col leading-none min-w-0">
+          <span
+            className={`text-base font-semibold tracking-tight truncate ${
+              inverted ? 'text-slate-50' : 'text-slate-900 dark:text-slate-50'
+            }`}
+          >
+            BuildFlow
+          </span>
+          <span
+            className={`text-[11px] font-medium tracking-wide mt-0.5 truncate ${
+              inverted ? 'text-slate-400' : 'text-slate-500 dark:text-slate-400'
+            }`}
+          >
+            {subtitle}
+          </span>
+        </div>
+      )}
     </div>
   );
 };
-

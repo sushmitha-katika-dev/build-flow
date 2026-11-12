@@ -7,8 +7,12 @@ export const ProtectedRoute: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#F7F7F5] dark:bg-slate-950">
+        <div
+          className="h-7 w-7 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900 dark:border-slate-700 dark:border-t-amber-500"
+          role="status"
+          aria-label="Loading workspace"
+        />
       </div>
     );
   }

@@ -2,52 +2,118 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bf-bg-canvas: #f7f7f5;
+  --bf-bg-surface: #ffffff;
+  --bf-bg-subtle: #f1f0ec;
+  --bf-border: #e4e4df;
+  --bf-text-primary: #0f172a;
+  --bf-text-secondary: #475569;
+  --bf-text-muted: #64748b;
+  --bf-accent: #d97706;
+  --bf-accent-soft: rgba(217, 119, 6, 0.1);
+}
+
+html.dark {
+  color-scheme: dark;
+  --bf-bg-canvas: #0b0f17;
+  --bf-bg-surface: #111827;
+  --bf-bg-subtle: #182234;
+  --bf-border: #1f2937;
+  --bf-text-primary: #f8fafc;
+  --bf-text-secondary: #cbd5e1;
+  --bf-text-muted: #94a3b8;
+  --bf-accent: #f59e0b;
+  --bf-accent-soft: rgba(245, 158, 11, 0.14);
+}
+
 @layer base {
-  html.dark {
-    color-scheme: dark;
+  html,
+  body {
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--bf-bg-canvas);
+    color: var(--bf-text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Subtle dark-mode fallbacks with zero specificity (:where) so explicit dark: utilities override cleanly */
+  :where(html.dark .bg-gray-50),
+  :where(html.dark .bg-slate-50) {
+    background-color: var(--bf-bg-canvas);
+  }
+
+  :where(html.dark .bg-white) {
+    background-color: var(--bf-bg-surface);
+    color: var(--bf-text-primary);
+    border-color: var(--bf-border);
+  }
+
+  :where(html.dark .text-gray-900),
+  :where(html.dark .text-gray-800),
+  :where(html.dark .text-slate-900),
+  :where(html.dark .text-slate-800) {
+    color: var(--bf-text-primary);
+  }
+
+  :where(html.dark .text-gray-700),
+  :where(html.dark .text-slate-700) {
+    color: var(--bf-text-secondary);
+  }
+
+  :where(html.dark .text-gray-600),
+  :where(html.dark .text-gray-500),
+  :where(html.dark .text-slate-600),
+  :where(html.dark .text-slate-500) {
+    color: var(--bf-text-muted);
+  }
+
+  :where(html.dark .border-gray-200),
+  :where(html.dark .border-gray-100),
+  :where(html.dark .border-slate-200),
+  :where(html.dark .border-slate-100) {
+    border-color: var(--bf-border);
+  }
+
+  :where(html.dark input),
+  :where(html.dark select),
+  :where(html.dark textarea) {
     background-color: #0f172a;
-    color: #f8fafc;
+    color: var(--bf-text-primary);
+    border-color: #334155;
   }
-  html.dark body {
+
+  :where(html.dark table thead) {
     background-color: #0f172a;
-    color: #f8fafc;
   }
-  html.dark .bg-gray-50,
-  html.dark .bg-slate-50 {
-    background-color: #0f172a !important;
+
+  :where(html.dark table tbody tr) {
+    background-color: var(--bf-bg-surface);
   }
-  html.dark .bg-white {
-    background-color: #1e293b !important;
-    color: #f8fafc !important;
-    border-color: #334155 !important;
+
+  :where(html.dark table tbody tr:hover) {
+    background-color: var(--bf-bg-subtle);
   }
-  html.dark .text-gray-900,
-  html.dark .text-gray-800,
-  html.dark .text-gray-700 {
-    color: #f8fafc !important;
+}
+
+@layer utilities {
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
-  html.dark .text-gray-600,
-  html.dark .text-gray-500 {
-    color: #94a3b8 !important;
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
   }
-  html.dark .border-gray-200,
-  html.dark .border-gray-100 {
-    border-color: #334155 !important;
-  }
-  html.dark input,
-  html.dark select,
-  html.dark textarea {
-    background-color: #0f172a !important;
-    color: #f8fafc !important;
-    border-color: #475569 !important;
-  }
-  html.dark table thead {
-    background-color: #0f172a !important;
-  }
-  html.dark table tbody tr {
-    background-color: #1e293b !important;
-  }
-  html.dark table tbody tr:hover {
-    background-color: #334155 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
