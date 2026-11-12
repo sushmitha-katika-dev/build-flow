@@ -6,7 +6,7 @@ spring:
     name: inventory-service
   
   datasource:
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DB:buildflow_inventory}?createDatabaseIfNotExist=true&useSSL=${MYSQL_USE_SSL:false}&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DB:buildflow_inventory}?createDatabaseIfNotExist=true&sslMode=${MYSQL_SSL_MODE:DISABLED}&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: ${MYSQL_USER:root}
     password: ${MYSQL_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver

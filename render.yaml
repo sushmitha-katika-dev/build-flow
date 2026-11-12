@@ -1,11 +1,21 @@
 # Render Blueprint specification for BuildFlow Java Spring Boot microservices.
-# NOTE:
-# - Uses `plan: free` by default to prevent unintended billing across 8 services.
-# - Internal `fromService` (`hostport`) private networking requires Render Starter+ plans.
-#   If running on the Free plan, set `<SERVICE>_SERVICE_URL=https://<service>.onrender.com`
-#   in Render Dashboard -> Environment (overrides `*_SERVICE_HOSTPORT`).
-# - External managed MySQL, Kafka, and Redis credentials use `sync: false` so Render
-#   prompts for them safely during Blueprint setup without committing secrets to Git.
+#
+# Pre-configured non-secret cloud endpoints:
+# - TiDB Cloud (MySQL-compatible): gateway01.ap-northeast-1.prod.aws.tidbcloud.com:4000 (sslMode=REQUIRED)
+#   IMPORTANT: In TiDB Cloud Console -> Networking, allow Render outbound access (0.0.0.0/0 or Render egress IPs).
+# - Upstash Redis (TLS): enabled-reptile-175680.upstash.io:6379
+# - Aiven Apache Kafka (SASL_SSL): buildflow-kafka-buildflow-cloud.a.aivencloud.com:21846 (user: avnadmin)
+#
+# Secret variables marked `sync: false` must be entered in the Render Blueprint prompt/Dashboard:
+# - MYSQL_PASSWORD (TiDB password)
+# - KAFKA_PASSWORD (Aiven avnadmin password)
+# - KAFKA_CA_CERT (Aiven ca.pem certificate)
+# - SPRING_DATA_REDIS_PASSWORD (Upstash Redis token/password)
+#
+# Networking note:
+# - `fromService` (`hostport`) uses Render Private Networking (requires `starter` plan or higher).
+# - If staying on `plan: free`, add `<SERVICE>_SERVICE_URL=https://<service>.onrender.com` in Render
+#   Dashboard -> Environment on `buildflow-api-gateway` (and `PROJECT_SERVICE_URL` on downstream services).
 
 services:
   - type: web
@@ -69,17 +79,17 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: MYSQL_HOST
-        sync: false
+        value: gateway01.ap-northeast-1.prod.aws.tidbcloud.com
       - key: MYSQL_PORT
-        value: "3306"
+        value: "4000"
       - key: MYSQL_DB
         value: buildflow_auth
       - key: MYSQL_USER
-        sync: false
+        value: 5HwsQoxdBRBr97F.root
       - key: MYSQL_PASSWORD
         sync: false
-      - key: MYSQL_USE_SSL
-        value: "true"
+      - key: MYSQL_SSL_MODE
+        value: REQUIRED
 
   - type: web
     name: buildflow-project-service
@@ -89,18 +99,24 @@ services:
     dockerfilePath: ./backend/project-service/Dockerfile
     envVars:
       - key: MYSQL_HOST
-        sync: false
+        value: gateway01.ap-northeast-1.prod.aws.tidbcloud.com
       - key: MYSQL_PORT
-        value: "3306"
+        value: "4000"
       - key: MYSQL_DB
         value: buildflow_project
       - key: MYSQL_USER
-        sync: false
+        value: 5HwsQoxdBRBr97F.root
       - key: MYSQL_PASSWORD
         sync: false
-      - key: MYSQL_USE_SSL
-        value: "true"
+      - key: MYSQL_SSL_MODE
+        value: REQUIRED
       - key: KAFKA_BOOTSTRAP_SERVERS
+        value: buildflow-kafka-buildflow-cloud.a.aivencloud.com:21846
+      - key: KAFKA_USERNAME
+        value: avnadmin
+      - key: KAFKA_PASSWORD
+        sync: false
+      - key: KAFKA_CA_CERT
         sync: false
 
   - type: web
@@ -111,18 +127,24 @@ services:
     dockerfilePath: ./backend/workforce-service/Dockerfile
     envVars:
       - key: MYSQL_HOST
-        sync: false
+        value: gateway01.ap-northeast-1.prod.aws.tidbcloud.com
       - key: MYSQL_PORT
-        value: "3306"
+        value: "4000"
       - key: MYSQL_DB
         value: buildflow_workforce
       - key: MYSQL_USER
-        sync: false
+        value: 5HwsQoxdBRBr97F.root
       - key: MYSQL_PASSWORD
         sync: false
-      - key: MYSQL_USE_SSL
-        value: "true"
+      - key: MYSQL_SSL_MODE
+        value: REQUIRED
       - key: KAFKA_BOOTSTRAP_SERVERS
+        value: buildflow-kafka-buildflow-cloud.a.aivencloud.com:21846
+      - key: KAFKA_USERNAME
+        value: avnadmin
+      - key: KAFKA_PASSWORD
+        sync: false
+      - key: KAFKA_CA_CERT
         sync: false
       - key: PROJECT_SERVICE_HOSTPORT
         fromService:
@@ -138,18 +160,24 @@ services:
     dockerfilePath: ./backend/inventory-service/Dockerfile
     envVars:
       - key: MYSQL_HOST
-        sync: false
+        value: gateway01.ap-northeast-1.prod.aws.tidbcloud.com
       - key: MYSQL_PORT
-        value: "3306"
+        value: "4000"
       - key: MYSQL_DB
         value: buildflow_inventory
       - key: MYSQL_USER
-        sync: false
+        value: 5HwsQoxdBRBr97F.root
       - key: MYSQL_PASSWORD
         sync: false
-      - key: MYSQL_USE_SSL
-        value: "true"
+      - key: MYSQL_SSL_MODE
+        value: REQUIRED
       - key: KAFKA_BOOTSTRAP_SERVERS
+        value: buildflow-kafka-buildflow-cloud.a.aivencloud.com:21846
+      - key: KAFKA_USERNAME
+        value: avnadmin
+      - key: KAFKA_PASSWORD
+        sync: false
+      - key: KAFKA_CA_CERT
         sync: false
       - key: PROJECT_SERVICE_HOSTPORT
         fromService:
@@ -165,18 +193,24 @@ services:
     dockerfilePath: ./backend/equipment-service/Dockerfile
     envVars:
       - key: MYSQL_HOST
-        sync: false
+        value: gateway01.ap-northeast-1.prod.aws.tidbcloud.com
       - key: MYSQL_PORT
-        value: "3306"
+        value: "4000"
       - key: MYSQL_DB
         value: buildflow_equipment_db
       - key: MYSQL_USER
-        sync: false
+        value: 5HwsQoxdBRBr97F.root
       - key: MYSQL_PASSWORD
         sync: false
-      - key: MYSQL_USE_SSL
-        value: "true"
+      - key: MYSQL_SSL_MODE
+        value: REQUIRED
       - key: KAFKA_BOOTSTRAP_SERVERS
+        value: buildflow-kafka-buildflow-cloud.a.aivencloud.com:21846
+      - key: KAFKA_USERNAME
+        value: avnadmin
+      - key: KAFKA_PASSWORD
+        sync: false
+      - key: KAFKA_CA_CERT
         sync: false
       - key: PROJECT_SERVICE_HOSTPORT
         fromService:
@@ -192,18 +226,24 @@ services:
     dockerfilePath: ./backend/finance-service/Dockerfile
     envVars:
       - key: MYSQL_HOST
-        sync: false
+        value: gateway01.ap-northeast-1.prod.aws.tidbcloud.com
       - key: MYSQL_PORT
-        value: "3306"
+        value: "4000"
       - key: MYSQL_DB
         value: buildflow_finance_db
       - key: MYSQL_USER
-        sync: false
+        value: 5HwsQoxdBRBr97F.root
       - key: MYSQL_PASSWORD
         sync: false
-      - key: MYSQL_USE_SSL
-        value: "true"
+      - key: MYSQL_SSL_MODE
+        value: REQUIRED
       - key: KAFKA_BOOTSTRAP_SERVERS
+        value: buildflow-kafka-buildflow-cloud.a.aivencloud.com:21846
+      - key: KAFKA_USERNAME
+        value: avnadmin
+      - key: KAFKA_PASSWORD
+        sync: false
+      - key: KAFKA_CA_CERT
         sync: false
       - key: PROJECT_SERVICE_HOSTPORT
         fromService:
@@ -219,23 +259,30 @@ services:
     dockerfilePath: ./backend/reporting-service/Dockerfile
     envVars:
       - key: MYSQL_HOST
-        sync: false
+        value: gateway01.ap-northeast-1.prod.aws.tidbcloud.com
       - key: MYSQL_PORT
-        value: "3306"
+        value: "4000"
       - key: MYSQL_DB
         value: buildflow_reporting
       - key: MYSQL_USER
-        sync: false
+        value: 5HwsQoxdBRBr97F.root
       - key: MYSQL_PASSWORD
         sync: false
-      - key: MYSQL_USE_SSL
-        value: "true"
+      - key: MYSQL_SSL_MODE
+        value: REQUIRED
       - key: KAFKA_BOOTSTRAP_SERVERS
+        value: buildflow-kafka-buildflow-cloud.a.aivencloud.com:21846
+      - key: KAFKA_USERNAME
+        value: avnadmin
+      - key: KAFKA_PASSWORD
+        sync: false
+      - key: KAFKA_CA_CERT
         sync: false
       - key: SPRING_DATA_REDIS_HOST
-        sync: false
+        value: enabled-reptile-175680.upstash.io
       - key: SPRING_DATA_REDIS_PORT
         value: "6379"
+      - key: SPRING_DATA_REDIS_SSL
+        value: "true"
       - key: SPRING_DATA_REDIS_PASSWORD
         sync: false
-

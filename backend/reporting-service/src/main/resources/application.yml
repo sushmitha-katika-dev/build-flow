@@ -6,7 +6,7 @@ spring:
     name: reporting-service
 
   datasource:
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DB:buildflow_reporting}?createDatabaseIfNotExist=true&useSSL=${MYSQL_USE_SSL:false}&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DB:buildflow_reporting}?createDatabaseIfNotExist=true&sslMode=${MYSQL_SSL_MODE:DISABLED}&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: ${MYSQL_USER:root}
     password: ${MYSQL_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -38,6 +38,8 @@ spring:
       host: ${SPRING_DATA_REDIS_HOST:${SPRING_REDIS_HOST:redis}}
       port: ${SPRING_DATA_REDIS_PORT:${SPRING_REDIS_PORT:6379}}
       password: ${SPRING_DATA_REDIS_PASSWORD:${REDIS_PASSWORD:}}
+      ssl:
+        enabled: ${SPRING_DATA_REDIS_SSL:false}
 
 
 
