@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 spring:
   application:
@@ -8,47 +8,47 @@ spring:
     gateway:
       routes:
         - id: auth-service
-          uri: ${AUTH_SERVICE_URL:http://auth-service:8081}
+          uri: ${AUTH_SERVICE_URL:http://${AUTH_SERVICE_HOSTPORT:auth-service:8081}}
           predicates:
             - Path=/api/v1/auth/**
         - id: company-service
-          uri: ${AUTH_SERVICE_URL:http://auth-service:8081}
+          uri: ${AUTH_SERVICE_URL:http://${AUTH_SERVICE_HOSTPORT:auth-service:8081}}
           predicates:
             - Path=/api/v1/company/**
           filters:
             - JwtAuthentication
         - id: project-service
-          uri: ${PROJECT_SERVICE_URL:http://project-service:8082}
+          uri: ${PROJECT_SERVICE_URL:http://${PROJECT_SERVICE_HOSTPORT:project-service:8082}}
           predicates:
             - Path=/api/v1/projects/**
           filters:
             - JwtAuthentication
         - id: workforce-service
-          uri: ${WORKFORCE_SERVICE_URL:http://workforce-service:8083}
+          uri: ${WORKFORCE_SERVICE_URL:http://${WORKFORCE_SERVICE_HOSTPORT:workforce-service:8083}}
           predicates:
             - Path=/api/v1/workforce/**
           filters:
             - JwtAuthentication
         - id: inventory-service
-          uri: ${INVENTORY_SERVICE_URL:http://inventory-service:8084}
+          uri: ${INVENTORY_SERVICE_URL:http://${INVENTORY_SERVICE_HOSTPORT:inventory-service:8084}}
           predicates:
             - Path=/api/v1/inventory/**,/api/v1/materials/**
           filters:
             - JwtAuthentication
         - id: equipment-service
-          uri: ${EQUIPMENT_SERVICE_URL:http://equipment-service:8085}
+          uri: ${EQUIPMENT_SERVICE_URL:http://${EQUIPMENT_SERVICE_HOSTPORT:equipment-service:8085}}
           predicates:
             - Path=/api/v1/equipment/**,/api/v1/maintenance/**,/api/v1/fuel/**
           filters:
             - JwtAuthentication
         - id: finance-service
-          uri: ${FINANCE_SERVICE_URL:http://finance-service:8086}
+          uri: ${FINANCE_SERVICE_URL:http://${FINANCE_SERVICE_HOSTPORT:finance-service:8086}}
           predicates:
             - Path=/api/v1/expenses/**,/api/v1/profit-loss/**,/api/v1/payments/**,/api/v1/budgets/**
           filters:
             - JwtAuthentication
         - id: reporting-service
-          uri: ${REPORTING_SERVICE_URL:http://reporting-service:8087}
+          uri: ${REPORTING_SERVICE_URL:http://${REPORTING_SERVICE_HOSTPORT:reporting-service:8087}}
           predicates:
             - Path=/api/v1/reporting/**
           filters:

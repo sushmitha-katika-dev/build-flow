@@ -1,0 +1,241 @@
+# Render Blueprint specification for BuildFlow Java Spring Boot microservices.
+# NOTE:
+# - Uses `plan: free` by default to prevent unintended billing across 8 services.
+# - Internal `fromService` (`hostport`) private networking requires Render Starter+ plans.
+#   If running on the Free plan, set `<SERVICE>_SERVICE_URL=https://<service>.onrender.com`
+#   in Render Dashboard -> Environment (overrides `*_SERVICE_HOSTPORT`).
+# - External managed MySQL, Kafka, and Redis credentials use `sync: false` so Render
+#   prompts for them safely during Blueprint setup without committing secrets to Git.
+
+services:
+  - type: web
+    name: buildflow-api-gateway
+    runtime: docker
+    plan: free
+    dockerContext: ./backend/api-gateway
+    dockerfilePath: ./backend/api-gateway/Dockerfile
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://build-flow-sooty.vercel.app,https://*.vercel.app,http://localhost:*,http://127.0.0.1:*
+      - key: JWT_SECRET
+        fromService:
+          type: web
+          name: buildflow-auth-service
+          envVarKey: JWT_SECRET
+      - key: AUTH_SERVICE_HOSTPORT
+        fromService:
+          type: web
+          name: buildflow-auth-service
+          property: hostport
+      - key: PROJECT_SERVICE_HOSTPORT
+        fromService:
+          type: web
+          name: buildflow-project-service
+          property: hostport
+      - key: WORKFORCE_SERVICE_HOSTPORT
+        fromService:
+          type: web
+          name: buildflow-workforce-service
+          property: hostport
+      - key: INVENTORY_SERVICE_HOSTPORT
+        fromService:
+          type: web
+          name: buildflow-inventory-service
+          property: hostport
+      - key: EQUIPMENT_SERVICE_HOSTPORT
+        fromService:
+          type: web
+          name: buildflow-equipment-service
+          property: hostport
+      - key: FINANCE_SERVICE_HOSTPORT
+        fromService:
+          type: web
+          name: buildflow-finance-service
+          property: hostport
+      - key: REPORTING_SERVICE_HOSTPORT
+        fromService:
+          type: web
+          name: buildflow-reporting-service
+          property: hostport
+
+  - type: web
+    name: buildflow-auth-service
+    runtime: docker
+    plan: free
+    dockerContext: ./backend/auth-service
+    dockerfilePath: ./backend/auth-service/Dockerfile
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MYSQL_HOST
+        sync: false
+      - key: MYSQL_PORT
+        value: "3306"
+      - key: MYSQL_DB
+        value: buildflow_auth
+      - key: MYSQL_USER
+        sync: false
+      - key: MYSQL_PASSWORD
+        sync: false
+      - key: MYSQL_USE_SSL
+        value: "true"
+
+  - type: web
+    name: buildflow-project-service
+    runtime: docker
+    plan: free
+    dockerContext: ./backend/project-service
+    dockerfilePath: ./backend/project-service/Dockerfile
+    envVars:
+      - key: MYSQL_HOST
+        sync: false
+      - key: MYSQL_PORT
+        value: "3306"
+      - key: MYSQL_DB
+        value: buildflow_project
+      - key: MYSQL_USER
+        sync: false
+      - key: MYSQL_PASSWORD
+        sync: false
+      - key: MYSQL_USE_SSL
+        value: "true"
+      - key: KAFKA_BOOTSTRAP_SERVERS
+        sync: false
+
+  - type: web
+    name: buildflow-workforce-service
+    runtime: docker
+    plan: free
+    dockerContext: ./backend/workforce-service
+    dockerfilePath: ./backend/workforce-service/Dockerfile
+    envVars:
+      - key: MYSQL_HOST
+        sync: false
+      - key: MYSQL_PORT
+        value: "3306"
+      - key: MYSQL_DB
+        value: buildflow_workforce
+      - key: MYSQL_USER
+        sync: false
+      - key: MYSQL_PASSWORD
+        sync: false
+      - key: MYSQL_USE_SSL
+        value: "true"
+      - key: KAFKA_BOOTSTRAP_SERVERS
+        sync: false
+      - key: PROJECT_SERVICE_HOSTPORT
+        fromService:
+          type: web
+          name: buildflow-project-service
+          property: hostport
+
+  - type: web
+    name: buildflow-inventory-service
+    runtime: docker
+    plan: free
+    dockerContext: ./backend/inventory-service
+    dockerfilePath: ./backend/inventory-service/Dockerfile
+    envVars:
+      - key: MYSQL_HOST
+        sync: false
+      - key: MYSQL_PORT
+        value: "3306"
+      - key: MYSQL_DB
+        value: buildflow_inventory
+      - key: MYSQL_USER
+        sync: false
+      - key: MYSQL_PASSWORD
+        sync: false
+      - key: MYSQL_USE_SSL
+        value: "true"
+      - key: KAFKA_BOOTSTRAP_SERVERS
+        sync: false
+      - key: PROJECT_SERVICE_HOSTPORT
+        fromService:
+          type: web
+          name: buildflow-project-service
+          property: hostport
+
+  - type: web
+    name: buildflow-equipment-service
+    runtime: docker
+    plan: free
+    dockerContext: ./backend/equipment-service
+    dockerfilePath: ./backend/equipment-service/Dockerfile
+    envVars:
+      - key: MYSQL_HOST
+        sync: false
+      - key: MYSQL_PORT
+        value: "3306"
+      - key: MYSQL_DB
+        value: buildflow_equipment_db
+      - key: MYSQL_USER
+        sync: false
+      - key: MYSQL_PASSWORD
+        sync: false
+      - key: MYSQL_USE_SSL
+        value: "true"
+      - key: KAFKA_BOOTSTRAP_SERVERS
+        sync: false
+      - key: PROJECT_SERVICE_HOSTPORT
+        fromService:
+          type: web
+          name: buildflow-project-service
+          property: hostport
+
+  - type: web
+    name: buildflow-finance-service
+    runtime: docker
+    plan: free
+    dockerContext: ./backend/finance-service
+    dockerfilePath: ./backend/finance-service/Dockerfile
+    envVars:
+      - key: MYSQL_HOST
+        sync: false
+      - key: MYSQL_PORT
+        value: "3306"
+      - key: MYSQL_DB
+        value: buildflow_finance_db
+      - key: MYSQL_USER
+        sync: false
+      - key: MYSQL_PASSWORD
+        sync: false
+      - key: MYSQL_USE_SSL
+        value: "true"
+      - key: KAFKA_BOOTSTRAP_SERVERS
+        sync: false
+      - key: PROJECT_SERVICE_HOSTPORT
+        fromService:
+          type: web
+          name: buildflow-project-service
+          property: hostport
+
+  - type: web
+    name: buildflow-reporting-service
+    runtime: docker
+    plan: free
+    dockerContext: ./backend/reporting-service
+    dockerfilePath: ./backend/reporting-service/Dockerfile
+    envVars:
+      - key: MYSQL_HOST
+        sync: false
+      - key: MYSQL_PORT
+        value: "3306"
+      - key: MYSQL_DB
+        value: buildflow_reporting
+      - key: MYSQL_USER
+        sync: false
+      - key: MYSQL_PASSWORD
+        sync: false
+      - key: MYSQL_USE_SSL
+        value: "true"
+      - key: KAFKA_BOOTSTRAP_SERVERS
+        sync: false
+      - key: SPRING_DATA_REDIS_HOST
+        sync: false
+      - key: SPRING_DATA_REDIS_PORT
+        value: "6379"
+      - key: SPRING_DATA_REDIS_PASSWORD
+        sync: false
+

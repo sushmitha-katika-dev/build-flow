@@ -13,7 +13,7 @@ public class ProjectClient {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    @Value("${PROJECT_SERVICE_URL:http://project-service:8082}")
+    @Value("${PROJECT_SERVICE_URL:http://${PROJECT_SERVICE_HOSTPORT:project-service:8082}}")
     private String projectServiceUrl;
 
     public void validateProjectIsActive(Long projectId) {
