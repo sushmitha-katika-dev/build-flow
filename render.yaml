@@ -2,20 +2,14 @@
 #
 # Pre-configured non-secret cloud endpoints:
 # - TiDB Cloud (MySQL-compatible): gateway01.ap-northeast-1.prod.aws.tidbcloud.com:4000 (sslMode=REQUIRED)
-#   IMPORTANT: In TiDB Cloud Console -> Networking, allow Render outbound access (0.0.0.0/0 or Render egress IPs).
 # - Upstash Redis (TLS): enabled-reptile-175680.upstash.io:6379
 # - Aiven Apache Kafka (SASL_SSL): buildflow-kafka-buildflow-cloud.a.aivencloud.com:21846 (user: avnadmin)
 #
-# Secret variables marked `sync: false` must be entered in the Render Blueprint prompt/Dashboard:
-# - MYSQL_PASSWORD (TiDB password)
-# - KAFKA_PASSWORD (Aiven avnadmin password)
-# - KAFKA_CA_CERT (Aiven ca.pem certificate)
-# - SPRING_DATA_REDIS_PASSWORD (Upstash Redis token/password)
+# Secret variables marked `sync: false` must be set in Render Dashboard:
+# - MYSQL_PASSWORD, KAFKA_PASSWORD, KAFKA_CA_CERT, SPRING_DATA_REDIS_PASSWORD
 #
-# Networking note:
-# - `fromService` (`hostport`) uses Render Private Networking (requires `starter` plan or higher).
-# - If staying on `plan: free`, add `<SERVICE>_SERVICE_URL=https://<service>.onrender.com` in Render
-#   Dashboard -> Environment on `buildflow-api-gateway` (and `PROJECT_SERVICE_URL` on downstream services).
+# Uses explicit public `https://*.onrender.com` URLs so services on `plan: free`
+# communicate cleanly without requiring paid private networking.
 
 services:
   - type: web
@@ -33,41 +27,20 @@ services:
           type: web
           name: buildflow-auth-service
           envVarKey: JWT_SECRET
-      - key: AUTH_SERVICE_HOSTPORT
-        fromService:
-          type: web
-          name: buildflow-auth-service
-          property: hostport
-      - key: PROJECT_SERVICE_HOSTPORT
-        fromService:
-          type: web
-          name: buildflow-project-service
-          property: hostport
-      - key: WORKFORCE_SERVICE_HOSTPORT
-        fromService:
-          type: web
-          name: buildflow-workforce-service
-          property: hostport
-      - key: INVENTORY_SERVICE_HOSTPORT
-        fromService:
-          type: web
-          name: buildflow-inventory-service
-          property: hostport
-      - key: EQUIPMENT_SERVICE_HOSTPORT
-        fromService:
-          type: web
-          name: buildflow-equipment-service
-          property: hostport
-      - key: FINANCE_SERVICE_HOSTPORT
-        fromService:
-          type: web
-          name: buildflow-finance-service
-          property: hostport
-      - key: REPORTING_SERVICE_HOSTPORT
-        fromService:
-          type: web
-          name: buildflow-reporting-service
-          property: hostport
+      - key: AUTH_SERVICE_URL
+        value: https://buildflow-auth-service.onrender.com
+      - key: PROJECT_SERVICE_URL
+        value: https://buildflow-project-service.onrender.com
+      - key: WORKFORCE_SERVICE_URL
+        value: https://buildflow-workforce-service.onrender.com
+      - key: INVENTORY_SERVICE_URL
+        value: https://buildflow-inventory-service.onrender.com
+      - key: EQUIPMENT_SERVICE_URL
+        value: https://buildflow-equipment-service.onrender.com
+      - key: FINANCE_SERVICE_URL
+        value: https://buildflow-finance-service.onrender.com
+      - key: REPORTING_SERVICE_URL
+        value: https://buildflow-reporting-service.onrender.com
 
   - type: web
     name: buildflow-auth-service
@@ -146,11 +119,8 @@ services:
         sync: false
       - key: KAFKA_CA_CERT
         sync: false
-      - key: PROJECT_SERVICE_HOSTPORT
-        fromService:
-          type: web
-          name: buildflow-project-service
-          property: hostport
+      - key: PROJECT_SERVICE_URL
+        value: https://buildflow-project-service.onrender.com
 
   - type: web
     name: buildflow-inventory-service
@@ -179,11 +149,8 @@ services:
         sync: false
       - key: KAFKA_CA_CERT
         sync: false
-      - key: PROJECT_SERVICE_HOSTPORT
-        fromService:
-          type: web
-          name: buildflow-project-service
-          property: hostport
+      - key: PROJECT_SERVICE_URL
+        value: https://buildflow-project-service.onrender.com
 
   - type: web
     name: buildflow-equipment-service
@@ -212,11 +179,8 @@ services:
         sync: false
       - key: KAFKA_CA_CERT
         sync: false
-      - key: PROJECT_SERVICE_HOSTPORT
-        fromService:
-          type: web
-          name: buildflow-project-service
-          property: hostport
+      - key: PROJECT_SERVICE_URL
+        value: https://buildflow-project-service.onrender.com
 
   - type: web
     name: buildflow-finance-service
@@ -245,11 +209,8 @@ services:
         sync: false
       - key: KAFKA_CA_CERT
         sync: false
-      - key: PROJECT_SERVICE_HOSTPORT
-        fromService:
-          type: web
-          name: buildflow-project-service
-          property: hostport
+      - key: PROJECT_SERVICE_URL
+        value: https://buildflow-project-service.onrender.com
 
   - type: web
     name: buildflow-reporting-service
